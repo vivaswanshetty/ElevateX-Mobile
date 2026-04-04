@@ -1,0 +1,34 @@
+# MONOREPO ROOT .easignore
+# This file MUST be in the same folder as the .git directory to be effective
+
+# EXCLUDE GIT HISTORY (THIS IS THE 450MB BLOAT!)
+.git/
+**/.git/
+.gitignore
+
+# Exclude other projects
+elevatex-app/
+docs/
+
+# Exclude all dependencies
+node_modules/
+**/node_modules/
+.bun/
+
+# Exclude all build artifacts
+.gradle/
+**/android/build/
+**/ios/build/
+*.apk
+*.aab
+*.ipa
+
+# System/IDE
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Environment
+.env.*.local
+.env.local

@@ -1,0 +1,13 @@
+node_modules/
+node_modules 2/
+.expo/
+.DS_Store
+*.lock
+*.log
+android/
+ios/
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/.expo/
+apps/mobile/node_modules/
+.gradle/

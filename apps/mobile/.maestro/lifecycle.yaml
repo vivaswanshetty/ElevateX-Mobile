@@ -1,0 +1,13 @@
+appId: com.elevatex.mobile
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Login"
+# Mock tapping login if needed
+- tapOn: "Login"
+- assertVisible: "Dashboard" # Placeholder for actual layout
+# Deep link from mock push notification
+- openLink: "exp://127.0.0.1:8081/--/chat"
+- assertVisible: "Messages"
+- tapOn: "Find Friends" # Tapping empty state call to action
+- assertVisible: "Search members"

@@ -1,0 +1,22 @@
+node_modules/
+.expo/
+dist/
+build/
+android/
+ios/
+*.apk
+*.aab
+*.ipa
+*.log
+.env
+.env.local
+.DS_Store
+# Sync-generated duplicates
+* 2.*
+* 3.*
+* 4.*
+* 5.*
+* 2
+* 3
+* 4
+* 5
