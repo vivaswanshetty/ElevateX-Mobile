@@ -201,31 +201,23 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
                   justifyContent: "center",
                   minHeight: 48,
                   borderRadius: 16,
-                  backgroundColor: focused
-                    ? "rgba(255,255,255,0.08)"
-                    : "transparent",
-                  borderWidth: focused ? 1 : 0,
-                  borderColor: focused
-                    ? "rgba(255,255,255,0.12)"
-                    : "transparent",
-                  opacity: pressed ? 0.88 : 1,
-                  transform: [{ scale: focused ? 1.05 : 1 }],
+                  opacity: pressed ? 0.80 : 1,
                 })}
               >
                 <View
                   style={{
-                    width: 32,
+                    width: 36,
                     height: 32,
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: focused
                       ? webTheme.accentSoft
-                      : "rgba(255,255,255,0.03)",
-                    borderWidth: 1,
+                      : "transparent",
+                    borderWidth: focused ? 1 : 0,
                     borderColor: focused
                       ? webTheme.accentBorder
-                      : "rgba(255,255,255,0.06)",
+                      : "transparent",
                   }}
                 >
                   <Feather

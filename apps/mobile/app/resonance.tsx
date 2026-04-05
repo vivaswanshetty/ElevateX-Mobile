@@ -199,7 +199,7 @@ function ParticleEmitter({ trigger }: { trigger: Animated.Value }) {
   }, []);
 
   return (
-    <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
+    <View style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, alignItems: "center", justifyContent: "center" }}>
       {particles.map((particle) => {
         const anim = trigger.interpolate({
           inputRange: [0, 1],
@@ -498,7 +498,7 @@ export default function ResonanceScreen() {
                 <Animated.View
                   style={{
                     position: "absolute",
-                    inset: 0,
+                    top: 0, right: 0, bottom: 0, left: 0,
                     borderRadius: 999,
                     backgroundColor: webTheme.red,
                     opacity: livePingOpacity,
@@ -585,7 +585,7 @@ export default function ResonanceScreen() {
                 end={{ x: 1, y: 1 }}
                 style={{
                   position: "absolute",
-                  inset: 0,
+                  top: 0, right: 0, bottom: 0, left: 0,
                   borderRadius: 80,
                 }}
               />

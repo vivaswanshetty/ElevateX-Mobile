@@ -23,7 +23,7 @@ export function SignOutModal({ visible, onConfirm, onCancel }: SignOutModalProps
           alignItems: "center",
         }}
       >
-        <Pressable style={{ position: "absolute", inset: 0 }} onPress={onCancel} />
+        <Pressable style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} onPress={onCancel} />
 
         <BlurView
           intensity={100}

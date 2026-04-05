@@ -37,12 +37,6 @@ function HeroButton({
           borderWidth: primary ? 0 : 1,
           borderColor: primary ? "transparent" : webTheme.borderStrong,
           backgroundColor: primary ? "transparent" : "rgba(255,255,255,0.04)",
-          paddingHorizontal: 16,
-          paddingVertical: 18,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
           overflow: "hidden",
         }}
       >
@@ -51,13 +45,24 @@ function HeroButton({
             colors={["#E5364B", "#F43F5E", "#8B5CF6"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ position: "absolute", inset: 0 }}
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
           />
         )}
-        <Text style={{ ...type.buttonLabel, color: primary ? "#fff" : webTheme.text, zIndex: 1, fontSize: 13, letterSpacing: 0.3 }}>
-          {label}
-        </Text>
-        <Feather name={icon} size={15} color={primary ? "#fff" : webTheme.muted} style={{ zIndex: 1 }} />
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 18,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          <Text style={{ ...type.buttonLabel, color: primary ? "#fff" : webTheme.text, zIndex: 1, fontSize: 13, letterSpacing: 0.3 }}>
+            {label}
+          </Text>
+          <Feather name={icon} size={15} color={primary ? "#fff" : webTheme.muted} style={{ zIndex: 1 }} />
+        </View>
       </View>
     </HapticPressable>
   );
@@ -95,7 +100,7 @@ export default function HomeScreen() {
           }}
         >
           {/* background blobs */}
-          <View style={{ position: "absolute", inset: 0, opacity: 0.6, pointerEvents: "none" }}>
+          <View style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, opacity: 0.6, pointerEvents: "none" }}>
             <View style={{ position: "absolute", top: -80, left: -40, width: 280, height: 280, backgroundColor: "rgba(229,54,75,0.12)", borderRadius: 999 }} />
             <View style={{ position: "absolute", top: 120, right: -100, width: 250, height: 250, backgroundColor: "rgba(139,92,246,0.12)", borderRadius: 999 }} />
           </View>
@@ -104,7 +109,7 @@ export default function HomeScreen() {
           <View
             style={{
               position: "absolute",
-              inset: 0,
+              top: 0, right: 0, bottom: 0, left: 0,
               borderTopWidth: 1,
               borderTopColor: "rgba(255,255,255,0.06)",
             }}
@@ -214,7 +219,7 @@ export default function HomeScreen() {
                     colors={["rgba(229,54,75,0.5)", "rgba(139,92,246,0.5)", "rgba(229,54,75,0.2)"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={{ position: "absolute", inset: 0 }}
+                    style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
                   />
                   <View
                     style={{

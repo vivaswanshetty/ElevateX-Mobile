@@ -15,6 +15,7 @@ import { FadeSlideIn } from "../../components/FadeSlideIn";
 import { HapticPressable } from "../../components/HapticPressable";
 import { normalizeUserPayload } from "../../lib/user";
 import { webTheme, inputFieldStyle } from "../../lib/webTheme";
+import { Watermark } from "../../components/Watermark";
 import { notify } from "../../stores/toastStore";
 import { type as Typography } from "../../lib/typography";
 
@@ -113,7 +114,7 @@ export default function RegisterScreen() {
                 colors={["rgba(255,255,255,0.05)", "transparent"]}
                 start={{ x: 0.3, y: 0 }}
                 end={{ x: 0.7, y: 1 }}
-                style={{ position: "absolute", inset: 0 }}
+                style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
               />
               <Feather name="zap" size={30} color={webTheme.accent} />
             </View>
@@ -226,6 +227,7 @@ export default function RegisterScreen() {
           </Text>
         </SurfaceCard>
         </FadeSlideIn>
+        <Watermark />
       </ScrollView>
     </SafeAreaView>
   );

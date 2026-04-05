@@ -12,6 +12,7 @@ export interface UpdateInfo {
 export const useCheckUpdates = () => {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const checkForUpdates = useCallback(async () => {
@@ -55,7 +56,7 @@ export const useCheckUpdates = () => {
 
   const downloadAndApplyUpdate = useCallback(async () => {
     try {
-      setIsChecking(true);
+      setIsApplying(true);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       await Updates.fetchUpdateAsync();
@@ -69,7 +70,7 @@ export const useCheckUpdates = () => {
       setError(message);
       console.error("Update download failed:", message);
     } finally {
-      setIsChecking(false);
+      setIsApplying(false);
     }
   }, []);
 
@@ -81,6 +82,7 @@ export const useCheckUpdates = () => {
   return {
     updateInfo,
     isChecking,
+    isApplying,
     error,
     checkForUpdates,
     downloadAndApplyUpdate,

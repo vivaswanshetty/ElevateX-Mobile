@@ -65,7 +65,7 @@ export function ConfirmDialog({
           paddingHorizontal: 24,
         }}
       >
-        <Pressable style={{ position: "absolute", inset: 0 }} onPress={onClose} />
+        <Pressable style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} onPress={onClose} />
 
         <Animated.View style={{ transform: [{ scale }], opacity, borderRadius: 32, overflow: "hidden" }}>
           <BlurView

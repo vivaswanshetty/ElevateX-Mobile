@@ -23,6 +23,7 @@ import { AnimatedList } from "../../components/AnimatedList";
 import { notify } from "../../stores/toastStore";
 import { HapticPressable } from "../../components/HapticPressable";
 import { TaskCardSkeleton } from "../../components/TaskCardSkeleton";
+import { Watermark } from "../../components/Watermark";
 import { getImageUrl, getInitials } from "../../lib/media";
 import { mapTaskToCard, type TaskCardSource } from "../../lib/tasks";
 import { type } from "../../lib/typography";
@@ -109,6 +110,7 @@ export default function ProfileScreen() {
   const { user, setUser, signOut } = useAuthStore();
   const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "posts" | "activity">("overview");
   const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const [emailDraft, setEmailDraft] = useState("");
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -139,6 +141,7 @@ export default function ProfileScreen() {
     if (!profile) return;
     setEmailDraft(profile.email || "");
     setIsEditingEmail(false);
+    setAvatarError(false);
   }, [profile]);
 
   const syncProfileState = (nextProfile: ProfileResponse) => {
@@ -226,6 +229,7 @@ export default function ProfileScreen() {
   };
 
   const avatarUrl = getImageUrl(displayProfile.avatar);
+  const showAvatar = avatarUrl && !avatarError;
   const level = Math.floor((displayProfile.xp || 0) / 500) + 1;
   const levelTitle = getLevelTitle(level);
   const planLabel = displayProfile.subscription?.plan?.toUpperCase() || "FREE";
@@ -361,12 +365,12 @@ export default function ProfileScreen() {
             colors={["#1A1015", "#120D10", webTheme.bg]}
             start={{ x: 0.1, y: 0 }}
             end={{ x: 0.7, y: 1 }}
-            style={{ position: "absolute", inset: 0 }}
+            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
           />
           <View
             style={{
               position: "absolute",
-              inset: 0,
+              top: 0, right: 0, bottom: 0, left: 0,
               backgroundColor: "rgba(229,54,75,0.03)",
             }}
           />
@@ -410,17 +414,22 @@ export default function ProfileScreen() {
                 width: 116,
                 height: 116,
                 borderRadius: 999,
-                backgroundColor: avatarUrl ? webTheme.bg : webTheme.surfaceRaised,
+                backgroundColor: showAvatar ? webTheme.bg : webTheme.surfaceRaised,
                 alignItems: "center",
                 justifyContent: "center",
                 borderWidth: 4,
-                borderColor: avatarUrl ? webTheme.bg : webTheme.accentBorder,
+                borderColor: showAvatar ? webTheme.bg : webTheme.accentBorder,
                 overflow: "hidden",
                 zIndex: 2,
               }}
             >
-              {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={{ width: "100%", height: "100%" }} />
+              {showAvatar ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                  onError={() => setAvatarError(true)}
+                />
               ) : (
                 <Text style={{ ...type.black, color: webTheme.accent, fontSize: 34 }}>
                   {getInitials(displayProfile.name)}
@@ -1144,6 +1153,7 @@ export default function ProfileScreen() {
           ) : null}
           </FadeSlideIn>
 
+          <Watermark />
       </ScrollView>
     </SafeAreaView>
   );

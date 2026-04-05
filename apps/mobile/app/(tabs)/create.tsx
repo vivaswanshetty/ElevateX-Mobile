@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Platform } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert, Pressable, ScrollView, Text, TextInput, View, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { ScreenHeader } from "../../components/ScreenHeader";
@@ -27,10 +29,22 @@ const createCategories = [
   "Business",
   "Lifestyle",
 ] as const;
+const SUBCATEGORIES: Record<string, string[]> = {
+  Development: ['Web Development', 'Mobile App', 'Debugging', 'API Integration', 'Automation', 'Desktop App', 'Database Design'],
+  Design: ['UI/UX', 'Logo', 'Poster', 'Branding', 'Illustration', 'Print Design', '3D Design'],
+  Marketing: ['SEO', 'Social Media', 'Content Strategy', 'Email Marketing', 'Influencer Marketing'],
+  Writing: ['Blog Post', 'Copywriting', 'Technical Writing', 'Creative Writing', 'Editing'],
+  'Data Science': ['Data Analysis', 'Machine Learning', 'Data Visualization', 'Statistical Modeling', 'Big Data'],
+  'Video & Animation': ['Video Editing', '2D Animation', '3D Animation', 'Motion Graphics', 'Video Production'],
+  'Music & Audio': ['Music Production', 'Audio Editing', 'Voice Over', 'Sound Design', 'Mixing & Mastering'],
+  Business: ['Business Plan', 'Financial Analysis', 'Market Research', 'Consulting', 'Project Management'],
+  Lifestyle: ['Fitness Coaching', 'Nutrition', 'Life Coaching', 'Travel Planning', 'Personal Shopping'],
+};
+
 const rewardTiers = [
-  { id: "starter", label: "Starter", coins: "20", xp: "12", color: webTheme.green, bg: webTheme.greenSoft, border: "rgba(52,211,153,0.3)" },
-  { id: "standard", label: "Standard", coins: "50", xp: "15", color: webTheme.blue, bg: webTheme.blueSoft, border: "rgba(96,165,250,0.3)" },
-  { id: "advanced", label: "Advanced", coins: "100", xp: "20", color: webTheme.purple, bg: webTheme.violetSoft, border: webTheme.violetBorder },
+  { id: "small", label: "Starter", coins: "20", xp: "12", color: webTheme.green, bg: webTheme.greenSoft, border: "rgba(52,211,153,0.3)" },
+  { id: "medium", label: "Standard", coins: "50", xp: "15", color: webTheme.blue, bg: webTheme.blueSoft, border: "rgba(96,165,250,0.3)" },
+  { id: "large", label: "Advanced", coins: "100", xp: "20", color: webTheme.purple, bg: webTheme.violetSoft, border: webTheme.violetBorder },
   { id: "premium", label: "Premium", coins: "200", xp: "30", color: webTheme.gold, bg: webTheme.goldSoft, border: "rgba(251,191,36,0.3)" },
 ] as const;
 const steps = ["Basics", "Reward", "Details", "Review"] as const;
@@ -43,10 +57,12 @@ export default function CreateScreen() {
   const [title, setTitle] = useState("");
   const [headline, setHeadline] = useState("");
   const [description, setDescription] = useState("");
-  const [rewardTier, setRewardTier] = useState<(typeof rewardTiers)[number]["id"]>("starter");
+  const [rewardTier, setRewardTier] = useState<(typeof rewardTiers)[number]["id"]>("small");
   const [category, setCategory] = useState<(typeof createCategories)[number]>("Development");
   const [subcategory, setSubcategory] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadlineDate, setDeadlineDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const deadlineStr = deadlineDate ? deadlineDate.toISOString().slice(0, 10) : "";
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const selectedTier = rewardTiers.find((tier) => tier.id === rewardTier)!;
 
@@ -62,31 +78,35 @@ export default function CreateScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !headline.trim() || !description.trim() || !subcategory.trim() || !deadline.trim()) {
+    if (!title.trim() || !headline.trim() || !description.trim() || !subcategory.trim() || !deadlineDate) {
       triggerHaptic("error");
       notify.error("Add a title, headline, subcategory, deadline, and description before posting.");
       return;
     }
 
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("category", category);
-      formData.append("sub", subcategory);
-      formData.append("rewardId", rewardTier);
-      formData.append("coins", String(selectedTier.coins));
-      formData.append("desc", `${headline}\n\n${description}`);
-      formData.append("deadline", deadline);
+      const payload = {
+        title,
+        category,
+        sub: subcategory,
+        rewardId: rewardTier,
+        coins: String(selectedTier.coins),
+        desc: `${headline}\n\n${description}`,
+        deadline: deadlineStr,
+      };
 
       if (selectedImage) {
+        const formData = new FormData();
+        Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
         formData.append("image", {
           uri: selectedImage.uri,
           name: selectedImage.fileName || "task_image.jpg",
           type: selectedImage.mimeType || "image/jpeg",
         } as any);
+        await api.post("/api/tasks", formData);
+      } else {
+        await api.post("/api/tasks", payload);
       }
-
-      await api.post("/api/tasks", formData);
 
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       triggerHaptic("success");
@@ -94,10 +114,10 @@ export default function CreateScreen() {
       setTitle("");
       setHeadline("");
       setDescription("");
-      setRewardTier("starter");
+      setRewardTier("small");
       setCategory("Development");
       setSubcategory("");
-      setDeadline("");
+      setDeadlineDate(null);
       setSelectedImage(null);
       setStep(0);
     } catch (error) {
@@ -174,39 +194,65 @@ export default function CreateScreen() {
                   />
                   <Text style={{ position: "absolute", top: 16, right: 16, color: webTheme.red, fontSize: 16, ...type.bold }}>*</Text>
                 </View>
-                <View style={{ position: "relative" }}>
-                  <TextInput
-                    style={{ ...type.regular, ...inputFieldStyle, paddingRight: 36 }}
-                    placeholder="Subcategory"
-                    placeholderTextColor={webTheme.faint}
-                    value={subcategory}
-                    onChangeText={setSubcategory}
-                  />
-                  <Text style={{ position: "absolute", top: 16, right: 16, color: webTheme.red, fontSize: 16, ...type.bold }}>*</Text>
+                <View style={{ gap: 6 }}>
+                  <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 12 }}>CATEGORY</Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                    {createCategories.map((item) => {
+                      const active = item === category;
+                      return (
+                        <HapticPressable
+                          key={item}
+                          hapticType="selection"
+                          onPress={() => {
+                            setCategory(item);
+                            setSubcategory("");
+                          }}
+                          style={{
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: active ? webTheme.accentBorder : webTheme.border,
+                            backgroundColor: active ? webTheme.accentSoft : "rgba(255,255,255,0.03)",
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                          }}
+                        >
+                          <Text style={{ ...type.bold, color: active ? webTheme.accent : webTheme.muted, fontSize: 13 }}>
+                            {item}
+                          </Text>
+                        </HapticPressable>
+                      );
+                    })}
+                  </View>
                 </View>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-                  {createCategories.map((item) => {
-                    const active = item === category;
-                    return (
-                      <HapticPressable
-                        key={item}
-                        hapticType="selection"
-                        onPress={() => setCategory(item)}
-                        style={{
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: active ? webTheme.accentBorder : webTheme.border,
-                          backgroundColor: active ? webTheme.accentSoft : "rgba(255,255,255,0.03)",
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                        }}
-                      >
-                        <Text style={{ ...type.bold, color: active ? webTheme.accent : webTheme.muted, fontSize: 13 }}>
-                          {item}
-                        </Text>
-                      </HapticPressable>
-                    );
-                  })}
+                <View style={{ gap: 6 }}>
+                  <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+                    <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 12 }}>SUBCATEGORY</Text>
+                    <Text style={{ color: webTheme.red, fontSize: 14, ...type.bold }}>*</Text>
+                  </View>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {(SUBCATEGORIES[category] ?? []).map((sub) => {
+                      const active = sub === subcategory;
+                      return (
+                        <HapticPressable
+                          key={sub}
+                          hapticType="selection"
+                          onPress={() => setSubcategory(sub)}
+                          style={{
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: active ? webTheme.accentBorder : webTheme.borderSoft,
+                            backgroundColor: active ? webTheme.accentSoft : "rgba(255,255,255,0.02)",
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                          }}
+                        >
+                          <Text style={{ ...type.bold, color: active ? webTheme.accent : webTheme.faint, fontSize: 12 }}>
+                            {sub}
+                          </Text>
+                        </HapticPressable>
+                      );
+                    })}
+                  </View>
                 </View>
               </View>
             ) : null}
@@ -268,16 +314,47 @@ export default function CreateScreen() {
                   />
                   <Text style={{ position: "absolute", top: 16, right: 16, color: webTheme.red, fontSize: 16, ...type.bold }}>*</Text>
                 </View>
-                <View style={{ position: "relative" }}>
-                  <TextInput
-                    style={{ ...type.regular, ...inputFieldStyle, paddingRight: 36 }}
-                    placeholder="Deadline (YYYY-MM-DD)"
-                    placeholderTextColor={webTheme.faint}
-                    value={deadline}
-                    onChangeText={setDeadline}
+                <Pressable
+                  onPress={() => setShowDatePicker(true)}
+                  style={{
+                    ...inputFieldStyle,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ ...type.regular, color: deadlineDate ? webTheme.text : webTheme.faint }}>
+                    {deadlineDate
+                      ? deadlineDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+                      : "Select deadline"}
+                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    {deadlineDate ? (
+                      <Pressable
+                        hitSlop={10}
+                        onPress={() => setDeadlineDate(null)}
+                      >
+                        <Feather name="x" size={14} color={webTheme.faint} />
+                      </Pressable>
+                    ) : null}
+                    <Feather name="calendar" size={16} color={webTheme.accent} />
+                    <Text style={{ color: webTheme.red, fontSize: 14, ...type.bold }}>*</Text>
+                  </View>
+                </Pressable>
+                {showDatePicker ? (
+                  <DateTimePicker
+                    value={deadlineDate ?? new Date()}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "inline" : "default"}
+                    minimumDate={new Date()}
+                    themeVariant="dark"
+                    accentColor={webTheme.accent}
+                    onChange={(_, date) => {
+                      setShowDatePicker(Platform.OS === "ios");
+                      if (date) setDeadlineDate(date);
+                    }}
                   />
-                  <Text style={{ position: "absolute", top: 16, right: 16, color: webTheme.red, fontSize: 16, ...type.bold }}>*</Text>
-                </View>
+                ) : null}
                 
                 <View style={{ marginTop: 10 }}>
                   <Text style={{ ...type.bold, color: webTheme.text, marginBottom: 10 }}>Attachment (Optional)</Text>
@@ -333,7 +410,7 @@ export default function CreateScreen() {
                   {headline || "A crisp headline makes the task easier to pick up."}
                 </Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
-                  {[category, subcategory || "Subcategory", `${selectedTier.coins} coins`, deadline || "No deadline"].map((item) => (
+                  {[category, subcategory || "Subcategory", `${selectedTier.coins} coins`, deadlineStr || "No deadline"].map((item) => (
                     <View
                       key={item}
                       style={{
@@ -373,7 +450,7 @@ export default function CreateScreen() {
                     return;
                   }
                 } else if (step === 2) {
-                  if (!description.trim() || !deadline.trim()) {
+                  if (!description.trim() || !deadlineDate) {
                     triggerHaptic("error");
                     notify.error("Please enter a description and a deadline.");
                     return;
@@ -390,7 +467,7 @@ export default function CreateScreen() {
             >
               <View style={{ borderRadius: 999, backgroundColor: webTheme.accent, paddingVertical: 16, alignItems: "center" }}>
                 <Text style={{ ...type.buttonLabel, color: "#fff" }}>
-                  {step < steps.length - 1 ? "Continue" : "Save draft task"}
+                  {step < steps.length - 1 ? "Continue" : "Post Task"}
                 </Text>
               </View>
             </Pressable>

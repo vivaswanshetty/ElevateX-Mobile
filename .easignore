@@ -1,0 +1,44 @@
+# .easignore — placed at git root (elevatex-mobile/) so EAS respects it when zipping
+# EAS zips from the git root, so this must live here.
+
+# ── Biggest bloat: pre-generated native projects ──
+apps/mobile/android/
+apps/mobile/ios/
+apps/backend/
+
+# ── Build outputs ──
+apps/mobile/android/build/
+apps/mobile/android/app/build/
+apps/mobile/android/gradle/
+apps/mobile/build/
+**/*.apk
+**/*.aab
+**/*.ipa
+**/*.app
+
+# ── All node_modules (EAS installs them fresh on its servers) ──
+node_modules/
+**/node_modules/
+
+# ── Bun / package manager cache ──
+.bun/
+**/.bun/
+
+# ── Git history (already excluded by EAS but be explicit) ──
+.git/
+
+# ── IDE and OS junk ──
+.DS_Store
+**/.DS_Store
+.vscode/
+.idea/
+*.log
+
+# ── Local env overrides ──
+.env.local
+.env.*.local
+
+# ── Test / debug artifacts ──
+apps/mobile/fix_sync_duplicates.py
+apps/mobile/monitor-build.sh
+apps/mobile/test.tsx

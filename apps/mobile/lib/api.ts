@@ -2,15 +2,10 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import { getAuthToken } from "./authSession";
 
-const DEFAULT_API_URL = Platform.select({
-  // Android Emulator: use 10.0.2.2 (maps to host machine localhost)
-  // Android Physical: use the EXPO_PUBLIC_API_URL env var (must be configured for your network)
-  android: "http://10.0.2.2:5001",
-  ios: "http://localhost:5001",
-  default: "http://localhost:5001",
-});
+const DEFAULT_API_URL = "https://elevatex-97c1.onrender.com";
 
-// Allow override via environment variable for physical devices
+// For development: use emulator/localhost addresses
+// For production: use EXPO_PUBLIC_API_URL environment variable
 export const API_URL =
   process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "") || DEFAULT_API_URL;
 
@@ -86,9 +81,15 @@ async function getHeaders() {
   };
 }
 
+function isFormDataBody(body: unknown): body is FormData {
+  return body instanceof FormData;
+}
+
 async function request(path: string, init?: RequestInit) {
   try {
-    const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+    const isFormData = init?.body && isFormDataBody(init.body);
+    console.log(`[API] ${init?.method || 'GET'} ${path} - FormData: ${isFormData}`);
+    
     const res = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
@@ -100,6 +101,8 @@ async function request(path: string, init?: RequestInit) {
       },
     });
 
+    console.log(`[API] Response: ${res.status} ${res.statusText}`);
+
     if (!res.ok) {
       let payload: unknown = null;
 
@@ -110,6 +113,7 @@ async function request(path: string, init?: RequestInit) {
       }
 
       const message = getPayloadMessage(payload, res.status);
+      console.log(`[API] Error: ${message}`);
 
       throw new ApiError(message, res.status, payload);
     }
@@ -118,7 +122,9 @@ async function request(path: string, init?: RequestInit) {
 
     return res.json();
   } catch (error) {
-    if (error instanceof TypeError) {
+    console.error(`[API] Exception:`, error);
+    
+    if (error instanceof TypeError && error.message === 'Network request failed') {
       throw new Error(
         `Cannot reach backend at ${API_URL}. Confirm the API server is running and reachable from the device.`,
       );
@@ -129,26 +135,26 @@ async function request(path: string, init?: RequestInit) {
 }
 
 export const api = {
-  get: async (path: string) => request(path),
+  get: async (path: string, init?: RequestInit) => request(path, init),
 
   post: async (path: string, body?: unknown) => {
     return request(path, {
       method: "POST",
-      body: body instanceof FormData ? body : JSON.stringify(body),
+      body: isFormDataBody(body) ? body : JSON.stringify(body),
     });
   },
 
   patch: async (path: string, body?: unknown) => {
     return request(path, {
       method: "PATCH",
-      body: body instanceof FormData ? body : JSON.stringify(body),
+      body: isFormDataBody(body) ? body : JSON.stringify(body),
     });
   },
 
   put: async (path: string, body?: unknown) => {
     return request(path, {
       method: "PUT",
-      body: body instanceof FormData ? body : JSON.stringify(body),
+      body: isFormDataBody(body) ? body : JSON.stringify(body),
     });
   },
 

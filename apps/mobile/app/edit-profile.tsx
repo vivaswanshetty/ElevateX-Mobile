@@ -68,6 +68,7 @@ export default function EditProfileScreen() {
   const maxBioLength = 160;
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [form, setForm] = useState({
+    username: "",
     name: "",
     bio: "",
     avatar: "",
@@ -88,6 +89,7 @@ export default function EditProfileScreen() {
     if (!profile) return;
 
     setForm({
+      username: user?.username || "",
       name: profile.name || "",
       bio: profile.bio || "",
       avatar: profile.avatar || "",
@@ -120,6 +122,10 @@ export default function EditProfileScreen() {
   const saveProfile = useMutation({
     mutationFn: async () => {
       const body = new FormData();
+      const trimmedUsername = form.username.trim().replace(/^@/, "");
+      if (trimmedUsername) {
+        body.append("username", trimmedUsername);
+      }
       body.append("name", form.name.trim());
       body.append("bio", form.bio.trim().slice(0, maxBioLength));
       body.append("socials", JSON.stringify({
@@ -145,12 +151,15 @@ export default function EditProfileScreen() {
       if (localAvatarUri) {
         const filename = localAvatarUri.split("/").pop() || "avatar.jpg";
         const match = /\.([\w]+)$/.exec(filename);
-        const mimeType = match ? `image/${match[1]}` : "image/jpeg";
+        const ext = match ? match[1].toLowerCase() : "jpeg";
+        const mimeType = `image/${ext === "jpg" ? "jpeg" : ext}`;
+        
+        // React Native FormData expects file object with uri, name, and type
         body.append("avatar", {
           uri: localAvatarUri,
           name: filename,
           type: mimeType,
-        } as unknown as Blob);
+        } as any);
       } else if (form.avatar) {
         body.append("avatar", form.avatar.trim());
       }
@@ -158,11 +167,12 @@ export default function EditProfileScreen() {
       return api.put("/api/users/profile", body);
     },
     onSuccess: async (nextProfile: ProfileResponse) => {
+      console.log('[EditProfile] Save success, response:', JSON.stringify(nextProfile));
       queryClient.setQueryData(["profile"], nextProfile);
       setUser(
         normalizeUserPayload({
           _id: nextProfile._id,
-          username: user?.username,
+          username: (nextProfile as any).username || form.username.replace(/^@/, "") || user?.username,
           name: nextProfile.name,
           email: nextProfile.email,
           avatar: nextProfile.avatar,
@@ -254,9 +264,14 @@ export default function EditProfileScreen() {
               }}
             >
               {localAvatarUri ? (
-                <Image source={{ uri: localAvatarUri }} style={{ width: "100%", height: "100%" }} />
+                <Image source={{ uri: localAvatarUri }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
               ) : getImageUrl(form.avatar) ? (
-                <Image source={{ uri: getImageUrl(form.avatar)! }} style={{ width: "100%", height: "100%" }} />
+                <Image
+                  source={{ uri: getImageUrl(form.avatar)! }}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                  onError={() => setLocalAvatarUri(null)}
+                />
               ) : (
                 <Text style={{ ...type.black, color: webTheme.accent, fontSize: 32 }}>
                   {getInitials(form.name)}
@@ -292,6 +307,7 @@ export default function EditProfileScreen() {
           </Text>
           <View style={{ marginTop: 16, gap: 12 }}>
             {[
+              { key: "username", label: "Username", placeholder: "@username", prefix: "@" },
               { key: "name", label: "Name", placeholder: "Your name" },
               { key: "bio", label: "Bio", placeholder: "What do you do on ElevateX?", multiline: true },
               { key: "twitter", label: "Twitter", placeholder: "@handle" },
@@ -310,19 +326,28 @@ export default function EditProfileScreen() {
                     </Text>
                   ) : null}
                 </View>
-                <TextInput
-                  multiline={field.multiline}
-                  value={form[field.key as keyof typeof form] as string}
-                  onChangeText={(value) =>
-                    setForm((current) => ({
-                      ...current,
-                      [field.key]: field.key === "bio" ? value.slice(0, maxBioLength) : value,
-                    }))
-                  }
-                  placeholder={field.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.22)"
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  {(field as any).prefix ? (
+                    <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 15, marginRight: 4 }}>
+                      {(field as any).prefix}
+                    </Text>
+                  ) : null}
+                  <TextInput
+                    multiline={field.multiline}
+                    value={form[field.key as keyof typeof form] as string}
+                    onChangeText={(value) => {
+                      let cleaned = value;
+                      if (field.key === "username") cleaned = value.replace(/^@/, "").replace(/[^a-zA-Z0-9_.-]/g, "");
+                      if (field.key === "bio") cleaned = value.slice(0, maxBioLength);
+                      setForm((current) => ({ ...current, [field.key]: cleaned }));
+                    }}
+                    placeholder={field.placeholder}
+                    placeholderTextColor="rgba(255,255,255,0.22)"
+                    autoCapitalize={field.key === "username" ? "none" : undefined}
+                    autoCorrect={field.key === "username" ? false : undefined}
                   style={{
                     ...type.regular,
+                    flex: 1,
                     minHeight: field.multiline ? 96 : undefined,
                     textAlignVertical: field.multiline ? "top" : "center",
                     backgroundColor: "rgba(255,255,255,0.04)",
@@ -334,6 +359,7 @@ export default function EditProfileScreen() {
                     paddingVertical: 14,
                   }}
                 />
+                </View>
               </View>
             ))}
           </View>

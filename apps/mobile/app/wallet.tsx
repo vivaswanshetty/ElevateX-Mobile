@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Alert,
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,6 +15,7 @@ import { AppStackHeader } from "../components/AppStackHeader";
 import { ScreenBackdrop } from "../components/ScreenBackdrop";
 import { SurfaceCard } from "../components/SurfaceCard";
 import { api, getErrorMessage } from "../lib/api";
+import { depositCoins } from "../lib/payment";
 import { type } from "../lib/typography";
 import { normalizeUserPayload } from "../lib/user";
 import { webTheme } from "../lib/webTheme";
@@ -81,14 +82,13 @@ export default function WalletScreen() {
     setUser(normalizeUserPayload(nextProfile));
   };
 
-  const transactionMutation = useMutation({
+  const user = useAuthStore((s) => s.user);
+
+  const depositMutation = useMutation({
     mutationFn: async () => {
       const parsedAmount = Number(amount);
-      if (!parsedAmount || parsedAmount <= 0) {
-        throw new Error("Enter a valid amount.");
-      }
-
-      return api.post(`/api/transactions/${mode}`, { amount: parsedAmount });
+      if (!parsedAmount || parsedAmount <= 0) throw new Error("Enter a valid amount.");
+      return depositCoins(parsedAmount, { displayName: user?.displayName, email: user?.email });
     },
     onSuccess: async () => {
       await Promise.all([
@@ -97,11 +97,35 @@ export default function WalletScreen() {
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
       ]);
       setAmount("100");
+      notify.success("Coins deposited successfully!");
+    },
+    onError: (error: any) => {
+      if (error?.code === 0 || error?.description?.includes("cancel")) return;
+      notify.error(error?.description ?? getErrorMessage(error));
+    },
+  });
+
+  const withdrawMutation = useMutation({
+    mutationFn: async () => {
+      const parsedAmount = Number(amount);
+      if (!parsedAmount || parsedAmount <= 0) throw new Error("Enter a valid amount.");
+      return api.post("/api/transactions/withdraw", { amount: parsedAmount });
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        syncProfile(),
+        queryClient.invalidateQueries({ queryKey: ["profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+      ]);
+      setAmount("100");
+      notify.success("Coins withdrawn successfully!");
     },
     onError: (error) => {
       notify.error(getErrorMessage(error));
     },
   });
+
+  const transactionMutation = mode === "deposit" ? depositMutation : withdrawMutation;
 
   const totalIn = useMemo(
     () =>

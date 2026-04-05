@@ -19,6 +19,7 @@ import { type } from "../../lib/typography";
 import { normalizeUserPayload } from "../../lib/user";
 import { webTheme, inputFieldStyle } from "../../lib/webTheme";
 import { notify } from "../../stores/toastStore";
+import { Watermark } from "../../components/Watermark";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -126,7 +127,7 @@ export default function LoginScreen() {
                 colors={["rgba(255,255,255,0.05)", "transparent"]}
                 start={{ x: 0.3, y: 0 }}
                 end={{ x: 0.7, y: 1 }}
-                style={{ position: "absolute", inset: 0 }}
+                style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
               />
               <Feather name="zap" size={30} color={webTheme.accent} />
             </View>
@@ -268,6 +269,7 @@ export default function LoginScreen() {
           </Text>
         </SurfaceCard>
         </FadeSlideIn>
+        <Watermark />
       </ScrollView>
     </SafeAreaView>
   );

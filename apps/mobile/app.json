@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#07080a"
       },
       "package": "com.vivaswan.shetty.elevatex",
@@ -38,8 +38,29 @@
         {
           "photosPermission": "The app accesses your photos to let you set a profile picture and post images."
         }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#07080a",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-updates",
+        {
+          "launchWaitMs": 0
+        }
       ]
     ],
+    "updates": {
+      "url": "https://u.expo.dev/d10969e8-b2ca-45ea-9694-c933294201a6"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "experiments": {
       "typedRoutes": true
     },

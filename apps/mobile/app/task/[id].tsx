@@ -66,6 +66,20 @@ export default function TaskDetailScreen() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/api/tasks/${id}`),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      notify.success("Task deleted and coins refunded.");
+      router.back();
+    },
+    onError: (error) => {
+      setShowDeleteConfirm(false);
+      notify.error(getErrorMessage(error));
+    },
+  });
 
   const taskQuery = useQuery<TaskDetail>({
     queryKey: ["task", id],
@@ -106,6 +120,14 @@ export default function TaskDetailScreen() {
         confirmLabel="Apply"
         onClose={() => setShowApplyConfirm(false)}
         onConfirm={() => applyMutation.mutate()}
+      />
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        title="Delete this task?"
+        detail="Your escrowed coins will be refunded. This cannot be undone."
+        confirmLabel="Delete"
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => deleteMutation.mutate()}
       />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
         {!task ? (
@@ -240,7 +262,7 @@ export default function TaskDetailScreen() {
                   colors={["rgba(255,255,255,0.08)", "rgba(255,255,255,0.02)"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 1 }}
-                  style={{ position: "absolute", inset: 0 }}
+                  style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
                 />
                 <View style={{ backgroundColor: webTheme.surfaceRaised, borderRadius: 23, padding: 20 }}>
                   <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase" }}>
@@ -359,6 +381,52 @@ export default function TaskDetailScreen() {
                 Task chat, completion energy, and shared momentum for this opportunity will build here as people apply and collaborate.
               </Text>
             </SurfaceCard>
+
+            {isOwner && task.status === "Open" ? (
+              <View style={{ marginTop: 20, flexDirection: "row", gap: 12 }}>
+                <HapticPressable
+                  hapticType="light"
+                  onPress={() => router.push({ pathname: "/task/edit", params: { id } })}
+                  style={{
+                    flex: 1,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: webTheme.accentBorder,
+                    backgroundColor: webTheme.accentSoft,
+                    paddingVertical: 16,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Feather name="edit-2" size={14} color={webTheme.accent} />
+                  <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 14 }}>Edit Task</Text>
+                </HapticPressable>
+                <HapticPressable
+                  hapticType="medium"
+                  onPress={() => setShowDeleteConfirm(true)}
+                  disabled={deleteMutation.isPending}
+                  style={{
+                    flex: 1,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: "rgba(214,60,71,0.3)",
+                    backgroundColor: "rgba(214,60,71,0.1)",
+                    paddingVertical: 16,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Feather name="trash-2" size={14} color={webTheme.red} />
+                  <Text style={{ ...type.bold, color: webTheme.red, fontSize: 14 }}>
+                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  </Text>
+                </HapticPressable>
+              </View>
+            ) : null}
 
             <HapticPressable
               hapticType="medium"

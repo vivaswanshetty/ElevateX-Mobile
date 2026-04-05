@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { ScrollView, Text, TextInput, View, Pressable, Animated } from "react-native";
@@ -44,7 +44,30 @@ export default function ExploreScreen() {
 
   const premiumTasks = mappedTasks.filter((task) => task.rewardCoins >= 45);
   const beginnerTasks = mappedTasks.filter((task) => task.rewardCoins < 45);
-  const featuredTask = mappedTasks[0];
+
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const featuredOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (mappedTasks.length <= 1) return;
+    const interval = setInterval(() => {
+      Animated.timing(featuredOpacity, {
+        toValue: 0,
+        duration: 350,
+        useNativeDriver: true,
+      }).start(() => {
+        setFeaturedIndex((prev) => (prev + 1) % mappedTasks.length);
+        Animated.timing(featuredOpacity, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [mappedTasks.length]);
+
+  const featuredTask = mappedTasks[featuredIndex] ?? mappedTasks[0];
 
   const filteredTasks = useMemo(() => {
     return mappedTasks.filter((task) => {
@@ -110,13 +133,14 @@ export default function ExploreScreen() {
         {/* featured task card */}
         {featuredTask ? (
           <FadeSlideIn delay={180} distance={14} style={{ width: "100%" }}>
+            <Animated.View style={{ opacity: featuredOpacity }}>
             <HapticPressable hapticType="selection" onPress={() => router.push({ pathname: "/task/[id]", params: { id: featuredTask.id } })}>
               <View style={{ marginTop: 22, borderRadius: 28, padding: 1, overflow: "hidden" }}>
                 <LinearGradient
                   colors={["rgba(229,54,75,0.8)", "rgba(139,92,246,0.6)", "rgba(20,20,25,0)"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={{ position: "absolute", inset: 0 }}
+                  style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
                 />
                 <View style={{ backgroundColor: "#0D0E14", borderRadius: 27, padding: 22, overflow: "hidden" }}>
                   <View style={{ position: "absolute", top: -50, right: -50, width: 150, height: 150, backgroundColor: "rgba(139,92,246,0.25)", borderRadius: 999 }} />
@@ -170,6 +194,23 @@ export default function ExploreScreen() {
                 </View>
               </View>
             </HapticPressable>
+            </Animated.View>
+            {mappedTasks.length > 1 ? (
+              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 12 }}>
+                {mappedTasks.map((_, i) => (
+                  <Pressable key={i} onPress={() => setFeaturedIndex(i)}>
+                    <View
+                      style={{
+                        width: i === featuredIndex ? 18 : 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: i === featuredIndex ? webTheme.accent : webTheme.border,
+                      }}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
           </FadeSlideIn>
         ) : null}
 
