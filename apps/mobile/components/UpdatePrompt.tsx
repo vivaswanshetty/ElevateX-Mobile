@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Feather from "@expo/vector-icons/Feather";
 import { useEffect, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { webTheme } from "../lib/webTheme";
 import { type } from "../lib/typography";
 import type { UpdateInfo } from "../lib/checkUpdates";
@@ -29,6 +30,7 @@ export function UpdatePrompt({
   onUpdate,
   onDismiss,
 }: UpdatePromptProps) {
+  const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(120)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const glowPulse = useRef(new Animated.Value(0)).current;
@@ -101,7 +103,7 @@ export function UpdatePrompt({
         style={{
           flex: 1,
           justifyContent: "flex-end",
-          paddingBottom: 24,
+          paddingBottom: Math.max(24, insets.bottom + 12),
           paddingHorizontal: 16,
           backgroundColor: "rgba(0,0,0,0.65)",
           opacity,

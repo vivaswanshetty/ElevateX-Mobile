@@ -20,35 +20,36 @@ export const useCheckUpdates = () => {
       setIsChecking(true);
       setError(null);
 
-      // Check if updates are enabled
+      // Updates are only available in standalone/production builds
       if (!Updates.isEnabled) {
         console.log("Updates are not enabled in this build");
         return;
       }
 
-      // Attempt to fetch the latest update
-      try {
-        await Updates.fetchUpdateAsync();
-        
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // checkForUpdateAsync only checks the manifest — it does NOT download anything.
+      // fetchUpdateAsync (called only when user taps "Update") does the actual download.
+      const result = await Updates.checkForUpdateAsync();
 
+      if (result.isAvailable) {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setUpdateInfo({
           isUpdateAvailable: true,
           currentVersion: Updates.runtimeVersion || "1.0.0",
-          newVersion: "1.0.1",
-          releaseNotes: "New features and improvements are available",
+          newVersion: "latest",
+          releaseNotes: "New features and improvements are ready to install.",
         });
-      } catch (fetchError) {
-        // No update available
+      } else {
         setUpdateInfo({
           isUpdateAvailable: false,
           currentVersion: Updates.runtimeVersion || "1.0.0",
         });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to check for updates";
-      setError(message);
-      console.warn("Update check failed:", message);
+      // No update available or network unavailable — do not surface to user
+      setUpdateInfo({
+        isUpdateAvailable: false,
+        currentVersion: Updates.runtimeVersion || "1.0.0",
+      });
     } finally {
       setIsChecking(false);
     }
@@ -59,10 +60,9 @@ export const useCheckUpdates = () => {
       setIsApplying(true);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+      // Download then immediately reload
       await Updates.fetchUpdateAsync();
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // Reload the app
       await Updates.reloadAsync();
     } catch (err) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

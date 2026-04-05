@@ -86,12 +86,21 @@ function isFormDataBody(body: unknown): body is FormData {
 }
 
 async function request(path: string, init?: RequestInit) {
+  // If the caller already provides a signal (e.g. auth hydration), use it.
+  // Otherwise apply a 30-second default so Render cold-starts don't hang forever.
+  const ownController = !init?.signal ? new AbortController() : null;
+  const ownTimeout = ownController
+    ? setTimeout(() => ownController.abort(), 30_000)
+    : null;
+  const signal = init?.signal ?? ownController!.signal;
+
   try {
     const isFormData = init?.body && isFormDataBody(init.body);
     console.log(`[API] ${init?.method || 'GET'} ${path} - FormData: ${isFormData}`);
     
     const res = await fetch(`${API_URL}${path}`, {
       ...init,
+      signal,
       headers: {
         ...(await getHeaders()),
         ...(!isFormData && {
@@ -118,15 +127,27 @@ async function request(path: string, init?: RequestInit) {
       throw new ApiError(message, res.status, payload);
     }
 
-    if (res.status === 204) return null;
+    if (res.status === 204) {
+      if (ownTimeout) clearTimeout(ownTimeout);
+      return null;
+    }
 
-    return res.json();
+    const data = await res.json();
+    if (ownTimeout) clearTimeout(ownTimeout);
+    return data;
   } catch (error) {
+    if (ownTimeout) clearTimeout(ownTimeout);
     console.error(`[API] Exception:`, error);
     
     if (error instanceof TypeError && error.message === 'Network request failed') {
       throw new Error(
         `Cannot reach backend at ${API_URL}. Confirm the API server is running and reachable from the device.`,
+      );
+    }
+
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(
+        `Request to ${path} timed out. The server may be starting up — please try again in a moment.`,
       );
     }
 

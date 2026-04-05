@@ -56,7 +56,7 @@ export default function RootLayout() {
         }
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
+        const timeout = setTimeout(() => controller.abort(), 20000);
         try {
           const user = await api.get("/api/users/profile", { signal: controller.signal });
           clearTimeout(timeout);
