@@ -2,9 +2,12 @@
 # EAS zips from the git root, so this must live here.
 
 # ── Biggest bloat: pre-generated native projects ──
+android/
 apps/mobile/android/
 apps/mobile/ios/
 apps/backend/
+.expo/
+**/.expo/
 
 # ── Build outputs ──
 apps/mobile/android/build/
