@@ -2,7 +2,9 @@
   "name": "elevatex-mobile",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
     "concurrently": "^9.2.1"
@@ -13,9 +15,14 @@
     "dev:all": "bun run cleanup:port && concurrently -n backend,mobile -c yellow,cyan \"npm --prefix '../../ElevateX/server' run dev\" \"bun run dev:mobile\"",
     "dev:android": "bun run cleanup:port && sh -c 'npm --prefix \"../../ElevateX/server\" run dev & BACKEND_PID=$!; trap \"kill -9 $BACKEND_PID\" EXIT INT TERM; bun run --cwd apps/mobile android'",
     "dev:mobile": "bun run --cwd apps/mobile start",
-    "typecheck:mobile": "bun x tsc -p apps/mobile/tsconfig.json --noEmit"
+    "typecheck:mobile": "bun x tsc -p apps/mobile/tsconfig.json --noEmit",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
-    "expo-document-picker": "~13.x"
+    "expo-document-picker": "~13.x",
+    "expo": "~52.0.49",
+    "react": "18.3.1",
+    "react-native": "0.76.9"
   }
 }
