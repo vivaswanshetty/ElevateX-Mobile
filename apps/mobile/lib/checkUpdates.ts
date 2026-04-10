@@ -1,6 +1,13 @@
-import * as Updates from "expo-updates";
 import { useEffect, useState, useCallback } from "react";
 import * as Haptics from "expo-haptics";
+
+// expo-updates native module isn't available in dev/Expo Go — import safely
+let Updates: typeof import("expo-updates") | null = null;
+try {
+  Updates = require("expo-updates");
+} catch {
+  // Running in development — updates not available
+}
 
 export interface UpdateInfo {
   isUpdateAvailable: boolean;
@@ -21,34 +28,34 @@ export const useCheckUpdates = () => {
       setError(null);
 
       // Updates are only available in standalone/production builds
-      if (!Updates.isEnabled) {
+      if (!Updates || !Updates.isEnabled) {
         console.log("Updates are not enabled in this build");
         return;
       }
 
       // checkForUpdateAsync only checks the manifest — it does NOT download anything.
       // fetchUpdateAsync (called only when user taps "Update") does the actual download.
-      const result = await Updates.checkForUpdateAsync();
+      const result = await Updates!.checkForUpdateAsync();
 
       if (result.isAvailable) {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setUpdateInfo({
           isUpdateAvailable: true,
-          currentVersion: Updates.runtimeVersion || "1.0.0",
+          currentVersion: Updates?.runtimeVersion || "1.0.0",
           newVersion: "latest",
           releaseNotes: "New features and improvements are ready to install.",
         });
       } else {
         setUpdateInfo({
           isUpdateAvailable: false,
-          currentVersion: Updates.runtimeVersion || "1.0.0",
+          currentVersion: Updates?.runtimeVersion || "1.0.0",
         });
       }
     } catch (err) {
       // No update available or network unavailable — do not surface to user
       setUpdateInfo({
         isUpdateAvailable: false,
-        currentVersion: Updates.runtimeVersion || "1.0.0",
+        currentVersion: Updates?.runtimeVersion || "1.0.0",
       });
     } finally {
       setIsChecking(false);
@@ -61,9 +68,9 @@ export const useCheckUpdates = () => {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       // Download then immediately reload
-      await Updates.fetchUpdateAsync();
+      await Updates!.fetchUpdateAsync();
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await Updates.reloadAsync();
+      await Updates!.reloadAsync();
     } catch (err) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const message = err instanceof Error ? err.message : "Failed to download update";
