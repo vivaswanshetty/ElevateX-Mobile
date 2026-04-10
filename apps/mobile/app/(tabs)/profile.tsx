@@ -109,14 +109,7 @@ export default function ProfileScreen() {
   const queryClient = useQueryClient();
   const { user, setUser, signOut } = useAuthStore();
   const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "posts" | "activity">("overview");
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  const [emailDraft, setEmailDraft] = useState("");
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
 
   const {
     data: profile,
@@ -139,74 +132,12 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (!profile) return;
-    setEmailDraft(profile.email || "");
-    setIsEditingEmail(false);
     setAvatarError(false);
   }, [profile]);
 
-  const syncProfileState = (nextProfile: ProfileResponse) => {
-    queryClient.setQueryData(["profile"], nextProfile);
-    setUser(
-      normalizeUserPayload({
-        _id: nextProfile._id,
-        username: user?.username,
-        name: nextProfile.name,
-        email: nextProfile.email,
-        avatar: nextProfile.avatar,
-        bio: nextProfile.bio,
-        xp: nextProfile.xp,
-        coins: nextProfile.coins,
-        isPrivate: nextProfile.isPrivate,
-        socials: nextProfile.socials,
-        subscription: nextProfile.subscription ?? user?.subscription,
-        chatSettings: nextProfile.chatSettings ?? user?.chatSettings,
-        seasonXP: nextProfile.seasonXP ?? user?.seasonXP,
-        seasonCoins: nextProfile.seasonCoins ?? user?.seasonCoins,
-        seasonTasksCompleted: nextProfile.seasonTasksCompleted ?? user?.seasonTasksCompleted,
-      }),
-    );
-  };
 
-  const updateAccount = useMutation({
-    mutationFn: (payload: { email?: string; isPrivate?: boolean }) =>
-      api.put("/api/users/profile", payload),
-    onSuccess: async (nextProfile: ProfileResponse) => {
-      syncProfileState(nextProfile);
-      await queryClient.invalidateQueries({ queryKey: ["profile"] });
-      setEmailDraft(nextProfile.email || "");
-      setIsEditingEmail(false);
-    },
-    onError: (error) => {
-      notify.error(getErrorMessage(error));
-    },
-  });
 
-  const changePassword = useMutation({
-    mutationFn: () =>
-      api.put("/api/users/password", {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-      }),
-    onSuccess: () => {
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      notify.success("Your password has been updated successfully.");
-    },
-    onError: (error) => {
-      notify.error(getErrorMessage(error));
-    },
-  });
 
-  const deleteAccount = useMutation({
-    mutationFn: () => api.delete("/api/users/account"),
-    onSuccess: async () => {
-      queryClient.clear();
-      await signOut();
-      router.replace("/auth/login");
-    },
-    onError: (error) => {
-      notify.error(getErrorMessage(error));
-    },
-  });
 
   const displayProfile: ProfileResponse = {
     _id: user?.id || "",
@@ -269,67 +200,7 @@ export default function ProfileScreen() {
     { key: "website", label: "Website", value: displayProfile.socials?.website, icon: "globe" },
   ] as const;
 
-  const handleSaveEmail = () => {
-    const trimmed = emailDraft.trim();
-    if (!trimmed || trimmed === displayProfile.email) {
-      setIsEditingEmail(false);
-      setEmailDraft(displayProfile.email || "");
-      return;
-    }
-    updateAccount.mutate({ email: trimmed });
-  };
 
-  const handlePrivacyToggle = (nextValue: boolean) => {
-    Alert.alert(
-      nextValue ? "Make account private?" : "Make account public?",
-      nextValue
-        ? "Only approved followers will be able to see your profile details."
-        : "Anyone will be able to view your profile details.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: nextValue ? "Make private" : "Make public",
-          style: "default",
-          onPress: () => {
-            updateAccount.mutate({ isPrivate: nextValue });
-          },
-        },
-      ]
-    );
-  };
-
-  const handlePasswordSubmit = () => {
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      notify.error("Fill in all password fields.");
-      return;
-    }
-    if (passwordForm.newPassword.length < 8) {
-      notify.error("New password must be at least 8 characters.");
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      notify.error("Confirm password must match the new password.");
-      return;
-    }
-    changePassword.mutate();
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete account?",
-      "This permanently deletes your account and associated data. This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete account",
-          style: "destructive",
-          onPress: () => {
-            deleteAccount.mutate();
-          },
-        },
-      ]
-    );
-  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -796,234 +667,35 @@ export default function ProfileScreen() {
                 </View>
               </SurfaceCard>
 
-              {/* manage account */}
-              <SurfaceCard tone="muted">
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Manage account
-                </Text>
-                <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13, marginTop: 6 }}>
-                  Account controls, privacy, password, and destructive actions are handled here just like the web version.
-                </Text>
-
-                <View style={{ marginTop: 18, gap: 18 }}>
-                  {/* account info */}
-                  <View>
-                    <Text style={{ ...type.label, color: webTheme.faint, fontSize: 10, marginBottom: 12 }}>
-                      Account information
-                    </Text>
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: webTheme.border,
-                        backgroundColor: "rgba(255,255,255,0.03)",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {[
-                        { label: "Username", value: `@${handle}` },
-                        { label: "Plan", value: planLabel },
-                      ].map((row, index, rows) => (
-                        <View
-                          key={row.label}
-                          style={{
-                            paddingHorizontal: 16,
-                            paddingVertical: 14,
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            borderBottomWidth: index === rows.length - 1 ? 0 : 1,
-                            borderBottomColor: "rgba(255,255,255,0.05)",
-                          }}
-                        >
-                          <Text style={{ ...type.caption, color: webTheme.faint }}>
-                            {row.label}
-                          </Text>
-                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                            {row.value}
-                          </Text>
-                        </View>
-                      ))}
-
-                      <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                          <Text style={{ ...type.caption, color: webTheme.faint }}>
-                            Email
-                          </Text>
-                          {!isEditingEmail ? (
-                            <HapticPressable onPress={() => setIsEditingEmail(true)}>
-                              <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 12 }}>
-                                Edit
-                              </Text>
-                            </HapticPressable>
-                          ) : null}
-                        </View>
-
-                        {isEditingEmail ? (
-                          <View style={{ gap: 10 }}>
-                            <TextInput
-                              value={emailDraft}
-                              onChangeText={setEmailDraft}
-                              autoCapitalize="none"
-                              keyboardType="email-address"
-                              placeholder="name@example.com"
-                              placeholderTextColor={webTheme.faint}
-                              style={{ ...type.regular, ...inputFieldStyle }}
-                            />
-                            <View style={{ flexDirection: "row", gap: 10 }}>
-                              <HapticPressable onPress={handleSaveEmail} disabled={updateAccount.isPending} style={{ flex: 1 }}>
-                                <View style={{ borderRadius: 999, backgroundColor: webTheme.accent, paddingVertical: 12, alignItems: "center", opacity: updateAccount.isPending ? 0.88 : 1 }}>
-                                  <Text style={{ ...type.bold, color: "#fff", fontSize: 12 }}>
-                                    {updateAccount.isPending ? "Saving..." : "Save email"}
-                                  </Text>
-                                </View>
-                              </HapticPressable>
-                              <HapticPressable
-                                hapticType="medium"
-                                onPress={() => {
-                                  setIsEditingEmail(false);
-                                  setEmailDraft(displayProfile.email || "");
-                                }}
-                                style={{
-                                  flex: 1,
-                                  borderRadius: 999,
-                                  borderWidth: 1,
-                                  borderColor: webTheme.border,
-                                  backgroundColor: "rgba(255,255,255,0.03)",
-                                  paddingVertical: 12,
-                                  alignItems: "center",
-                                }}
-                              >
-                                <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 12 }}>
-                                  Cancel
-                                </Text>
-                              </HapticPressable>
-                            </View>
-                          </View>
-                        ) : (
-                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                            {displayProfile.email}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* privacy */}
-                  <View>
-                    <Text style={{ ...type.label, color: webTheme.faint, fontSize: 10, marginBottom: 12 }}>
-                      Privacy
-                    </Text>
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: webTheme.border,
-                        backgroundColor: "rgba(255,255,255,0.03)",
-                        padding: 16,
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 14,
-                      }}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
-                          Private account
-                        </Text>
-                        <Text style={{ ...type.caption, color: webTheme.muted, lineHeight: 17, marginTop: 4 }}>
-                          Only approved followers can see your profile details when privacy is enabled.
-                        </Text>
-                      </View>
-                      <Switch
-                        value={Boolean(displayProfile.isPrivate)}
-                        disabled={updateAccount.isPending}
-                        onValueChange={handlePrivacyToggle}
-                        thumbColor={displayProfile.isPrivate ? webTheme.accent : "#f4f4f5"}
-                        trackColor={{ false: "rgba(255,255,255,0.18)", true: "rgba(229,54,75,0.35)" }}
-                      />
-                    </View>
-                  </View>
-
-                  {/* security */}
-                  <View>
-                    <Text style={{ ...type.label, color: webTheme.faint, fontSize: 10, marginBottom: 12 }}>
-                      Security
-                    </Text>
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: webTheme.border,
-                        backgroundColor: "rgba(255,255,255,0.03)",
-                        padding: 16,
-                        gap: 10,
-                      }}
-                    >
-                      {[
-                        { key: "currentPassword", label: "Current password", placeholder: "Enter current password" },
-                        { key: "newPassword", label: "New password", placeholder: "Minimum 8 characters" },
-                        { key: "confirmPassword", label: "Confirm new password", placeholder: "Re-enter new password" },
-                      ].map((field) => (
-                        <View key={field.key}>
-                          <Text style={{ ...type.label, color: webTheme.faint, fontSize: 10, marginBottom: 7 }}>
-                            {field.label}
-                          </Text>
-                          <TextInput
-                            value={passwordForm[field.key as keyof typeof passwordForm]}
-                            onChangeText={(value) =>
-                              setPasswordForm((current) => ({ ...current, [field.key]: value }))
-                            }
-                            secureTextEntry
-                            autoCapitalize="none"
-                            placeholder={field.placeholder}
-                            placeholderTextColor={webTheme.faint}
-                            style={{ ...type.regular, ...inputFieldStyle }}
-                          />
-                        </View>
-                      ))}
-
-                      <HapticPressable onPress={handlePasswordSubmit} disabled={changePassword.isPending}>
-                        <View style={{ marginTop: 4, borderRadius: 999, backgroundColor: webTheme.accent, paddingVertical: 13, alignItems: "center", opacity: changePassword.isPending ? 0.88 : 1 }}>
-                          <Text style={{ ...type.bold, color: "#fff", fontSize: 12 }}>
-                            {changePassword.isPending ? "Updating..." : "Change password"}
-                          </Text>
-                        </View>
-                      </HapticPressable>
-                    </View>
-                  </View>
-
-                  {/* danger zone */}
-                  <View>
-                    <Text style={{ ...type.label, color: webTheme.faint, fontSize: 10, marginBottom: 12 }}>
-                      Danger zone
-                    </Text>
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: webTheme.accentBorder,
-                        backgroundColor: webTheme.accentGlow,
-                        padding: 16,
-                      }}
-                    >
-                      <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 14 }}>
-                        Delete account
+              {/* manage account link */}
+              <HapticPressable onPress={() => router.push("/manage-account")}>
+                <SurfaceCard tone="muted">
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ ...type.h2, color: webTheme.text }}>
+                        Manage Account
                       </Text>
-                      <Text style={{ ...type.caption, color: webTheme.textSecondary, lineHeight: 17, marginTop: 6 }}>
-                        Permanently delete your account and associated data. This cannot be undone.
+                      <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13, marginTop: 4 }}>
+                        Privacy, password, and account controls.
                       </Text>
-                      <HapticPressable onPress={handleDeleteAccount} disabled={deleteAccount.isPending}>
-                        <View style={{ marginTop: 14, borderRadius: 999, borderWidth: 1, borderColor: webTheme.accentBorder, backgroundColor: webTheme.accentSoft, paddingVertical: 13, alignItems: "center", opacity: deleteAccount.isPending ? 0.85 : 1 }}>
-                          <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 12 }}>
-                            {deleteAccount.isPending ? "Deleting..." : "Delete my account"}
-                          </Text>
-                        </View>
-                      </HapticPressable>
+                    </View>
+                    <View 
+                      style={{ 
+                        width: 44, 
+                        height: 44, 
+                        borderRadius: 22, 
+                        backgroundColor: "rgba(255,255,255,0.05)", 
+                        alignItems: "center", 
+                        justifyContent: "center",
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.1)"
+                      }}
+                    >
+                      <Feather name="settings" size={20} color={webTheme.accent} />
                     </View>
                   </View>
-                </View>
-              </SurfaceCard>
+                </SurfaceCard>
+              </HapticPressable>
             </View>
           ) : null}
 

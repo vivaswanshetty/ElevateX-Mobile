@@ -137,8 +137,8 @@ export default function RootLayout() {
   return (
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }}>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#07080a' }}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#07080a' } }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="auth" />
           </Stack>

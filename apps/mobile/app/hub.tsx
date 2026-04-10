@@ -179,6 +179,7 @@ export default function HubScreen() {
   const analytics = useQuery<AnalyticsResponse>({
     queryKey: ["hubAnalytics"],
     queryFn: () => api.get("/api/analytics/tasks"),
+    retry: false,
   });
 
   const myDuels = useQuery<Duel[]>({
@@ -199,6 +200,7 @@ export default function HubScreen() {
   const relics = useQuery<Relic[]>({
     queryKey: ["hubRelics"],
     queryFn: () => api.get("/api/alchemy/relics"),
+    retry: false,
   });
 
   const tasks = useQuery<HubTask[]>({

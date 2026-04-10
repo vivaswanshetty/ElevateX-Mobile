@@ -232,6 +232,7 @@ export default function AlchemyScreen() {
   const relics = useQuery<Relic[]>({
     queryKey: ["alchemyRelics"],
     queryFn: () => api.get("/api/alchemy/relics"),
+    retry: false,
   });
 
   const craftMutation = useMutation({

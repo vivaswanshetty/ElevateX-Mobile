@@ -1,13 +1,22 @@
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import type { ComponentProps } from "react";
+import { ComponentProps, useEffect, useMemo } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { Text, View } from "react-native";
+import { Text, View, Dimensions } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { 
+  useAnimatedStyle, 
+  withSpring, 
+  useSharedValue, 
+  withTiming,
+  interpolateColor
+} from "react-native-reanimated";
 import { HapticPressable } from "./HapticPressable";
 import { fontFaces } from "../lib/typography";
 import { webTheme } from "../lib/webTheme";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const routeMeta = {
   index: { label: "Home", icon: "home" },
@@ -24,82 +33,107 @@ function isRouteName(value: string): value is RouteName {
   return value in routeMeta;
 }
 
+const TAB_BAR_MARGIN = 20;
+const TAB_BAR_WIDTH = SCREEN_WIDTH - TAB_BAR_MARGIN * 2;
+const TAB_COUNT = 5;
+const TAB_WIDTH = (TAB_BAR_WIDTH - 16) / TAB_COUNT; // 16 is horizontal padding
+
 export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const insets = useSafeAreaInsets();
-  const tabSlotWidth = 54;
+  const activeIndex = state.index;
+  
+  const indicatorX = useSharedValue(activeIndex * TAB_WIDTH);
+
+  useEffect(() => {
+    indicatorX.value = withSpring(activeIndex * TAB_WIDTH, {
+      damping: 18,
+      stiffness: 150,
+      mass: 0.8,
+    });
+  }, [activeIndex]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
 
   return (
     <View
       pointerEvents="box-none"
       style={{
         position: "absolute",
-        left: 20,
-        right: 20,
-        bottom: Math.max(insets.bottom, 10),
+        left: TAB_BAR_MARGIN,
+        right: TAB_BAR_MARGIN,
+        bottom: Math.max(insets.bottom, 14),
       }}
     >
       <BlurView
-        intensity={100}
+        intensity={80}
         tint="dark"
         style={{
-          borderRadius: 28,
+          borderRadius: 32,
           borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.15)",
-          backgroundColor: "rgba(20, 20, 25, 0.92)",
+          borderColor: "rgba(255, 255, 255, 0.12)",
+          backgroundColor: "rgba(10, 10, 15, 0.85)",
           paddingHorizontal: 8,
-          paddingTop: 6,
-          paddingBottom: 6,
+          paddingVertical: 8,
           shadowColor: "#000",
-          shadowOpacity: 0.5,
-          shadowRadius: 30,
-          shadowOffset: { width: 0, height: 16 },
-          elevation: 24,
+          shadowOpacity: 0.4,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 10 },
+          elevation: 20,
           overflow: "hidden",
         }}
       >
-        {/* top glass highlight */}
-        <LinearGradient
-          pointerEvents="none"
-          colors={["rgba(255,255,255,0.12)", "transparent"]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 1,
-          }}
+        {/* Subtle top edge highlight */}
+        <View 
+          style={{ 
+            position: "absolute", 
+            top: 0, 
+            left: 20, 
+            right: 20, 
+            height: 1, 
+            backgroundColor: "rgba(255,255,255,0.08)" 
+          }} 
         />
 
-        {/* ambient accent glow behind center */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: -40,
-            alignSelf: "center",
-            width: 120,
-            height: 60,
-            borderRadius: 999,
-            backgroundColor: webTheme.accentGlow,
-          }}
-        />
+        {/* Dynamic Indicator */}
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              top: 8,
+              left: 8,
+              width: TAB_WIDTH,
+              height: 48,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            indicatorStyle,
+          ]}
+        >
+          <View
+            style={{
+              width: "85%",
+              height: "100%",
+              borderRadius: 20,
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              borderWidth: 1,
+              borderColor: "rgba(255, 255, 255, 0.08)",
+            }}
+          />
+        </Animated.View>
 
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-evenly",
+            justifyContent: "space-between",
           }}
         >
           {state.routes.map((route, index) => {
-            if (!isRouteName(route.name)) {
-              return null;
-            }
+            if (!isRouteName(route.name)) return null;
 
             const focused = state.index === index;
-            const { options } = descriptors[route.key];
             const meta = routeMeta[route.name];
             const isCreate = route.name === "create";
 
@@ -122,126 +156,113 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               });
             };
 
-            if (isCreate) {
-              return (
-                <View key={route.key} style={{ width: tabSlotWidth, alignItems: "center" }}>
-                  <HapticPressable
-                    hapticType="medium"
-                    onPress={onPress}
-                    onLongPress={onLongPress}
-                    accessibilityRole="button"
-                    accessibilityState={focused ? { selected: true } : {}}
-                    accessibilityLabel={options.tabBarAccessibilityLabel}
-                    testID={options.tabBarButtonTestID}
-                    style={({ pressed }) => ({
-                      transform: [{ scale: pressed ? 0.92 : 1 }],
-                    })}
-                  >
-                    <LinearGradient
-                      colors={
-                        focused
-                          ? ["#FF4D5E", "#D63048"]
-                          : ["#1E1517", "#161113"]
-                      }
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 16,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderWidth: 1,
-                        borderColor: focused
-                          ? "rgba(255,255,255,0.18)"
-                          : webTheme.accentBorder,
-                        shadowColor: webTheme.accent,
-                        shadowOpacity: focused ? 0.3 : 0.12,
-                        shadowRadius: 12,
-                        shadowOffset: { width: 0, height: 6 },
-                        elevation: 8,
-                      }}
-                    >
-                      <Feather
-                        name={meta.icon}
-                        size={20}
-                        color={focused ? "#fff" : "rgba(255,255,255,0.72)"}
-                      />
-                    </LinearGradient>
-                  </HapticPressable>
-
-                  <Text
-                    style={{
-                      fontFamily: fontFaces.bold,
-                      color: focused ? webTheme.text : webTheme.faint,
-                      fontSize: 9,
-                      marginTop: 6,
-                      letterSpacing: 0.3,
-                    }}
-                  >
-                    {meta.label}
-                  </Text>
-                </View>
-              );
-            }
-
             return (
-              <HapticPressable
+              <TabItem
                 key={route.key}
-                hapticType="selection"
+                focused={focused}
+                meta={meta}
+                isCreate={isCreate}
                 onPress={onPress}
                 onLongPress={onLongPress}
-                accessibilityRole="button"
-                accessibilityState={focused ? { selected: true } : {}}
-                accessibilityLabel={options.tabBarAccessibilityLabel}
-                testID={options.tabBarButtonTestID}
-                style={({ pressed }) => ({
-                  width: tabSlotWidth,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minHeight: 48,
-                  borderRadius: 16,
-                  opacity: pressed ? 0.80 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    width: 36,
-                    height: 32,
-                    borderRadius: 12,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: focused
-                      ? webTheme.accentSoft
-                      : "transparent",
-                    borderWidth: focused ? 1 : 0,
-                    borderColor: focused
-                      ? webTheme.accentBorder
-                      : "transparent",
-                  }}
-                >
-                  <Feather
-                    name={meta.icon}
-                    size={17}
-                    color={focused ? webTheme.accent : "rgba(255,255,255,0.40)"}
-                  />
-                </View>
-                <Text
-                  style={{
-                    fontFamily: focused ? fontFaces.bold : fontFaces.semibold,
-                    color: focused ? webTheme.text : webTheme.faint,
-                    fontSize: 9,
-                    marginTop: 5,
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  {meta.label}
-                </Text>
-              </HapticPressable>
+              />
             );
           })}
         </View>
       </BlurView>
     </View>
+  );
+}
+
+function TabItem({ 
+  focused, 
+  meta, 
+  isCreate, 
+  onPress, 
+  onLongPress 
+}: { 
+  focused: boolean; 
+  meta: any; 
+  isCreate: boolean; 
+  onPress: () => void;
+  onLongPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(focused ? 1 : 0.4);
+
+  useEffect(() => {
+    opacity.value = withTiming(focused ? 1 : 0.4, { duration: 250 });
+  }, [focused]);
+
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const animatedTextStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  if (isCreate) {
+    return (
+      <HapticPressable
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={{ width: TAB_WIDTH, alignItems: "center", justifyContent: "center" }}
+        onPressIn={() => { scale.value = withSpring(0.9); }}
+        onPressOut={() => { scale.value = withSpring(1); }}
+      >
+        <LinearGradient
+          colors={focused ? ["#FF4D5E", "#D63048"] : ["#2A2A35", "#1A1A22"]}
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: 14,
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: 1,
+            borderColor: focused ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)",
+            shadowColor: focused ? webTheme.red : "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: focused ? 0.3 : 0.2,
+            shadowRadius: 8,
+            elevation: 4,
+          }}
+        >
+          <Feather name="plus" size={22} color="#fff" />
+        </LinearGradient>
+      </HapticPressable>
+    );
+  }
+
+  return (
+    <HapticPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={{ width: TAB_WIDTH, height: 48, alignItems: "center", justifyContent: "center" }}
+      onPressIn={() => { scale.value = withSpring(0.85); }}
+      onPressOut={() => { scale.value = withSpring(1); }}
+    >
+      <Animated.View style={[{ alignItems: "center" }, animatedIconStyle]}>
+        <Feather 
+          name={meta.icon} 
+          size={19} 
+          color={focused ? webTheme.accent : "#FFF"} 
+        />
+        <Animated.Text
+          style={[
+            {
+              fontFamily: focused ? fontFaces.bold : fontFaces.semibold,
+              color: focused ? webTheme.text : "#FFF",
+              fontSize: 9,
+              marginTop: 4,
+              letterSpacing: 0.2,
+            },
+            animatedTextStyle,
+          ]}
+        >
+          {meta.label}
+        </Animated.Text>
+      </Animated.View>
+    </HapticPressable>
   );
 }

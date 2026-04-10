@@ -13,5 +13,5 @@ export default function AuthLayout() {
     return <Redirect href="/" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#07080a' } }} />;
 }

@@ -179,6 +179,7 @@ export default function AnalyticsScreen() {
   const analytics = useQuery<AnalyticsResponse>({
     queryKey: ["analyticsScreen"],
     queryFn: () => api.get("/api/analytics/tasks"),
+    retry: false,
   });
 
   const maxMonthly = useMemo(() => {
