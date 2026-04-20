@@ -13,6 +13,7 @@ import {
   TextInput,
   View,
   Alert,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SurfaceCard } from "../../components/SurfaceCard";
@@ -110,6 +111,7 @@ export default function ProfileScreen() {
   const { user, setUser, signOut } = useAuthStore();
   const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "posts" | "activity">("overview");
   const [avatarError, setAvatarError] = useState(false);
+  const [showEnlargedAvatar, setShowEnlargedAvatar] = useState(false);
 
   const {
     data: profile,
@@ -280,33 +282,36 @@ export default function ProfileScreen() {
           <View style={{ paddingHorizontal: 22, marginTop: -28 }}>
             <View style={{ alignItems: "center" }}>
             {/* avatar */}
-            <View
-              style={{
-                width: 116,
-                height: 116,
-                borderRadius: 999,
-                backgroundColor: showAvatar ? webTheme.bg : webTheme.surfaceRaised,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 4,
-                borderColor: showAvatar ? webTheme.bg : webTheme.accentBorder,
-                overflow: "hidden",
-                zIndex: 2,
-              }}
-            >
-              {showAvatar ? (
-                <Image
-                  source={{ uri: avatarUrl }}
-                  style={{ width: "100%", height: "100%" }}
-                  resizeMode="cover"
-                  onError={() => setAvatarError(true)}
-                />
-              ) : (
-                <Text style={{ ...type.black, color: webTheme.accent, fontSize: 34 }}>
-                  {getInitials(displayProfile.name)}
-                </Text>
-              )}
-            </View>
+            <Pressable onPress={() => showAvatar && setShowEnlargedAvatar(true)}>
+              <View
+                style={{
+                  width: 116,
+                  height: 116,
+                  borderRadius: 999,
+                  backgroundColor: showAvatar ? webTheme.bg : webTheme.surfaceRaised,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 4,
+                  borderColor: showAvatar ? webTheme.bg : webTheme.accentBorder,
+                  overflow: "hidden",
+                  zIndex: 2,
+                  opacity: showAvatar ? 1 : 1,
+                }}
+              >
+                {showAvatar ? (
+                  <Image
+                    source={{ uri: avatarUrl }}
+                    style={{ width: "100%", height: "100%" }}
+                    resizeMode="cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <Text style={{ ...type.black, color: webTheme.accent, fontSize: 34 }}>
+                    {getInitials(displayProfile.name)}
+                  </Text>
+                )}
+              </View>
+            </Pressable>
 
             {/* info card */}
             <SurfaceCard style={{ width: "100%", marginTop: -22 }} contentStyle={{ paddingTop: 44 }}>
@@ -827,6 +832,48 @@ export default function ProfileScreen() {
 
           <Watermark />
       </ScrollView>
+
+      {/* Enlarged Avatar Modal */}
+      <Modal
+        visible={showEnlargedAvatar}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEnlargedAvatar(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onPress={() => setShowEnlargedAvatar(false)}
+        >
+          {showAvatar && (
+            <>
+              <Image
+                source={{ uri: avatarUrl }}
+                style={{
+                  width: "85%",
+                  height: "60%",
+                  borderRadius: 20,
+                  resizeMode: "contain",
+                }}
+              />
+              <Text
+                style={{
+                  ...type.body,
+                  color: "#fff",
+                  marginTop: 20,
+                  textAlign: "center",
+                }}
+              >
+                Tap anywhere to close
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

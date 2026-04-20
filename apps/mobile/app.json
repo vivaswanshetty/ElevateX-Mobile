@@ -52,11 +52,14 @@
       [
         "expo-updates",
         {
-          "launchWaitMs": 0
+          "launchWaitMs": 2000
         }
       ]
     ],
     "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 3000,
       "url": "https://u.expo.dev/d10969e8-b2ca-45ea-9694-c933294201a6"
     },
     "runtimeVersion": {

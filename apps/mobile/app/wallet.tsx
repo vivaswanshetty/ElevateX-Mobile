@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -66,6 +66,15 @@ export default function WalletScreen() {
   const [mode, setMode] = useState<"deposit" | "withdraw">("deposit");
   const [amount, setAmount] = useState("100");
   const [filter, setFilter] = useState<"all" | "credit" | "debit">("all");
+  const scrollRef = useRef<ScrollView>(null);
+  const inputCardY = useRef(0);
+
+  const scrollToInput = useCallback((newMode: "deposit" | "withdraw") => {
+    setMode(newMode);
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: inputCardY.current - 20, animated: true });
+    }, 100);
+  }, []);
 
   const { data: profile, isFetching, refetch } = useQuery<ProfileResponse>({
     queryKey: ["profile"],
@@ -162,9 +171,11 @@ export default function WalletScreen() {
       <ScreenBackdrop accent={webTheme.red} secondaryAccent={webTheme.gold} />
       <AppStackHeader title="Wallet" detail="Coins, deposits, withdrawals, and rewards." />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={webTheme.red} />}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={{ alignItems: "center", marginTop: 6 }}>
           <Text
@@ -286,7 +297,7 @@ export default function WalletScreen() {
 
           <View style={{ marginTop: 22, flexDirection: "row", gap: 12 }}>
             <Pressable
-              onPress={() => setMode("deposit")}
+              onPress={() => scrollToInput("deposit")}
               style={{
                 flex: 1,
                 borderRadius: 18,
@@ -303,7 +314,7 @@ export default function WalletScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => setMode("withdraw")}
+              onPress={() => scrollToInput("withdraw")}
               style={{
                 flex: 1,
                 borderRadius: 18,
@@ -344,6 +355,7 @@ export default function WalletScreen() {
           ))}
         </View>
 
+        <View onLayout={(e) => { inputCardY.current = e.nativeEvent.layout.y; }}>
         <SurfaceCard style={{ marginTop: 16 }}>
           <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
             {mode === "deposit" ? "Deposit coins" : "Withdraw coins"}
@@ -419,6 +431,7 @@ export default function WalletScreen() {
             </Text>
           </Pressable>
         </SurfaceCard>
+        </View>
 
         <View style={{ marginTop: 20 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
