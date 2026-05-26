@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import * as Haptics from "expo-haptics";
+import versionInfo from "../version.json";
 
 // Lazily load expo-updates to prevent native crash when the module is not present in development builds
 let Updates: any = null;
@@ -25,6 +26,7 @@ const useSafeUpdates = () => {
   if (__DEV__ || !isUpdatesEnabled || !Updates) {
     return {
       currentlyRunning: null,
+      availableUpdate: null,
       isUpdateAvailable: false,
       isUpdatePending: false,
       checkError: null,
@@ -35,7 +37,7 @@ const useSafeUpdates = () => {
 };
 
 export const useCheckUpdates = () => {
-  const { currentlyRunning, isUpdateAvailable, isUpdatePending, checkError } = useSafeUpdates();
+  const { currentlyRunning, availableUpdate, isUpdateAvailable, isUpdatePending, checkError } = useSafeUpdates();
   const [isChecking, setIsChecking] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,17 +53,19 @@ export const useCheckUpdates = () => {
   const checkForUpdates = useCallback(async () => {
     if (__DEV__ || !isUpdatesEnabled || !Updates) {
       console.log("[Updates] Skipping check — in dev mode or updates disabled");
-      return;
+      return null;
     }
     try {
       setIsChecking(true);
       setError(null);
       console.log("[Updates] Checking for updates manually...");
-      await Updates.checkForUpdateAsync();
+      const result = await Updates.checkForUpdateAsync();
+      return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Update check failed";
       console.warn("[Updates] Check failed:", message);
       setError(message);
+      throw err;
     } finally {
       setIsChecking(false);
     }
@@ -133,8 +137,8 @@ export const useCheckUpdates = () => {
   // Expose reactive update state
   const updateInfo: UpdateInfo = {
     isUpdateAvailable: Boolean(isUpdateAvailable || isUpdatePending),
-    currentVersion: currentlyRunning?.runtimeVersion ?? "1.0.0",
-    newVersion: "latest",
+    currentVersion: versionInfo.version,
+    newVersion: availableUpdate?.manifest?.extra?.expoClient?.version ?? (availableUpdate?.manifest as any)?.version ?? "latest",
     releaseNotes: isUpdatePending 
       ? "A new update is downloaded and ready to apply."
       : "New features and improvements are ready to install.",

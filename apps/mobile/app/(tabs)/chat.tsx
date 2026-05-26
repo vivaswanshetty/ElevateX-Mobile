@@ -116,14 +116,21 @@ export default function ChatScreen() {
   });
 
   // Fetch current user's following list
-  const followingQuery = useQuery<{ following: string[] }>({
+  const followingQuery = useQuery<any>({
     queryKey: ["myFollowing"],
     queryFn: () => api.get("/api/users/profile"),
-    select: (data) => ({
-      following: (data.following || []).map((item: any) =>
-        typeof item === "string" ? item : item?._id || item?.id || ""
-      ).filter(Boolean),
-    }),
+    select: (data: any) => {
+      // Handle both array and object responses
+      const followingArray = Array.isArray(data?.following) ? data.following 
+        : Array.isArray(data) ? data 
+        : [];
+      return {
+        following: followingArray.map((item: any) => {
+          if (typeof item === "string") return item;
+          return String(item?._id || item?.id || "");
+        }).filter(Boolean),
+      };
+    },
   });
 
   const userSearch = useQuery<ChatUser[]>({
@@ -457,10 +464,11 @@ export default function ChatScreen() {
     },
   });
 
+  const followingIds = followingQuery.data?.following || [];
   const searchedUsers = (userSearch.data || []).filter(
     (item) => 
-      item._id !== currentUser?.id && 
-      (followingQuery.data?.following || []).includes(item._id)
+      String(item._id) !== String(currentUser?.id) && 
+      followingIds.some((fid: string) => String(fid) === String(item._id))
   );
 
   // Auto-scroll to bottom when messages change
@@ -593,6 +601,11 @@ export default function ChatScreen() {
                 placeholderTextColor={webTheme.muted}
                 style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent" }}
               />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                  <Feather name="x-circle" size={16} color={webTheme.muted} />
+                </Pressable>
+              )}
             </View>
 
             {search.trim().length >= 2 ? (

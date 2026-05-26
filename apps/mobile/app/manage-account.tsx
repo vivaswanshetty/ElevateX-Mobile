@@ -19,6 +19,8 @@ import { normalizeUserPayload } from "../lib/user";
 import { useThemeStore } from "../stores/themeStore";
 import { getImageUrl, getInitials } from "../lib/media";
 import { UserAvatar } from "../components/UserAvatar";
+import { useCheckUpdates } from "../lib/checkUpdates";
+import versionInfo from "../version.json";
 
 interface ProfileResponse {
   _id: string;
@@ -38,6 +40,23 @@ export default function ManageAccountScreen() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const { checkForUpdates, isChecking } = useCheckUpdates();
+
+  const handleCheckUpdates = async () => {
+    try {
+      notify.info("Checking for updates...");
+      const res = await checkForUpdates();
+      if (res && res.isAvailable) {
+        notify.success("New update available!");
+      } else {
+        notify.success("You are on the latest version.");
+      }
+    } catch (err) {
+      console.warn("Manual update check failed:", err);
+      notify.error("Failed to check for updates. Please try again.");
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -313,6 +332,36 @@ export default function ManageAccountScreen() {
                 value={theme === "dark"}
                 onValueChange={(val) => setTheme(val ? "dark" : "light")}
               />
+            </View>
+          </SurfaceCard>
+
+          {/* App Updates card */}
+          <SurfaceCard>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flex: 1, marginRight: 16 }}>
+                <Text style={{ ...type.h3, color: webTheme.text, marginBottom: 4 }}>App Updates</Text>
+                <Text style={{ ...type.caption, color: webTheme.muted }}>
+                  Current Version: v{versionInfo.version}
+                </Text>
+              </View>
+              <HapticPressable onPress={handleCheckUpdates} disabled={isChecking}>
+                <View
+                  style={{
+                    backgroundColor: isChecking ? webTheme.surfaceAlt : webTheme.accentSoft,
+                    borderColor: isChecking ? webTheme.border : webTheme.accentBorder,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ ...type.bold, color: isChecking ? webTheme.muted : webTheme.accent, fontSize: 13 }}>
+                    {isChecking ? "Checking..." : "Check"}
+                  </Text>
+                </View>
+              </HapticPressable>
             </View>
           </SurfaceCard>
 

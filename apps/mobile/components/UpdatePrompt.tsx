@@ -139,7 +139,7 @@ export function UpdatePrompt({
               colors={[webTheme.surfaceRaised, webTheme.surface]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
-              style={{ padding: 24 }}
+              style={{ padding: 24, borderRadius: 24 }}
             >
               {/* Header row */}
               <View
@@ -338,6 +338,7 @@ export function UpdatePrompt({
                       justifyContent: "center",
                       flexDirection: "row",
                       gap: 8,
+                      borderRadius: 14,
                     }}
                   >
                     {isApplying ? (
@@ -374,7 +375,7 @@ export function UpdatePrompt({
                 style={[
                   type.caption,
                   {
-                    color: webTheme.faint,
+                    color: webTheme.muted,
                     textAlign: "center",
                     marginTop: 14,
                     letterSpacing: 0.2,

@@ -135,7 +135,18 @@ export default function RootLayout() {
   }
 
   if (authError) {
-    return <FullscreenMessage title="Connection error" detail={authError} />;
+    return (
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: webTheme.bg }}>
+        <FullscreenMessage title="Connection error" detail={authError} />
+        <UpdatePrompt
+          visible={showUpdatePrompt}
+          updateInfo={updateInfo}
+          isApplying={isApplyingUpdate}
+          onUpdate={downloadAndApplyUpdate}
+          onDismiss={() => setUpdateDismissed(true)}
+        />
+      </GestureHandlerRootView>
+    );
   }
 
   return (

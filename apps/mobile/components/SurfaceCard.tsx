@@ -5,6 +5,7 @@ import {
   type AccessibilityRole,
   type StyleProp,
   type ViewStyle,
+  type LayoutChangeEvent,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { surfaceCardStyle, webTheme } from "../lib/webTheme";
@@ -21,6 +22,7 @@ interface SurfaceCardProps {
   accent?: string;
   tone?: SurfaceCardTone;
   onPress?: () => void;
+  onLayout?: (event: LayoutChangeEvent) => void;
   disabled?: boolean;
   accessibilityRole?: AccessibilityRole;
   accessibilityLabel?: string;
@@ -106,6 +108,7 @@ export function SurfaceCard({
   accent,
   tone = "default",
   onPress,
+  onLayout,
   disabled = false,
   accessibilityRole,
   accessibilityLabel,
@@ -178,7 +181,7 @@ export function SurfaceCard({
   );
 
   if (!isInteractive) {
-    return <View style={baseStyle}>{renderInner()}</View>;
+    return <View style={baseStyle} onLayout={onLayout}>{renderInner()}</View>;
   }
 
   return (

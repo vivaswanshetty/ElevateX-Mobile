@@ -440,6 +440,11 @@ export default function DuelsScreen() {
                   placeholderTextColor={webTheme.muted}
                   style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent" }}
                 />
+                {search.length > 0 && (
+                  <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                    <Feather name="x-circle" size={16} color={webTheme.muted} />
+                  </Pressable>
+                )}
               </View>
 
               {search.trim().length >= 2 ? (

@@ -343,13 +343,28 @@ export default function HomeScreen() {
                       justifyContent: "center",
                       borderRadius: 24,
                       borderWidth: 1,
-                      borderColor: "rgba(255,255,255,0.06)",
-                      backgroundColor: "rgba(255,255,255,0.02)",
-                      paddingVertical: 20,
+                      borderColor: webTheme.borderStrong,
+                      backgroundColor: webTheme.cardBg,
+                      paddingVertical: 22,
                       paddingHorizontal: 8,
+                      alignSelf: "stretch",
                     }}
                   >
-                    <Feather name={item.icon as "users" | "activity" | "check-circle"} size={16} color={item.color} style={{ marginBottom: 12, opacity: 0.8 }} />
+                    <View
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 999,
+                        backgroundColor: `${item.color}18`,
+                        borderWidth: 1,
+                        borderColor: `${item.color}3A`,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Feather name={item.icon as any} size={15} color={item.color} />
+                    </View>
                     <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
                       {item.value}
                     </Text>

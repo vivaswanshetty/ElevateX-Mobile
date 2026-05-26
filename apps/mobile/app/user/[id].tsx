@@ -446,7 +446,7 @@ export default function UserDetailScreen() {
                 {(postsQuery.data || []).slice(0, 3).map((post) => (
                   <HapticPressable
                     key={post._id}
-                    onPress={() => router.push(`/feed?postId=${post._id}`)}
+                    onPress={() => router.push({ pathname: "/post/[id]", params: { id: post._id } })}
                     style={{
                       borderRadius: 18,
                       borderWidth: 1,

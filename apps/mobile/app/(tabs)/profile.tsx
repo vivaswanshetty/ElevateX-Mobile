@@ -793,7 +793,7 @@ export default function ProfileScreen() {
             <View style={{ marginTop: 18, gap: 14 }}>
               {ownPosts.length > 0 ? (
                 ownPosts.map((post) => (
-                  <SurfaceCard key={post._id}>
+                  <SurfaceCard key={post._id} onPress={() => router.push({ pathname: "/post/[id]", params: { id: post._id } })}>
                     <Text style={{ ...type.body, color: webTheme.text }}>
                       {post.content || "Media post"}
                     </Text>
@@ -803,13 +803,16 @@ export default function ProfileScreen() {
                         style={{ width: "100%", height: 220, borderRadius: 20, marginTop: 14, backgroundColor: webTheme.surface }}
                       />
                     ) : null}
-                    <View style={{ marginTop: 14, flexDirection: "row", gap: 14 }}>
-                      <Text style={{ ...type.caption, color: webTheme.faint }}>
-                        {post.likes?.length || 0} likes
-                      </Text>
-                      <Text style={{ ...type.caption, color: webTheme.faint }}>
-                        {post.comments?.length || 0} comments
-                      </Text>
+                    <View style={{ marginTop: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <View style={{ flexDirection: "row", gap: 14 }}>
+                        <Text style={{ ...type.caption, color: webTheme.faint }}>
+                          {post.likes?.length || 0} likes
+                        </Text>
+                        <Text style={{ ...type.caption, color: webTheme.faint }}>
+                          {post.comments?.length || 0} comments
+                        </Text>
+                      </View>
+                      <Feather name="chevron-right" size={14} color={webTheme.faint} />
                     </View>
                   </SurfaceCard>
                 ))

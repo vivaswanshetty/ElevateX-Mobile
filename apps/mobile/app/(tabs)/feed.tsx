@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -73,14 +73,29 @@ export default function FeedScreen() {
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
-  const params = useLocalSearchParams<{ postId?: string }>();
+  const params = useLocalSearchParams<{ postId?: string; from?: string }>();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const postLayoutsRef = useRef<Record<string, number>>({});
+  const targetPostIdRef = useRef<string | null>(null);
+  const hasScrolledRef = useRef(false);
 
+  // Track the target post ID from params
   useEffect(() => {
     if (params.postId) {
+      targetPostIdRef.current = params.postId;
+      hasScrolledRef.current = false;
       setExpandedPostId(params.postId);
+      // Clean params but don't lose postId reference
       router.replace("/feed");
     }
   }, [params.postId]);
+
+  // Handle back navigation to return to profile if "from" param present
+  const handleBackToProfile = useCallback(() => {
+    if (params.from === "userProfile") {
+      router.back();
+    }
+  }, [params.from]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -179,6 +194,7 @@ export default function FeedScreen() {
         }}
       />
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={webTheme.red} />}
         showsVerticalScrollIndicator={false}
@@ -379,7 +395,30 @@ export default function FeedScreen() {
             const authorLevel = getLevel(post.author?.xp);
 
             return (
-              <SurfaceCard key={post._id}>
+              <SurfaceCard
+                key={post._id}
+                style={targetPostIdRef.current === post._id ? { borderColor: webTheme.accent, borderWidth: 1.5 } : undefined}
+                onLayout={(e: any) => {
+                  postLayoutsRef.current[post._id] = e.nativeEvent.layout.y;
+                  // Auto-scroll to target post once its layout is measured
+                  if (
+                    targetPostIdRef.current === post._id &&
+                    !hasScrolledRef.current
+                  ) {
+                    hasScrolledRef.current = true;
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({
+                        y: e.nativeEvent.layout.y + 160, // offset for header + composer
+                        animated: true,
+                      });
+                      // Clear highlight after 3s
+                      setTimeout(() => {
+                        targetPostIdRef.current = null;
+                      }, 3000);
+                    }, 300);
+                  }
+                }}
+              >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
                   <Pressable
                     onPress={() => post.author?._id ? router.push({ pathname: "/user/[id]", params: { id: post.author._id } }) : null}

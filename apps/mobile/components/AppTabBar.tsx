@@ -63,7 +63,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
     transform: [{ translateX: indicatorX.value }],
   }));
 
-  if (isTabBarHidden) return null;
+  // Instead of early return, we'll use display:none to keep hooks stable
 
   const tint = isDark ? "dark" : "light";
   const barBg = isDark ? "rgba(10, 10, 15, 0.70)" : "rgba(255, 255, 255, 0.75)";
@@ -74,12 +74,13 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
 
   return (
     <View
-      pointerEvents="box-none"
+      pointerEvents={isTabBarHidden ? "none" : "box-none"}
       style={{
         position: "absolute",
         left: TAB_BAR_MARGIN,
         right: TAB_BAR_MARGIN,
         bottom: Math.max(insets.bottom, 14),
+        display: isTabBarHidden ? "none" : "flex",
       }}
     >
       <BlurView
