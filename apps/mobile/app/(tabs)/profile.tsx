@@ -847,6 +847,7 @@ export default function ProfileScreen() {
                     { label: "Wallet", route: "/wallet", icon: "credit-card" },
                     { label: "Leaderboard", route: "/leaderboard", icon: "award" },
                     { label: "Chat", route: "/chat", icon: "message-circle" },
+                    { label: "AI Assistant", route: "/assistant", icon: "cpu" },
                     { label: "Workspace", route: "/hub", icon: "grid" },
                   ].map((item) => (
                     <Pressable
@@ -862,7 +863,7 @@ export default function ProfileScreen() {
                       })}
                     >
                       <Feather
-                        name={item.icon as "layout" | "credit-card" | "award" | "message-circle"}
+                        name={item.icon as any}
                         size={18}
                         color={webTheme.accent}
                       />

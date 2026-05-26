@@ -104,7 +104,7 @@ function ToolCard({
 }: {
   label: string;
   detail: string;
-  icon: "credit-card" | "message-circle" | "bar-chart-2" | "award" | "users" | "zap" | "box" | "activity";
+  icon: "credit-card" | "message-circle" | "bar-chart-2" | "award" | "users" | "zap" | "box" | "activity" | "cpu";
   accent: string;
   onPress?: () => void;
   badge?: number;
@@ -265,6 +265,7 @@ export default function HubScreen() {
           <ToolCard label="Alchemy Lab" detail="Relics, essences, and crafting paths." icon="box" accent={webTheme.purple} onPress={() => router.navigate(`/alchemy?from=${workspaceFrom}` as any)} />
           <ToolCard label="Duels" detail="Pending challenges and live competitions." icon="zap" accent={webTheme.red} badge={pendingDuels.length} onPress={() => router.navigate(`/duels?from=${workspaceFrom}` as any)} />
           <ToolCard label="Resonance Room" detail="Live task energy, open opportunities, and momentum." icon="activity" accent={webTheme.blue} badge={openTasks} onPress={() => router.navigate(`/resonance?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Elev AI Assistant" detail="AI Companion, task matchmaking, and productivity guide." icon="cpu" accent={webTheme.red} onPress={() => router.navigate(`/assistant?from=${workspaceFrom}` as any)} />
         </View>
 
         <SurfaceCard style={{ marginTop: 18 }}>
