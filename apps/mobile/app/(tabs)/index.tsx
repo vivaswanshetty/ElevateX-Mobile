@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -546,7 +546,7 @@ export default function HomeScreen() {
                   borderColor: "rgba(229, 54, 75, 0.3)",
                 }}
               />
-              <Feather name="cpu" size={22} color={webTheme.accent} />
+              <MaterialCommunityIcons name="robot" size={22} color={webTheme.accent} />
             </View>
           </View>
         </HapticPressable>

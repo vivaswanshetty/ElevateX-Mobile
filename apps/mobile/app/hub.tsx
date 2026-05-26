@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, Animated, Dimensions } from "react-native";
@@ -104,7 +104,7 @@ function ToolCard({
 }: {
   label: string;
   detail: string;
-  icon: "credit-card" | "message-circle" | "bar-chart-2" | "award" | "users" | "zap" | "box" | "activity" | "cpu";
+  icon: "credit-card" | "message-circle" | "bar-chart-2" | "award" | "users" | "zap" | "box" | "activity" | "cpu" | "robot";
   accent: string;
   onPress?: () => void;
   badge?: number;
@@ -138,7 +138,11 @@ function ToolCard({
                 borderColor: `${accent}33`,
               }}
             >
-              <Feather name={icon} size={18} color={accent} />
+              {icon === "robot" ? (
+                <MaterialCommunityIcons name="robot" size={18} color={accent} />
+              ) : (
+                <Feather name={icon} size={18} color={accent} />
+              )}
             </View>
             {badge !== undefined && badge > 0 && (
               <View
@@ -257,7 +261,7 @@ export default function HubScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-          <ToolCard label="Elev AI Assistant" detail="AI Companion, task matchmaking, and productivity guide." icon="cpu" accent={webTheme.red} onPress={() => router.navigate(`/assistant?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Elev AI Assistant" detail="AI Companion, task matchmaking, and productivity guide." icon="robot" accent={webTheme.red} onPress={() => router.navigate(`/assistant?from=${workspaceFrom}` as any)} />
           <ToolCard label="Wallet" detail="Balance, deposits, withdrawals, and coin flow." icon="credit-card" accent={webTheme.gold} onPress={() => router.navigate(`/wallet?from=${workspaceFrom}` as any)} />
           <ToolCard label="Chat" detail="Direct messages and user search." icon="message-circle" accent={webTheme.blue} onPress={() => router.navigate(`/chat?from=${workspaceFrom}` as any)} />
           <ToolCard label="Leaderboard" detail="All-time and seasonal performance." icon="award" accent={webTheme.red} onPress={() => router.navigate(`/leaderboard?from=${workspaceFrom}` as any)} />

@@ -13,7 +13,7 @@ import {
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { HapticPressable } from "../components/HapticPressable";
@@ -496,7 +496,7 @@ export default function AIAssistantScreen() {
               justifyContent: "center",
             }}
           >
-            <Feather name="cpu" size={16} color={webTheme.accent} />
+            <MaterialCommunityIcons name="robot" size={16} color={webTheme.accent} />
           </View>
           <View style={{ justifyContent: "center" }}>
             <Text style={{ ...type.bold, fontSize: 14, color: webTheme.text }}>Elev AI Assistant</Text>
@@ -618,7 +618,11 @@ export default function AIAssistantScreen() {
                           justifyContent: "center",
                         }}
                       >
-                        <Feather name={mine ? "user" : "cpu"} size={13} color={mine ? webTheme.accent : webTheme.text} />
+                        {mine ? (
+                          <Feather name="user" size={13} color={webTheme.accent} />
+                        ) : (
+                          <MaterialCommunityIcons name="robot" size={13} color={webTheme.text} />
+                        )}
                       </View>
 
                       {/* Content bubble */}
@@ -673,7 +677,7 @@ export default function AIAssistantScreen() {
                       justifyContent: "center",
                     }}
                   >
-                    <Feather name="cpu" size={13} color={webTheme.text} />
+                    <MaterialCommunityIcons name="robot" size={13} color={webTheme.text} />
                   </View>
                   <View
                     style={{
