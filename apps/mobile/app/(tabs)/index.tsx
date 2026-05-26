@@ -485,7 +485,7 @@ export default function HomeScreen() {
       <View
         style={{
           position: "absolute",
-          bottom: tabBarPadding + 85,
+          bottom: tabBarPadding + 43,
           right: 20,
           zIndex: 9999,
         }}
