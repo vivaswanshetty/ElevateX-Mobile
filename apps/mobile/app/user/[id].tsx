@@ -271,7 +271,10 @@ export default function UserDetailScreen() {
                     </HapticPressable>
                     <HapticPressable
                       hapticType="light"
-                      onPress={() => router.push("/chat")}
+                      onPress={() => {
+                        const avatarParam = profile?.avatar ? `&avatar=${encodeURIComponent(profile.avatar)}` : '';
+                        router.push(`/chat?userId=${id}&name=${encodeURIComponent(profile?.name || '')}${avatarParam}`);
+                      }}
                       style={{
                         flex: 1,
                         borderRadius: 999,
@@ -441,8 +444,9 @@ export default function UserDetailScreen() {
               </Text>
               <View style={{ marginTop: 14, gap: 10 }}>
                 {(postsQuery.data || []).slice(0, 3).map((post) => (
-                  <View
+                  <HapticPressable
                     key={post._id}
+                    onPress={() => router.push(`/feed?postId=${post._id}`)}
                     style={{
                       borderRadius: 18,
                       borderWidth: 1,
@@ -457,7 +461,7 @@ export default function UserDetailScreen() {
                     <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12, marginTop: 10 }}>
                       {post.likes?.length || 0} likes • {post.comments?.length || 0} comments
                     </Text>
-                  </View>
+                  </HapticPressable>
                 ))}
               </View>
             </SurfaceCard>

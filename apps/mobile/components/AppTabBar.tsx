@@ -59,11 +59,11 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
     });
   }, [activeIndex, setIndex]);
 
-  if (isTabBarHidden) return null;
-
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorX.value }],
   }));
+
+  if (isTabBarHidden) return null;
 
   const tint = isDark ? "dark" : "light";
   const barBg = isDark ? "rgba(10, 10, 15, 0.70)" : "rgba(255, 255, 255, 0.75)";

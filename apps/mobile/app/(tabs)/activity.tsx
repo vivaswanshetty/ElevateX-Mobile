@@ -68,11 +68,13 @@ export default function ActivityScreen() {
             ? `completed${item.task?.title ? ` "${item.task.title}"` : " your task"}.`
             : item.type === "comment"
               ? `commented${item.comment ? `: "${item.comment}"` : " on your post"}.`
-              : item.type === "follow_request"
-                ? "requested to follow you."
-                : item.type === "follow_accept"
-                  ? "accepted your follow request."
-                  : "interacted with you.",
+              : item.type === "follow"
+                ? "started following you."
+                : item.type === "follow_request"
+                  ? "requested to follow you."
+                  : item.type === "follow_accept"
+                    ? "accepted your follow request."
+                    : "interacted with you.",
     time: new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     unread: !item.read,
   }));

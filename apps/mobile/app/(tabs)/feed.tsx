@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   Alert,
   Image,
@@ -72,6 +72,15 @@ export default function FeedScreen() {
   const [savedPosts, setSavedPosts] = useState<Record<string, boolean>>({});
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+
+  const params = useLocalSearchParams<{ postId?: string }>();
+
+  useEffect(() => {
+    if (params.postId) {
+      setExpandedPostId(params.postId);
+      router.replace("/feed");
+    }
+  }, [params.postId]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

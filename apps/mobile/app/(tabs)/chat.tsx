@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import {
   Alert,
@@ -77,6 +77,19 @@ export default function ChatScreen() {
   const currentUser = useAuthStore((state) => state.user);
   const [selectedChat, setSelectedChat] = useState<ChatUser | null>(null);
   const [search, setSearch] = useState("");
+
+  const params = useLocalSearchParams<{ userId?: string; name?: string; avatar?: string }>();
+
+  useEffect(() => {
+    if (params.userId && params.name) {
+      setSelectedChat({
+        _id: params.userId,
+        name: params.name,
+        avatar: params.avatar || undefined,
+      });
+      router.replace("/chat");
+    }
+  }, [params.userId, params.name, params.avatar]);
   const [draft, setDraft] = useState("");
   const [attachedMedia, setAttachedMedia] = useState<MediaFile[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -106,7 +119,11 @@ export default function ChatScreen() {
   const followingQuery = useQuery<{ following: string[] }>({
     queryKey: ["myFollowing"],
     queryFn: () => api.get("/api/users/profile"),
-    select: (data) => ({ following: data.following || [] }),
+    select: (data) => ({
+      following: (data.following || []).map((item: any) =>
+        typeof item === "string" ? item : item?._id || item?.id || ""
+      ).filter(Boolean),
+    }),
   });
 
   const userSearch = useQuery<ChatUser[]>({
@@ -443,7 +460,7 @@ export default function ChatScreen() {
   const searchedUsers = (userSearch.data || []).filter(
     (item) => 
       item._id !== currentUser?.id && 
-      followingQuery.data?.following.includes(item._id)
+      (followingQuery.data?.following || []).includes(item._id)
   );
 
   // Auto-scroll to bottom when messages change
