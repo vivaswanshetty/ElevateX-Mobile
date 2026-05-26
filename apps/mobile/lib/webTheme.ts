@@ -1,22 +1,86 @@
-export const webTheme = {
-  /* ── backgrounds ── */
-  bg: "#07080A",
-  bgSoft: "#0C0D10",
-  surface: "#101114",
-  surfaceRaised: "#151619",
-  surfaceAlt: "#131416",
+import { useThemeStore } from "../stores/themeStore";
 
-  /* ── borders ── */
-  border: "rgba(255,255,255,0.07)",
-  borderStrong: "rgba(255,255,255,0.12)",
+const darkColors = {
+  bg: "#000000",
+  bgSoft: "#080808",
+  surface: "#0D0D0D",
+  surfaceRaised: "#121212",
+  surfaceAlt: "#0A0A0A",
+
+  border: "rgba(255,255,255,0.08)",
+  borderStrong: "rgba(255,255,255,0.15)",
   borderSoft: "rgba(255,255,255,0.04)",
 
-  /* ── text ── */
-  text: "#F5F5F7",
-  textSecondary: "rgba(245,245,247,0.72)",
-  muted: "rgba(255,255,255,0.50)",
-  faint: "rgba(255,255,255,0.30)",
+  text: "#FFFFFF",
+  textSecondary: "rgba(255,255,255,0.85)",
+  muted: "rgba(255,255,255,0.70)",
+  faint: "rgba(255,255,255,0.52)",
   subtle: "rgba(255,255,255,0.18)",
+};
+
+const lightColors = {
+  bg: "#F8F9FA",
+  bgSoft: "#F1F3F5",
+  surface: "#FFFFFF",
+  surfaceRaised: "#FFFFFF",
+  surfaceAlt: "#F1F3F5",
+
+  border: "rgba(0,0,0,0.08)",
+  borderStrong: "rgba(0,0,0,0.14)",
+  borderSoft: "rgba(0,0,0,0.04)",
+
+  text: "#1A1A1A",
+  textSecondary: "rgba(0,0,0,0.80)",
+  muted: "rgba(0,0,0,0.65)",
+  faint: "rgba(0,0,0,0.50)",
+  subtle: "rgba(0,0,0,0.18)",
+};
+
+export const webTheme = {
+  /* ── backgrounds ── */
+  get bg() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.bg : lightColors.bg;
+  },
+  get bgSoft() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.bgSoft : lightColors.bgSoft;
+  },
+  get surface() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.surface : lightColors.surface;
+  },
+  get surfaceRaised() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.surfaceRaised : lightColors.surfaceRaised;
+  },
+  get surfaceAlt() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.surfaceAlt : lightColors.surfaceAlt;
+  },
+
+  /* ── borders ── */
+  get border() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.border : lightColors.border;
+  },
+  get borderStrong() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.borderStrong : lightColors.borderStrong;
+  },
+  get borderSoft() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.borderSoft : lightColors.borderSoft;
+  },
+
+  /* ── text ── */
+  get text() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.text : lightColors.text;
+  },
+  get textSecondary() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.textSecondary : lightColors.textSecondary;
+  },
+  get muted() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.muted : lightColors.muted;
+  },
+  get faint() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.faint : lightColors.faint;
+  },
+  get subtle() {
+    return useThemeStore.getState().theme === "dark" ? darkColors.subtle : lightColors.subtle;
+  },
 
   /* ── primary accent ── */
   accent: "#E5364B",
@@ -47,13 +111,28 @@ export const webTheme = {
   /* ── glow ── */
   glow: "rgba(229,54,75,0.14)",
   glowSoft: "rgba(229,54,75,0.06)",
+
+  /* ── helper background getters ── */
+  get inputBg() {
+    return useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
+  },
+  get cardBg() {
+    return useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)";
+  },
+  get tintBg() {
+    return useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
+  },
 };
 
 /* ── shared card style ── */
 export const surfaceCardStyle = {
-  backgroundColor: webTheme.surfaceRaised,
+  get backgroundColor() {
+    return webTheme.surfaceRaised;
+  },
   borderWidth: 1,
-  borderColor: webTheme.border,
+  get borderColor() {
+    return webTheme.border;
+  },
   borderRadius: 28,
   shadowColor: "#000",
   shadowOpacity: 0.28,
@@ -64,9 +143,17 @@ export const surfaceCardStyle = {
 
 /* ── glass card (translucent) ── */
 export const glassCardStyle = {
-  backgroundColor: "rgba(18,19,23,0.82)",
+  get backgroundColor() {
+    return useThemeStore.getState().theme === "dark"
+      ? "rgba(18,19,23,0.82)"
+      : "rgba(255,255,255,0.82)";
+  },
   borderWidth: 1,
-  borderColor: "rgba(255,255,255,0.08)",
+  get borderColor() {
+    return useThemeStore.getState().theme === "dark"
+      ? "rgba(255,255,255,0.08)"
+      : "rgba(0,0,0,0.08)";
+  },
   borderRadius: 28,
   shadowColor: "#000",
   shadowOpacity: 0.32,
@@ -79,8 +166,14 @@ export const glassCardStyle = {
 export const pillStyle = {
   borderRadius: 999,
   borderWidth: 1,
-  borderColor: webTheme.border,
-  backgroundColor: "rgba(255,255,255,0.04)",
+  get borderColor() {
+    return webTheme.border;
+  },
+  get backgroundColor() {
+    return useThemeStore.getState().theme === "dark"
+      ? "rgba(255,255,255,0.04)"
+      : "rgba(0,0,0,0.04)";
+  },
 };
 
 /* ── premium button base ── */
@@ -99,11 +192,19 @@ export const premiumButtonStyle = {
 
 /* ── input field ── */
 export const inputFieldStyle = {
-  backgroundColor: "rgba(255,255,255,0.04)",
+  get backgroundColor() {
+    return useThemeStore.getState().theme === "dark"
+      ? "rgba(255,255,255,0.04)"
+      : "rgba(0,0,0,0.04)";
+  },
   borderWidth: 1,
-  borderColor: webTheme.border,
+  get borderColor() {
+    return webTheme.border;
+  },
   borderRadius: 16,
   paddingHorizontal: 18,
   paddingVertical: 15,
-  color: webTheme.text,
+  get color() {
+    return webTheme.text;
+  },
 };

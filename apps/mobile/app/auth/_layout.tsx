@@ -1,6 +1,7 @@
 import { Redirect, Stack } from "expo-router";
 import { FullscreenMessage } from "../../components/FullscreenMessage";
 import { useAuthStore } from "../../stores/authStore";
+import { webTheme } from "../../lib/webTheme";
 
 export default function AuthLayout() {
   const { user, isLoading } = useAuthStore();
@@ -13,5 +14,5 @@ export default function AuthLayout() {
     return <Redirect href="/" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#07080a' } }} />;
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: webTheme.bg } }} />;
 }

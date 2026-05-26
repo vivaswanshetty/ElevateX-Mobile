@@ -15,17 +15,24 @@ import {
   TextInput,
   View,
   ActivityIndicator,
+  Keyboard,
+  Modal,
 } from "react-native";
+import { BlurView } from "expo-blur";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { HapticPressable } from "../components/HapticPressable";
-import { api } from "../lib/api";
-import { formatConversationDate, formatTimeAgo, getImageUrl, getInitials } from "../lib/media";
-import { socketService } from "../lib/socket";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
-import { useAuthStore } from "../stores/authStore";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { HapticPressable } from "../../components/HapticPressable";
+import { api } from "../../lib/api";
+import { formatConversationDate, formatTimeAgo, getImageUrl, getInitials } from "../../lib/media";
+import { socketService } from "../../lib/socket";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { useAuthStore } from "../../stores/authStore";
+import { useThemeStore } from "../../stores/themeStore";
+import { UserAvatar } from "../../components/UserAvatar";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
+import { useTabStore } from "../../stores/tabStore";
 
 interface ChatUser {
   _id: string;
@@ -65,6 +72,7 @@ interface Message {
 }
 
 export default function ChatScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [selectedChat, setSelectedChat] = useState<ChatUser | null>(null);
@@ -74,6 +82,20 @@ export default function ChatScreen() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const markedAsReadRef = useRef(new Set<string>());
+
+  const tabBarPadding = useTabBarPadding();
+  const setTabBarHidden = useTabStore((s) => s.setTabBarHidden);
+
+  useEffect(() => {
+    if (selectedChat) {
+      setTabBarHidden(true);
+    } else {
+      setTabBarHidden(false);
+    }
+    return () => {
+      setTabBarHidden(false);
+    };
+  }, [selectedChat, setTabBarHidden]);
 
   const conversations = useQuery<Conversation[]>({
     queryKey: ["conversations"],
@@ -98,8 +120,8 @@ export default function ChatScreen() {
     setDraft("");
     setAttachedMedia([]);
     setEditingMessageId(null);
-    setSelectedMessageForAction(null);
-    setReactionPickerMessageId(null);
+    setActionModalVisible(false);
+    setActionMessage(null);
     markedAsReadRef.current.clear();
   }, [selectedChat?._id]);
 
@@ -284,8 +306,8 @@ export default function ChatScreen() {
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
-  const [selectedMessageForAction, setSelectedMessageForAction] = useState<string | null>(null);
-  const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [actionMessage, setActionMessage] = useState<Message | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const emojis = ["👍", "❤️", "😂", "🔥", "😍", "🎉", "⚡", "👏"];
@@ -311,7 +333,6 @@ export default function ChatScreen() {
       return api.delete(`/api/messages/${messageId}`);
     },
     onSuccess: async () => {
-      setSelectedMessageForAction(null);
       await queryClient.invalidateQueries({ queryKey: ["conversation", selectedChat?._id] });
     },
   });
@@ -524,6 +545,9 @@ export default function ChatScreen() {
     return getMessageDateLabel(currentDate) !== getMessageDateLabel(previousDate);
   };
 
+  const isActionMessageMine = actionMessage ? String(actionMessage.sender?._id || '') === (currentUser?.id || '') : false;
+  const canEditActionMessage = actionMessage && !actionMessage.deletedAt && (Date.now() - new Date(actionMessage.createdAt).getTime()) < 30 * 60 * 1000;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
@@ -536,7 +560,7 @@ export default function ChatScreen() {
                 borderRadius: 16,
                 borderWidth: 1,
                 borderColor: webTheme.border,
-                backgroundColor: "rgba(255,255,255,0.03)",
+                backgroundColor: webTheme.inputBg,
                 paddingHorizontal: 14,
                 paddingVertical: 12,
                 flexDirection: "row",
@@ -549,8 +573,8 @@ export default function ChatScreen() {
                 value={search}
                 onChangeText={setSearch}
                 placeholder="Search users..."
-                placeholderTextColor="rgba(255,255,255,0.24)"
-                style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14 }}
+                placeholderTextColor={webTheme.muted}
+                style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent" }}
               />
             </View>
 
@@ -558,9 +582,8 @@ export default function ChatScreen() {
               searchedUsers.length > 0 ? (
                 <>
                   <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12 }}>Following</Text>
-                  <ScrollView contentContainerStyle={{ gap: 10 }}>
+                  <ScrollView contentContainerStyle={{ gap: 10, paddingBottom: tabBarPadding }}>
                     {searchedUsers.map((item) => {
-                      const avatar = getImageUrl(item.avatar);
                       return (
                         <Pressable
                           key={item._id}
@@ -577,26 +600,7 @@ export default function ChatScreen() {
                             gap: 12,
                           }}
                         >
-                          <View
-                            style={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: 24,
-                              overflow: "hidden",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              backgroundColor: "rgba(214,60,71,0.16)",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {avatar ? (
-                              <Image source={{ uri: avatar }} style={{ width: "100%", height: "100%" }} />
-                            ) : (
-                              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                                {getInitials(item.name)}
-                              </Text>
-                            )}
-                          </View>
+                          <UserAvatar avatar={item.avatar} size={48} />
                           <View style={{ flex: 1 }}>
                             <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
                               {item.name}
@@ -631,7 +635,7 @@ export default function ChatScreen() {
                   tintColor={webTheme.red}
                 />
               }
-              contentContainerStyle={{ gap: 10 }}
+              contentContainerStyle={{ gap: 10, paddingBottom: tabBarPadding }}
             >
               {(conversations.data || []).length === 0 ? (
                 <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 14, textAlign: "center", marginTop: 20 }}>
@@ -639,7 +643,6 @@ export default function ChatScreen() {
                 </Text>
               ) : (
                 (conversations.data || []).map((item) => {
-                  const avatar = getImageUrl(item.user.avatar);
                   return (
                     <Pressable
                       key={item._id}
@@ -656,26 +659,7 @@ export default function ChatScreen() {
                         gap: 12,
                       }}
                     >
-                      <View
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 24,
-                          overflow: "hidden",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: "rgba(214,60,71,0.16)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {avatar ? (
-                          <Image source={{ uri: avatar }} style={{ width: "100%", height: "100%" }} />
-                        ) : (
-                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                            {getInitials(item.user.name)}
-                          </Text>
-                        )}
-                      </View>
+                      <UserAvatar avatar={item.user.avatar} size={48} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
                           {item.user.name}
@@ -714,7 +698,7 @@ export default function ChatScreen() {
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: webTheme.borderStrong,
-                  backgroundColor: "rgba(255,255,255,0.04)",
+                  backgroundColor: webTheme.cardBg,
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
@@ -795,14 +779,6 @@ export default function ChatScreen() {
                   const currentUserId = currentUser?.id || '';
                   const mine = senderId === currentUserId;
                   
-                  console.log('Message:', {
-                    id: message._id,
-                    senderId,
-                    currentUserId,
-                    mine,
-                    senderName: message.sender?.name
-                  });
-                  
                   const createdDate = new Date(message.createdAt);
                   const timeString = createdDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
                   const dateLabel = getMessageDateLabel(createdDate);
@@ -840,7 +816,7 @@ export default function ChatScreen() {
                                 borderRadius: 18,
                                 borderWidth: 1,
                                 borderColor: webTheme.red,
-                                backgroundColor: mine ? "rgba(214,60,71,0.16)" : "rgba(255,255,255,0.05)",
+                                backgroundColor: mine ? "rgba(229,54,75,0.16)" : webTheme.cardBg,
                                 paddingHorizontal: 12,
                                 paddingVertical: 10,
                                 gap: 10,
@@ -852,8 +828,8 @@ export default function ChatScreen() {
                             value={editingContent}
                             onChangeText={setEditingContent}
                             placeholder="Edit message..."
-                            placeholderTextColor="rgba(255,255,255,0.24)"
-                            style={{ ...type.regular, color: webTheme.text, fontSize: 14, minHeight: 40 }}
+                            placeholderTextColor={webTheme.muted}
+                            style={{ ...type.regular, color: webTheme.text, fontSize: 14, minHeight: 40, backgroundColor: "transparent" }}
                             multiline
                           />
                           <View style={{ flexDirection: "row", gap: 8, justifyContent: "flex-end" }}>
@@ -877,7 +853,7 @@ export default function ChatScreen() {
                                 paddingHorizontal: 16,
                                 paddingVertical: 8,
                                 borderRadius: 8,
-                                backgroundColor: "rgba(255,255,255,0.1)",
+                                backgroundColor: webTheme.cardBg,
                                 alignItems: "center",
                               }}
                             >
@@ -888,12 +864,12 @@ export default function ChatScreen() {
                       ) : (
                         <Pressable
                           onLongPress={() => {
-                            setSelectedMessageForAction(message._id);
+                            Keyboard.dismiss();
+                            setActionMessage(message);
+                            setActionModalVisible(true);
                           }}
                           onPress={() => {
-                            if (selectedMessageForAction === message._id) {
-                              setSelectedMessageForAction(null);
-                            }
+                            setActionModalVisible(false);
                           }}
                           style={{
                             borderRadius: 18,
@@ -917,7 +893,7 @@ export default function ChatScreen() {
                                   return (
                                     <Image
                                       key={idx}
-                                      source={{ uri: file.url }}
+                                      source={{ uri: getImageUrl(file.url) || undefined }}
                                       style={{ width: '100%', height: 200, borderRadius: 12 }}
                                     />
                                   );
@@ -999,113 +975,7 @@ export default function ChatScreen() {
                         </View>
                       )}
 
-                      {selectedMessageForAction === message._id && mine && (
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            gap: 6,
-                            marginTop: 8,
-                            paddingHorizontal: 4,
-                            alignSelf: "flex-end",
-                          }}
-                        >
-                          <HapticPressable
-                            onPress={() => {
-                              setEditingMessageId(message._id);
-                              setEditingContent(message.content);
-                            }}
-                            style={{
-                              paddingHorizontal: 10,
-                              paddingVertical: 6,
-                              borderRadius: 8,
-                              backgroundColor: "rgba(255,255,255,0.08)",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            <Feather name="edit-2" size={12} color={webTheme.text} />
-                            <Text style={{ ...type.regular, color: webTheme.text, fontSize: 11 }}>Edit</Text>
-                          </HapticPressable>
-                          <HapticPressable
-                            onPress={() => {
-                              Alert.alert(
-                                "Delete Message",
-                                "Are you sure you want to delete this message?",
-                                [
-                                  { text: "Cancel", onPress: () => {}, style: "cancel" },
-                                  {
-                                    text: "Delete",
-                                    onPress: () => deleteMessage.mutate(message._id),
-                                    style: "destructive",
-                                  },
-                                ]
-                              );
-                            }}
-                            style={{
-                              paddingHorizontal: 10,
-                              paddingVertical: 6,
-                              borderRadius: 8,
-                              backgroundColor: "rgba(214,60,71,0.2)",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            <Feather name="trash-2" size={12} color={webTheme.red} />
-                            <Text style={{ ...type.regular, color: webTheme.red, fontSize: 11 }}>Delete</Text>
-                          </HapticPressable>
-                          <HapticPressable
-                            onPress={() => setReactionPickerMessageId(message._id)}
-                            style={{
-                              paddingHorizontal: 10,
-                              paddingVertical: 6,
-                              borderRadius: 8,
-                              backgroundColor: "rgba(255,255,255,0.08)",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            <Feather name="smile" size={12} color={webTheme.text} />
-                            <Text style={{ ...type.regular, color: webTheme.text, fontSize: 11 }}>React</Text>
-                          </HapticPressable>
-                        </View>
-                      )}
-
-                      {reactionPickerMessageId === message._id && (
-                        <View style={{ marginTop: 12, paddingHorizontal: 4, alignSelf: mine ? "flex-end" : "flex-start" }}>
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              flexWrap: "wrap",
-                              gap: 8,
-                              backgroundColor: "rgba(255,255,255,0.06)",
-                              borderRadius: 12,
-                              padding: 10,
-                            }}
-                          >
-                            {emojis.map((emoji) => (
-                              <Pressable
-                                key={emoji}
-                                onPress={() => {
-                                  reactToMessage.mutate({ messageId: message._id, emoji });
-                                  setReactionPickerMessageId(null);
-                                }}
-                                style={{
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 8,
-                                  borderRadius: 8,
-                                  backgroundColor: "rgba(255,255,255,0.08)",
-                                }}
-                              >
-                                <Text style={{ fontSize: 16 }}>{emoji}</Text>
-                              </Pressable>
-                            ))}
-                          </View>
-                        </View>
-                      )}
-                    </View>
+                     </View>
                   );
                 })
               )}
@@ -1118,7 +988,7 @@ export default function ChatScreen() {
                     <View key={idx} style={{ position: 'relative', width: 80, height: 80 }}>
                       {file.type === 'image' ? (
                         <Image 
-                          source={{ uri: file.url }} 
+                          source={{ uri: getImageUrl(file.url) || undefined }} 
                           style={{ width: '100%', height: '100%', borderRadius: 8 }}
                         />
                       ) : (
@@ -1155,7 +1025,7 @@ export default function ChatScreen() {
                 borderRadius: 16,
                 borderWidth: 1,
                 borderColor: webTheme.border,
-                backgroundColor: "rgba(255,255,255,0.03)",
+                backgroundColor: webTheme.inputBg,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
                 flexDirection: "row",
@@ -1175,8 +1045,8 @@ export default function ChatScreen() {
                 value={draft}
                 onChangeText={setDraft}
                 placeholder="Type a message..."
-                placeholderTextColor="rgba(255,255,255,0.24)"
-                style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14 }}
+                placeholderTextColor={webTheme.muted}
+                style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent" }}
                 editable={!isUploading}
               />
               <HapticPressable
@@ -1198,6 +1068,154 @@ export default function ChatScreen() {
           </>
         )}
       </KeyboardAvoidingView>
+
+      {/* Message Actions Bottom Modal */}
+      <Modal
+        visible={actionModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setActionModalVisible(false)}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <Pressable style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} onPress={() => setActionModalVisible(false)} />
+          <BlurView
+            intensity={90}
+            tint="dark"
+            style={{
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.1)",
+              backgroundColor: "rgba(20, 20, 24, 0.95)",
+              paddingBottom: 40,
+              paddingTop: 12,
+              paddingHorizontal: 20,
+            }}
+          >
+            {/* Drag Handle */}
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                alignSelf: "center",
+                marginBottom: 20,
+              }}
+            />
+
+            {/* Reaction Emojis Row */}
+            <Text style={{ ...type.label, color: webTheme.muted, fontSize: 11, marginBottom: 8, letterSpacing: 1 }}>REACTIONS</Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 24 }}>
+              {emojis.map((emoji) => (
+                <HapticPressable
+                  key={emoji}
+                  onPress={() => {
+                    if (actionMessage) {
+                      reactToMessage.mutate({ messageId: actionMessage._id, emoji });
+                    }
+                    setActionModalVisible(false);
+                  }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "rgba(255,255,255,0.06)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                </HapticPressable>
+              ))}
+            </View>
+
+            {/* Actions List */}
+            <View style={{ gap: 12 }}>
+              {isActionMessageMine && !actionMessage?.deletedAt && (
+                <>
+                  {canEditActionMessage && (
+                    <HapticPressable
+                      onPress={() => {
+                        if (actionMessage) {
+                          setEditingMessageId(actionMessage._id);
+                          setEditingContent(actionMessage.content);
+                        }
+                        setActionModalVisible(false);
+                      }}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 12,
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        borderRadius: 16,
+                        paddingVertical: 14,
+                        paddingHorizontal: 16,
+                        borderWidth: 1,
+                        borderColor: "rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <Feather name="edit-2" size={18} color={webTheme.text} />
+                      <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>Edit Message</Text>
+                    </HapticPressable>
+                  )}
+
+                  <HapticPressable
+                    onPress={() => {
+                      if (actionMessage) {
+                        setActionModalVisible(false);
+                        Alert.alert(
+                          "Delete Message",
+                          "Are you sure you want to delete this message?",
+                          [
+                            { text: "Cancel", style: "cancel" },
+                            {
+                              text: "Delete",
+                              onPress: () => deleteMessage.mutate(actionMessage._id),
+                              style: "destructive",
+                            },
+                          ]
+                        );
+                      }
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 12,
+                      backgroundColor: "rgba(214,60,71,0.1)",
+                      borderRadius: 16,
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                      borderWidth: 1,
+                      borderColor: "rgba(214,60,71,0.15)",
+                    }}
+                  >
+                    <Feather name="trash-2" size={18} color={webTheme.red} />
+                    <Text style={{ ...type.bold, color: webTheme.red, fontSize: 14 }}>Delete Message</Text>
+                  </HapticPressable>
+                </>
+              )}
+
+              <HapticPressable
+                onPress={() => setActionModalVisible(false)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  borderRadius: 16,
+                  paddingVertical: 14,
+                  marginTop: 8,
+                }}
+              >
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>Cancel</Text>
+              </HapticPressable>
+            </View>
+          </BlurView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

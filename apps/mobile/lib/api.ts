@@ -82,7 +82,13 @@ async function getHeaders() {
 }
 
 function isFormDataBody(body: unknown): body is FormData {
-  return body instanceof FormData;
+  return (
+    body instanceof FormData ||
+    (typeof body === "object" &&
+      body !== null &&
+      (body as any).constructor &&
+      (body as any).constructor.name === "FormData")
+  );
 }
 
 async function request(path: string, init?: RequestInit) {
@@ -137,7 +143,7 @@ async function request(path: string, init?: RequestInit) {
     return data;
   } catch (error) {
     if (ownTimeout) clearTimeout(ownTimeout);
-    console.error(`[API] Exception:`, error);
+    console.warn(`[API] Exception:`, error);
     
     if (error instanceof TypeError && error.message === 'Network request failed') {
       throw new Error(

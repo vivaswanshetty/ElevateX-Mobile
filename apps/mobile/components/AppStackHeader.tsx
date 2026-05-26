@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, Text, View } from "react-native";
 import { type } from "../lib/typography";
@@ -12,6 +12,25 @@ interface AppStackHeaderProps {
 }
 
 export function AppStackHeader({ title, detail, hideWorkspaceButton }: AppStackHeaderProps) {
+  const params = useLocalSearchParams();
+  const from = params.from;
+
+  const handleBack = () => {
+    if (from === "workspace_home") {
+      router.navigate("/hub?from=home");
+    } else if (from === "workspace_profile") {
+      router.navigate("/hub?from=profile");
+    } else if (from === "workspace") {
+      router.navigate("/hub");
+    } else if (from === "home") {
+      router.navigate("/(tabs)");
+    } else if (from === "profile") {
+      router.navigate("/(tabs)/profile");
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View
       style={{
@@ -24,7 +43,7 @@ export function AppStackHeader({ title, detail, hideWorkspaceButton }: AppStackH
       }}
     >
       <Pressable
-        onPress={() => router.back()}
+        onPress={handleBack}
         style={({ pressed }) => ({
           width: 44,
           height: 44,

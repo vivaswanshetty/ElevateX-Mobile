@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { surfaceCardStyle, webTheme } from "../lib/webTheme";
+import { useThemeStore } from "../stores/themeStore";
 
 export type SurfaceCardTone = "default" | "info" | "success" | "danger" | "muted";
 
@@ -114,8 +115,11 @@ export function SurfaceCard({
   const accentColor = getAccentColor(tone, accent);
   const isInteractive = typeof onPress === "function";
 
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+
   const baseStyle: StyleProp<ViewStyle> = [
-    surfaceCardStyle,
+    { ...surfaceCardStyle },
     {
       overflow: "hidden",
       borderColor: accentColor
@@ -126,16 +130,18 @@ export function SurfaceCard({
     style,
   ];
 
+  const glassColors = (isDark
+    ? ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.015)", "rgba(255,255,255,0.005)"]
+    : ["rgba(0,0,0,0.01)", "rgba(0,0,0,0.005)", "rgba(0,0,0,0.0)"]) as [string, string, string];
+
+  const edgeHighlightColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)";
+
   const renderInner = (pressed = false) => (
     <>
       {/* top-lit glass gradient */}
       <LinearGradient
         pointerEvents="none"
-        colors={[
-          "rgba(255,255,255,0.05)",
-          "rgba(255,255,255,0.015)",
-          "rgba(255,255,255,0.005)",
-        ]}
+        colors={glassColors}
         start={{ x: 0.15, y: 0 }}
         end={{ x: 0.85, y: 1 }}
         style={{
@@ -156,42 +162,11 @@ export function SurfaceCard({
           left: 1,
           right: 1,
           height: 1,
-          backgroundColor: "rgba(255,255,255,0.06)",
+          backgroundColor: edgeHighlightColor,
         }}
       />
 
       {/* accent wash */}
-      {accentColor ? (
-        <>
-          <LinearGradient
-            pointerEvents="none"
-            colors={[
-              colorToRgba(accentColor, pressed ? 0.20 : 0.14),
-              colorToRgba(accentColor, pressed ? 0.06 : 0.03),
-              "transparent",
-            ]}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 140,
-            }}
-          />
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 1,
-              backgroundColor: accentColor,
-              opacity: pressed ? 0.6 : 0.35,
-            }}
-          />
-        </>
-      ) : null}
 
       {/* content */}
       <View style={[{ padding: 22 }, contentStyle]}>
@@ -231,9 +206,13 @@ export function SurfaceCard({
 }
 
 export function SectionRule() {
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+  const ruleColor = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
+
   return (
     <LinearGradient
-      colors={["transparent", "rgba(255,255,255,0.10)", "transparent"]}
+      colors={["transparent", ruleColor, "transparent"]}
       start={{ x: 0, y: 0.5 }}
       end={{ x: 1, y: 0.5 }}
       style={{
@@ -244,3 +223,4 @@ export function SectionRule() {
     />
   );
 }
+

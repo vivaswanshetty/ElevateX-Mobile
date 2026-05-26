@@ -30,7 +30,7 @@ export function ScreenHeader({
         {/* eyebrow pill */}
         <View
           style={[
-            pillStyle,
+            { ...pillStyle },
             {
               alignSelf: "flex-start",
               flexDirection: "row",

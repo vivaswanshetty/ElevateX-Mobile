@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View, Animated, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,6 +10,7 @@ import { SurfaceCard } from "../components/SurfaceCard";
 import { api } from "../lib/api";
 import { type } from "../lib/typography";
 import { webTheme } from "../lib/webTheme";
+import { useThemeStore } from "../stores/themeStore";
 
 interface SearchUser {
   _id: string;
@@ -174,7 +175,13 @@ function ToolCard({
 }
 
 export default function HubScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const [search, setSearch] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  
+  const params = useLocalSearchParams();
+  const parent = params.from;
+  const workspaceFrom = parent === "profile" ? "workspace_profile" : "workspace_home";
 
   const analytics = useQuery<AnalyticsResponse>({
     queryKey: ["hubAnalytics"],
@@ -250,14 +257,14 @@ export default function HubScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-          <ToolCard label="Wallet" detail="Balance, deposits, withdrawals, and coin flow." icon="credit-card" accent={webTheme.gold} onPress={() => router.push("/wallet")} />
-          <ToolCard label="Chat" detail="Direct messages and user search." icon="message-circle" accent={webTheme.blue} onPress={() => router.push("/chat")} />
-          <ToolCard label="Leaderboard" detail="All-time and seasonal performance." icon="award" accent={webTheme.red} onPress={() => router.push("/leaderboard")} />
-          <ToolCard label="Feed" detail="Public momentum, wins, and posts." icon="users" accent={webTheme.green} onPress={() => router.push("/feed")} />
-          <ToolCard label="Analytics" detail="Creator metrics from the shared backend." icon="bar-chart-2" accent={webTheme.orange} onPress={() => router.push("/analytics")} />
-          <ToolCard label="Alchemy Lab" detail="Relics, essences, and crafting paths." icon="box" accent={webTheme.purple} onPress={() => router.push("/alchemy")} />
-          <ToolCard label="Duels" detail="Pending challenges and live competitions." icon="zap" accent={webTheme.red} badge={pendingDuels.length} onPress={() => router.push("/duels")} />
-          <ToolCard label="Resonance Room" detail="Live task energy, open opportunities, and momentum." icon="activity" accent={webTheme.blue} badge={openTasks} onPress={() => router.push("/resonance")} />
+          <ToolCard label="Wallet" detail="Balance, deposits, withdrawals, and coin flow." icon="credit-card" accent={webTheme.gold} onPress={() => router.navigate(`/wallet?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Chat" detail="Direct messages and user search." icon="message-circle" accent={webTheme.blue} onPress={() => router.navigate(`/chat?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Leaderboard" detail="All-time and seasonal performance." icon="award" accent={webTheme.red} onPress={() => router.navigate(`/leaderboard?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Feed" detail="Public momentum, wins, and posts." icon="users" accent={webTheme.green} onPress={() => router.navigate(`/feed?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Analytics" detail="Creator metrics from the shared backend." icon="bar-chart-2" accent={webTheme.orange} onPress={() => router.navigate(`/analytics?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Alchemy Lab" detail="Relics, essences, and crafting paths." icon="box" accent={webTheme.purple} onPress={() => router.navigate(`/alchemy?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Duels" detail="Pending challenges and live competitions." icon="zap" accent={webTheme.red} badge={pendingDuels.length} onPress={() => router.navigate(`/duels?from=${workspaceFrom}` as any)} />
+          <ToolCard label="Resonance Room" detail="Live task energy, open opportunities, and momentum." icon="activity" accent={webTheme.blue} badge={openTasks} onPress={() => router.navigate(`/resonance?from=${workspaceFrom}` as any)} />
         </View>
 
         <SurfaceCard style={{ marginTop: 18 }}>
@@ -267,25 +274,32 @@ export default function HubScreen() {
           <View
             style={{
               marginTop: 14,
-              borderRadius: 16,
+              borderRadius: 14,
               borderWidth: 1,
-              borderColor: webTheme.border,
-              backgroundColor: "rgba(255,255,255,0.03)",
-              paddingHorizontal: 14,
-              paddingVertical: 14,
+              borderColor: isFocused ? webTheme.accent : webTheme.border,
+              backgroundColor: webTheme.inputBg,
+              paddingHorizontal: 16,
+              height: 50,
               flexDirection: "row",
               alignItems: "center",
               gap: 10,
             }}
           >
-            <Feather name="search" size={16} color={webTheme.muted} />
+            <Feather name="search" size={16} color={isFocused ? webTheme.accent : webTheme.muted} />
             <TextInput
               value={search}
               onChangeText={setSearch}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               placeholder="Search people across ElevateX"
-              placeholderTextColor="rgba(255,255,255,0.24)"
-              style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14 }}
+              placeholderTextColor={webTheme.faint}
+              style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent", padding: 0 }}
             />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch("")}>
+                <Feather name="x-circle" size={16} color={webTheme.muted} />
+              </Pressable>
+            )}
           </View>
 
           {search.trim().length >= 2 ? (
@@ -298,7 +312,7 @@ export default function HubScreen() {
                     borderRadius: 16,
                     borderWidth: 1,
                     borderColor: webTheme.border,
-                    backgroundColor: "rgba(255,255,255,0.03)",
+                    backgroundColor: webTheme.cardBg,
                     paddingHorizontal: 14,
                     paddingVertical: 14,
                     flexDirection: "row",
@@ -319,7 +333,7 @@ export default function HubScreen() {
           ) : null}
         </SurfaceCard>
 
-        <Pressable onPress={() => router.push("/analytics")}>
+        <Pressable onPress={() => router.navigate(`/analytics?from=${workspaceFrom}` as any)}>
           <SurfaceCard style={{ marginTop: 18 }} accent={webTheme.orange}>
             <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
               Analytics
@@ -368,7 +382,7 @@ export default function HubScreen() {
           </SurfaceCard>
         </Pressable>
 
-        <Pressable onPress={() => router.push("/duels")}>
+        <Pressable onPress={() => router.navigate(`/duels?from=${workspaceFrom}` as any)}>
           <SurfaceCard style={{ marginTop: 18 }} accent={webTheme.red}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
@@ -455,7 +469,7 @@ export default function HubScreen() {
           </SurfaceCard>
         </Pressable>
 
-        <Pressable onPress={() => router.push("/alchemy")}>
+        <Pressable onPress={() => router.navigate(`/alchemy?from=${workspaceFrom}` as any)}>
           <SurfaceCard style={{ marginTop: 18 }} accent={webTheme.purple}>
             <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
               Alchemy Lab

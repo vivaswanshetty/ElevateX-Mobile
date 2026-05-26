@@ -122,7 +122,6 @@ export function UpdatePrompt({
               borderRadius: 60,
               backgroundColor: webTheme.accent,
               opacity: glowOpacity,
-              filter: undefined,
             }}
           />
 

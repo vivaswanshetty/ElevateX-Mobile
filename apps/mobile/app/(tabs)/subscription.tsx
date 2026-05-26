@@ -4,16 +4,18 @@ import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useQueryClient } from "@tanstack/react-query";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { ScreenBackdrop } from "../components/ScreenBackdrop";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { HapticPressable } from "../components/HapticPressable";
-import { useAuthStore } from "../stores/authStore";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
-import { notify } from "../stores/toastStore";
-import { purchaseSubscription, type BillingCycle, type SubscriptionPlan } from "../lib/payment";
-import { normalizeUserPayload } from "../lib/user";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { ScreenBackdrop } from "../../components/ScreenBackdrop";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { HapticPressable } from "../../components/HapticPressable";
+import { useAuthStore } from "../../stores/authStore";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { notify } from "../../stores/toastStore";
+import { purchaseSubscription, type BillingCycle, type SubscriptionPlan } from "../../lib/payment";
+import { normalizeUserPayload } from "../../lib/user";
+import { useThemeStore } from "../../stores/themeStore";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 // Plan prices in smallest unit (paise) for Razorpay
 const PLAN_PRICES: Record<SubscriptionPlan, Record<BillingCycle, number>> = {
@@ -28,8 +30,10 @@ const plans = [
     name: "Starter",
     tagline: "Get started for free.",
     icon: "star",
-    iconBg: "rgba(255,255,255,0.1)",
-    accent: webTheme.muted,
+    iconBgDark: "rgba(255,255,255,0.08)",
+    iconBgLight: "rgba(0,0,0,0.04)",
+    accentDark: "#A3A3A3",
+    accentLight: "#525252",
     features: ["50 Daily Login Coins", "Basic Task Access", "Community Support", "Standard Profile"],
   },
   {
@@ -37,8 +41,10 @@ const plans = [
     name: "Pro",
     tagline: "For serious freelancers.",
     icon: "zap",
-    iconBg: "rgba(96,165,250,0.12)",
-    accent: webTheme.blue,
+    iconBgDark: "rgba(96,165,250,0.14)",
+    iconBgLight: "rgba(37,99,235,0.08)",
+    accentDark: webTheme.blue,
+    accentLight: "#1D4ED8",
     features: ["500 Monthly Coins", "Unlimited Applications", "Verified Pro Badge", "Premium Tasks", "Priority Support"],
   },
   {
@@ -46,8 +52,10 @@ const plans = [
     name: "Elite",
     tagline: "Maximum power.",
     icon: "award",
-    iconBg: "rgba(251,191,36,0.12)",
-    accent: webTheme.gold,
+    iconBgDark: "rgba(251,191,36,0.14)",
+    iconBgLight: "rgba(217,119,6,0.08)",
+    accentDark: webTheme.gold,
+    accentLight: "#B45309",
     features: ["2,500 Monthly Coins", "0% Service Fee", "Dedicated Manager", "Early Feature Access", "Custom Profile Theme"],
   },
 ];
@@ -57,6 +65,9 @@ const planTiers: Record<SubscriptionPlan, number> = { free: 1, pro: 2, elite: 3 
 export default function SubscriptionScreen() {
   const queryClient = useQueryClient();
   const { user, setUser } = useAuthStore();
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+  const tabBarPadding = useTabBarPadding();
   const currentPlan = (user?.subscription?.plan ?? "free") as SubscriptionPlan;
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [activatingPlan, setActivatingPlan] = useState<SubscriptionPlan | null>(null);
@@ -107,10 +118,10 @@ export default function SubscriptionScreen() {
       <ScreenBackdrop />
       <AppStackHeader title="Plans & Pricing" detail="Unlock premium features" />
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: tabBarPadding }} showsVerticalScrollIndicator={false}>
 
         {/* Billing Cycle Toggle */}
-        <View style={{ flexDirection: "row", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 999, padding: 4, marginBottom: 24, alignSelf: "center", borderWidth: 1, borderColor: webTheme.border }}>
+        <View style={{ flexDirection: "row", backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", borderRadius: 999, padding: 4, marginBottom: 24, alignSelf: "center", borderWidth: 1, borderColor: webTheme.border }}>
           {(["monthly", "yearly"] as BillingCycle[]).map((cycle) => (
             <HapticPressable
               key={cycle}
@@ -149,17 +160,20 @@ export default function SubscriptionScreen() {
             ? "Downgrade to Free"
             : `${isDowngrade ? "Downgrade" : "Upgrade"} to ${plan.name}`;
 
+          const planAccent = isDark ? plan.accentDark : plan.accentLight;
+          const planIconBg = isDark ? plan.iconBgDark : plan.iconBgLight;
+
           return (
             <SurfaceCard
               key={plan.id}
               style={{
                 marginBottom: 16, position: "relative", overflow: "hidden",
                 borderWidth: isCurrent ? 2 : 1,
-                borderColor: isCurrent ? plan.accent : "rgba(255,255,255,0.05)",
+                borderColor: isCurrent ? planAccent : webTheme.border,
               }}
             >
               <LinearGradient
-                colors={[plan.iconBg, "transparent"]}
+                colors={[planIconBg, "transparent"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
                 style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.5 }}
@@ -169,10 +183,10 @@ export default function SubscriptionScreen() {
               <View style={{ padding: 20 }}>
                 {/* Plan header */}
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <Feather name={plan.icon as any} size={20} color={plan.accent} />
+                  <Feather name={plan.icon as any} size={20} color={planAccent} />
                   <Text style={{ ...type.black, color: webTheme.text, fontSize: 22 }}>{plan.name}</Text>
                   {isCurrent && (
-                    <View style={{ backgroundColor: "rgba(255,255,255,0.1)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                    <View style={{ backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: webTheme.border }}>
                       <Text style={{ ...type.bold, color: webTheme.text, fontSize: 10, textTransform: "uppercase", letterSpacing: 1 }}>Current</Text>
                     </View>
                   )}
@@ -194,21 +208,23 @@ export default function SubscriptionScreen() {
                   disabled={isCurrent || isLoading || !!activatingPlan}
                   style={{
                     backgroundColor: isCurrent
-                      ? "rgba(255,255,255,0.05)"
+                      ? (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)")
                       : plan.id === "free"
-                      ? webTheme.surfaceRaised
-                      : plan.accent,
+                      ? (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)")
+                      : planAccent,
                     paddingVertical: 14,
                     alignItems: "center",
                     borderRadius: 12,
                     marginBottom: 24,
                     opacity: !isCurrent && activatingPlan && !isLoading ? 0.5 : 1,
+                    borderWidth: isCurrent ? 1 : 0,
+                    borderColor: webTheme.border,
                   }}
                 >
                   {isLoading ? (
                     <ActivityIndicator size="small" color={webTheme.text} />
                   ) : (
-                    <Text style={{ ...type.bold, color: isCurrent ? webTheme.muted : plan.id === "free" ? webTheme.textSecondary : "#111", fontSize: 15 }}>
+                    <Text style={{ ...type.bold, color: isCurrent ? webTheme.text : plan.id === "free" ? webTheme.text : "#FFF", fontSize: 15 }}>
                       {buttonLabel}
                     </Text>
                   )}
@@ -219,8 +235,8 @@ export default function SubscriptionScreen() {
                   <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13, textTransform: "uppercase", letterSpacing: 1 }}>What's Included</Text>
                   {plan.features.map((feat, i) => (
                     <View key={i} style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" }}>
-                        <Feather name="check" size={12} color={plan.accent} />
+                      <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)", alignItems: "center", justifyContent: "center" }}>
+                        <Feather name="check" size={12} color={planAccent} />
                       </View>
                       <Text style={{ ...type.regular, color: webTheme.textSecondary, fontSize: 14 }}>{feat}</Text>
                     </View>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { Alert, ScrollView, Text, TextInput, View, Image } from "react-native";
+import { IOSSwitch } from "../components/IOSSwitch";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { AppStackHeader } from "../components/AppStackHeader";
@@ -14,12 +16,16 @@ import { type } from "../lib/typography";
 import { webTheme, inputFieldStyle } from "../lib/webTheme";
 import { useAuthStore } from "../stores/authStore";
 import { normalizeUserPayload } from "../lib/user";
+import { useThemeStore } from "../stores/themeStore";
+import { getImageUrl, getInitials } from "../lib/media";
+import { UserAvatar } from "../components/UserAvatar";
 
 interface ProfileResponse {
   _id: string;
   name: string;
   email: string;
   isPrivate?: boolean;
+  avatar?: string;
 }
 
 export default function ManageAccountScreen() {
@@ -33,9 +39,50 @@ export default function ManageAccountScreen() {
     confirmPassword: "",
   });
 
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out? You'll need to sign back in next time.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () => {
+            queryClient.clear();
+            signOut().finally(() => {
+              router.replace("/auth/login");
+            });
+          },
+        },
+      ]
+    );
+  };
+
   const { data: profile, isFetching, refetch } = useQuery<ProfileResponse>({
     queryKey: ["profile"],
     queryFn: () => api.get("/api/users/profile"),
+  });
+
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+
+  const followersQuery = useQuery<any[]>({
+    queryKey: ["userFollowers", user?.id],
+    queryFn: () => api.get(`/api/users/${user?.id}/followers`),
+    enabled: Boolean(user?.id),
+  });
+
+  const followingQuery = useQuery<any[]>({
+    queryKey: ["userFollowing", user?.id],
+    queryFn: () => api.get(`/api/users/${user?.id}/following`),
+    enabled: Boolean(user?.id),
+  });
+
+  const postsQuery = useQuery<any[]>({
+    queryKey: ["userPosts", user?.id],
+    queryFn: () => api.get(`/api/posts/user/${user?.id}`),
+    enabled: Boolean(user?.id),
   });
 
   useEffect(() => {
@@ -152,6 +199,50 @@ export default function ManageAccountScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ gap: 16 }}>
+          {/* Profile overview summary */}
+          <SurfaceCard>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+              <UserAvatar avatar={profile?.avatar || user?.avatarUrl} size={56} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ ...type.h3, color: webTheme.text }}>
+                  {profile?.name || user?.displayName || "ElevateX Member"}
+                </Text>
+                <Text style={{ ...type.caption, color: webTheme.muted, marginTop: 2 }}>
+                  @{user?.username || "member"}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: webTheme.borderSoft }}>
+              <View style={{ alignItems: "center", flex: 1 }}>
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
+                  {followersQuery.data?.length || 0}
+                </Text>
+                <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 11, marginTop: 2 }}>
+                  Followers
+                </Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: webTheme.borderSoft }} />
+              <View style={{ alignItems: "center", flex: 1 }}>
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
+                  {followingQuery.data?.length || 0}
+                </Text>
+                <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 11, marginTop: 2 }}>
+                  Following
+                </Text>
+              </View>
+              <View style={{ width: 1, backgroundColor: webTheme.borderSoft }} />
+              <View style={{ alignItems: "center", flex: 1 }}>
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
+                  {postsQuery.data?.length || 0}
+                </Text>
+                <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 11, marginTop: 2 }}>
+                  Posts
+                </Text>
+              </View>
+            </View>
+          </SurfaceCard>
+
           {/* Email section */}
           <SurfaceCard>
             <Text style={{ ...type.h3, color: webTheme.text, marginBottom: 4 }}>Email Address</Text>
@@ -202,11 +293,25 @@ export default function ManageAccountScreen() {
                   Hide your activity and details from users who aren't following you.
                 </Text>
               </View>
-              <Switch
+              <IOSSwitch
                 value={Boolean(profile?.isPrivate)}
                 onValueChange={handlePrivacyToggle}
-                thumbColor={profile?.isPrivate ? webTheme.accent : "#f4f4f5"}
-                trackColor={{ false: "rgba(255,255,255,0.1)", true: "rgba(229,54,75,0.3)" }}
+              />
+            </View>
+          </SurfaceCard>
+
+          {/* Theme switcher */}
+          <SurfaceCard>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flex: 1, marginRight: 16 }}>
+                <Text style={{ ...type.h3, color: webTheme.text, marginBottom: 4 }}>Dark Theme</Text>
+                <Text style={{ ...type.caption, color: webTheme.muted }}>
+                  Switch between light and dark theme mode.
+                </Text>
+              </View>
+              <IOSSwitch
+                value={theme === "dark"}
+                onValueChange={(val) => setTheme(val ? "dark" : "light")}
               />
             </View>
           </SurfaceCard>
@@ -256,6 +361,19 @@ export default function ManageAccountScreen() {
                 </View>
               </HapticPressable>
             </View>
+          </SurfaceCard>
+
+          {/* Sign Out Section */}
+          <SurfaceCard>
+            <Text style={{ ...type.h3, color: webTheme.text, marginBottom: 4 }}>Account Session</Text>
+            <Text style={{ ...type.caption, color: webTheme.muted, marginBottom: 16 }}>
+              Log out of this device. You will need to enter your credentials to log back in.
+            </Text>
+            <HapticPressable onPress={handleSignOut}>
+              <View style={{ borderRadius: 12, borderWidth: 1, borderColor: webTheme.red, backgroundColor: "rgba(229,54,75,0.1)", paddingVertical: 14, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ ...type.bold, color: webTheme.red }}>Sign Out</Text>
+              </View>
+            </HapticPressable>
           </SurfaceCard>
 
           {/* Danger zone */}

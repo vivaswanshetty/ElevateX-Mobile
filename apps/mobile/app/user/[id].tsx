@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, Text, View, Modal, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -17,6 +17,9 @@ import { mapTaskToCard, type TaskCardSource } from "../../lib/tasks";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useAuthStore } from "../../stores/authStore";
+import { UserListModal } from "../../components/UserListModal";
+import { UserAvatar } from "../../components/UserAvatar";
+import { useThemeStore } from "../../stores/themeStore";
 
 interface UserProfile {
   _id: string;
@@ -26,6 +29,8 @@ interface UserProfile {
   bio?: string;
   xp?: number;
   coins?: number;
+  isPrivate?: boolean;
+  followRequests?: string[];
   socials?: {
     twitter?: string;
     linkedin?: string;
@@ -53,6 +58,9 @@ export default function UserDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
+  const [userListModalVisible, setUserListModalVisible] = useState(false);
+  const [userListTitle, setUserListTitle] = useState<"Followers" | "Following">("Followers");
+  const [showEnlargedAvatar, setShowEnlargedAvatar] = useState(false);
 
   const userQuery = useQuery<UserProfile>({
     queryKey: ["user", id],
@@ -89,8 +97,19 @@ export default function UserDetailScreen() {
     queryFn: () => api.get("/api/tasks"),
   });
 
+  const profile = userQuery.data;
   const isCurrentUser = currentUser?.id === id;
   const isFollowing = Boolean((currentFollowingQuery.data || []).some((item) => item._id === id));
+
+  const isRequested = useMemo(() => {
+    if (!profile || !currentUser) return false;
+    return Boolean(
+      profile.followRequests?.some((reqId: any) => {
+        const idStr = typeof reqId === "object" ? reqId._id || reqId.id : reqId;
+        return String(idStr) === String(currentUser.id);
+      })
+    );
+  }, [profile, currentUser]);
 
   const ownTasks = useMemo(
     () =>
@@ -102,9 +121,10 @@ export default function UserDetailScreen() {
   );
 
   const followMutation = useMutation({
-    mutationFn: () => api.put(`/api/users/${id}/${isFollowing ? "unfollow" : "follow"}`),
+    mutationFn: () => api.put(`/api/users/${id}/${(isFollowing || isRequested) ? "unfollow" : "follow"}`),
     onSuccess: async () => {
       await Promise.all([
+        userQuery.refetch(),
         followersQuery.refetch(),
         followingQuery.refetch(),
         currentFollowingQuery.refetch(),
@@ -114,8 +134,6 @@ export default function UserDetailScreen() {
       notify.error(getErrorMessage(error));
     },
   });
-
-  const profile = userQuery.data;
   const avatarUrl = getImageUrl(profile?.avatar);
   const level = Math.floor((profile?.xp || 0) / 500) + 1;
 
@@ -153,27 +171,14 @@ export default function UserDetailScreen() {
             <SurfaceCard>
               <View style={{ position: "absolute", top: -100, right: -50, width: 250, height: 250, borderRadius: 999, backgroundColor: webTheme.accent, opacity: 0.12 }} />
               <View style={{ alignItems: "center" }}>
-                <View
-                  style={{
-                    width: 90,
-                    height: 90,
-                    borderRadius: 999,
-                    overflow: "hidden",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(255,255,255,0.06)",
-                    borderWidth: 2,
-                    borderColor: "rgba(255,255,255,0.1)",
-                  }}
-                >
-                  {avatarUrl ? (
-                    <Image source={{ uri: avatarUrl }} style={{ width: "100%", height: "100%" }} />
-                  ) : (
-                    <Text style={{ ...type.black, color: webTheme.text, fontSize: 28 }}>
-                      {getInitials(profile.name)}
-                    </Text>
-                  )}
-                </View>
+                <Pressable onPress={() => setShowEnlargedAvatar(true)}>
+                  <UserAvatar
+                    avatar={profile.avatar}
+                    size={90}
+                    borderWidth={2}
+                    borderColor="rgba(255,255,255,0.1)"
+                  />
+                </Pressable>
                 <Text style={{ ...type.black, color: webTheme.text, fontSize: 30, marginTop: 16 }}>
                   {profile.name}
                 </Text>
@@ -201,7 +206,7 @@ export default function UserDetailScreen() {
                         overflow: "hidden",
                       }}
                     >
-                      {!isFollowing && (
+                      {!isFollowing && !isRequested && (
                         <LinearGradient
                           colors={[webTheme.accent, "rgba(255,255,255,0.1)"]}
                           start={{ x: 0, y: 0 }}
@@ -212,27 +217,56 @@ export default function UserDetailScreen() {
                       {isFollowing ? (
                         <View style={{ 
                           paddingVertical: 14, 
-                          alignItems: "center", 
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
                           backgroundColor: "rgba(255,255,255,0.05)",
                           borderRadius: 999,
                           borderWidth: 1,
                           borderColor: webTheme.border
                         }}>
+                          <Feather name="user-check" size={14} color={webTheme.text} />
                           <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
                             {followMutation.isPending ? "Updating..." : "Following"}
                           </Text>
                         </View>
-                      ) : (
+                      ) : isRequested ? (
                         <View style={{ 
                           paddingVertical: 14, 
-                          alignItems: "center", 
-                          backgroundColor: webTheme.surfaceRaised,
-                          borderRadius: 999
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          backgroundColor: "rgba(255,255,255,0.05)",
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: webTheme.border
                         }}>
-                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                            {followMutation.isPending ? "Updating..." : "Follow"}
+                          <Feather name="clock" size={14} color={webTheme.gold} />
+                          <Text style={{ ...type.bold, color: webTheme.gold, fontSize: 13 }}>
+                            {followMutation.isPending ? "Updating..." : "Requested"}
                           </Text>
                         </View>
+                      ) : (
+                        <LinearGradient
+                          colors={[webTheme.accent, "#B02A38"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={{
+                            borderRadius: 999,
+                            paddingVertical: 14,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <Feather name="user-plus" size={14} color="#FFF" />
+                          <Text style={{ ...type.bold, color: "#FFF", fontSize: 13 }}>
+                            {followMutation.isPending ? "Updating..." : "Follow"}
+                          </Text>
+                        </LinearGradient>
                       )}
                     </HapticPressable>
                     <HapticPressable
@@ -245,10 +279,14 @@ export default function UserDetailScreen() {
                         borderColor: webTheme.border,
                         backgroundColor: "rgba(255,255,255,0.03)",
                         paddingVertical: 14,
+                        flexDirection: "row",
                         alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
                       }}
                     >
-                      <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 13 }}>
+                      <Feather name="mail" size={14} color={webTheme.text} />
+                      <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
                         Message
                       </Text>
                     </HapticPressable>
@@ -257,7 +295,7 @@ export default function UserDetailScreen() {
               </View>
             </SurfaceCard>
 
-            <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+            <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
               {[
                 { 
                   label: "Followers", 
@@ -288,27 +326,60 @@ export default function UserDetailScreen() {
                   bg: "rgba(245,158,11,0.12)",
                 },
               ].map((item) => {
-                return (
-                  <View key={item.label} style={{ width: "47%" }}>
-                    <SurfaceCard style={{ padding: 16, position: "relative", overflow: "hidden" }}>
-                      <LinearGradient
-                        colors={[item.bg, "transparent"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.5 }}
-                      />
-                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                        <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: item.bg, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
-                          <Feather name={item.icon as any} size={18} color={item.color} />
-                        </View>
-                      </View>
-                      <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 10, letterSpacing: 1.6, textTransform: "uppercase" }}>
+                const isPressable = item.label === "Followers" || item.label === "Following";
+                const handlePress = () => {
+                  if (item.label === "Followers") {
+                    setUserListTitle("Followers");
+                    setUserListModalVisible(true);
+                  } else if (item.label === "Following") {
+                    setUserListTitle("Following");
+                    setUserListModalVisible(true);
+                  }
+                };
+
+                const cardContent = (
+                  <View
+                    style={{
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: webTheme.border,
+                      backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                      padding: 12,
+                      minHeight: 76,
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <Text
+                        style={{
+                          ...type.bold,
+                          color: webTheme.faint,
+                          fontSize: 9,
+                          letterSpacing: 1.2,
+                          textTransform: "uppercase"
+                        }}
+                      >
                         {item.label}
                       </Text>
-                      <Text style={{ ...type.black, color: webTheme.text, fontSize: 28, marginTop: 4 }}>
+                      <Feather name={item.icon as any} size={13} color={item.color} />
+                    </View>
+                    <View style={{ marginTop: 4 }}>
+                      <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
                         {item.value}
                       </Text>
-                    </SurfaceCard>
+                    </View>
+                  </View>
+                );
+
+                return (
+                  <View key={item.label} style={{ width: "48%", marginBottom: 12 }}>
+                    {isPressable ? (
+                      <HapticPressable hapticType="light" onPress={handlePress}>
+                        {cardContent}
+                      </HapticPressable>
+                    ) : (
+                      cardContent
+                    )}
                   </View>
                 );
               })}
@@ -393,6 +464,46 @@ export default function UserDetailScreen() {
           </>
         )}
       </ScrollView>
+
+      <UserListModal
+        visible={userListModalVisible}
+        title={userListTitle}
+        users={userListTitle === "Followers" ? (followersQuery.data || []) : (followingQuery.data || [])}
+        isLoading={userListTitle === "Followers" ? followersQuery.isFetching : followingQuery.isFetching}
+        onClose={() => setUserListModalVisible(false)}
+      />
+
+      {/* Enlarged Avatar Modal */}
+      <Modal
+        visible={showEnlargedAvatar}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEnlargedAvatar(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onPress={() => setShowEnlargedAvatar(false)}
+        >
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{
+                width: "85%",
+                height: "60%",
+                borderRadius: 20,
+                resizeMode: "contain",
+              }}
+            />
+          ) : (
+            <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 16 }}>No profile photo</Text>
+          )}
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

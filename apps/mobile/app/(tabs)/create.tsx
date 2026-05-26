@@ -17,6 +17,7 @@ import { api, getErrorMessage } from "../../lib/api";
 import { type } from "../../lib/typography";
 import { webTheme, inputFieldStyle } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
+import { TabTransitionView } from "../../components/TabTransitionView";
 
 const createCategories = [
   "Development",
@@ -128,7 +129,8 @@ export default function CreateScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
-      <ScreenBackdrop />
+      <TabTransitionView index={2}>
+        <ScreenBackdrop />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: tabBarPadding }}>
         <FadeSlideIn delay={50} distance={10} style={{ width: "100%" }}>
           <ScreenHeader
@@ -474,6 +476,7 @@ export default function CreateScreen() {
           </View>
         </FadeSlideIn>
       </ScrollView>
+      </TabTransitionView>
     </SafeAreaView>
   );
 }

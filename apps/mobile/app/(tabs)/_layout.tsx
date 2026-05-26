@@ -57,6 +57,54 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Feather name="user" color={color} size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="alchemy"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="duels"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="subscription"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="resonance"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

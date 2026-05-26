@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { View } from "react-native";
 import { webTheme } from "../lib/webTheme";
+import { useThemeStore } from "../stores/themeStore";
 
 interface ScreenBackdropProps {
   accent?: string;
@@ -11,6 +12,14 @@ export function ScreenBackdrop({
   accent = webTheme.accent,
   secondaryAccent = webTheme.violet,
 }: ScreenBackdropProps) {
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+
+  // Use absolute black gradients for dark mode and soft light-grey gradients for light mode
+  const gradientColors = (isDark
+    ? ["rgba(0,0,0,0.0)", "rgba(0,0,0,0.45)", webTheme.bg]
+    : ["rgba(248,249,250,0.0)", "rgba(248,249,250,0.45)", webTheme.bg]) as [string, string, string];
+
   return (
     <View
       pointerEvents="none"
@@ -25,57 +34,23 @@ export function ScreenBackdrop({
     >
       {/* top edge highlight */}
       <LinearGradient
-        colors={["rgba(255,255,255,0.04)", "transparent"]}
+        colors={[isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)", "transparent"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1 }}
       />
 
-      {/* primary accent blob — top right */}
-      <View
-        style={{
-          position: "absolute",
-          top: -160,
-          right: -110,
-          width: 340,
-          height: 340,
-          borderRadius: 999,
-          backgroundColor: accent,
-          opacity: 0.06,
-        }}
-      />
-
-      {/* secondary accent blob — left */}
-      <View
-        style={{
-          position: "absolute",
-          top: 80,
-          left: -140,
-          width: 300,
-          height: 300,
-          borderRadius: 999,
-          backgroundColor: secondaryAccent,
-          opacity: 0.04,
-        }}
-      />
-
-      {/* subtle bottom accent */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: -80,
-          right: 40,
-          width: 200,
-          height: 200,
-          borderRadius: 999,
-          backgroundColor: accent,
-          opacity: 0.03,
-        }}
+      {/* premium, minimal backdrop wash gradient */}
+      <LinearGradient
+        colors={isDark ? ["rgba(229,54,75,0.03)", "rgba(139,92,246,0.02)", "transparent"] : ["rgba(229,54,75,0.02)", "rgba(139,92,246,0.015)", "transparent"]}
+        start={{ x: 0.9, y: 0.1 }}
+        end={{ x: 0.1, y: 0.9 }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
       {/* full-screen fade overlay */}
       <LinearGradient
-        colors={["rgba(7,8,10,0.0)", "rgba(7,8,10,0.4)", webTheme.bg]}
+        colors={gradientColors}
         locations={[0, 0.5, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}

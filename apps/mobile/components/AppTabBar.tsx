@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { ComponentProps, useEffect, useMemo } from "react";
+import { ComponentProps, useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Text, View, Dimensions } from "react-native";
 import { BlurView } from "expo-blur";
@@ -9,12 +9,13 @@ import Animated, {
   useAnimatedStyle, 
   withSpring, 
   useSharedValue, 
-  withTiming,
-  interpolateColor
+  withTiming
 } from "react-native-reanimated";
 import { HapticPressable } from "./HapticPressable";
 import { fontFaces } from "../lib/typography";
 import { webTheme } from "../lib/webTheme";
+import { useTabStore } from "../stores/tabStore";
+import { useThemeStore } from "../stores/themeStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -43,18 +44,33 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const activeIndex = state.index;
   
   const indicatorX = useSharedValue(activeIndex * TAB_WIDTH);
+  const setIndex = useTabStore((s) => s.setIndex);
+  
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+  const isTabBarHidden = useTabStore((s) => s.isTabBarHidden);
 
   useEffect(() => {
+    setIndex(activeIndex);
     indicatorX.value = withSpring(activeIndex * TAB_WIDTH, {
       damping: 18,
       stiffness: 150,
       mass: 0.8,
     });
-  }, [activeIndex]);
+  }, [activeIndex, setIndex]);
+
+  if (isTabBarHidden) return null;
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorX.value }],
   }));
+
+  const tint = isDark ? "dark" : "light";
+  const barBg = isDark ? "rgba(10, 10, 15, 0.70)" : "rgba(255, 255, 255, 0.75)";
+  const barBorder = isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.50)";
+  const edgeHighlight = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.60)";
+  const indicatorBg = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)";
+  const indicatorBorder = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)";
 
   return (
     <View
@@ -67,19 +83,19 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
       }}
     >
       <BlurView
-        intensity={80}
-        tint="dark"
+        intensity={95}
+        tint={tint}
         style={{
           borderRadius: 32,
           borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.12)",
-          backgroundColor: "rgba(10, 10, 15, 0.85)",
+          borderColor: barBorder,
+          backgroundColor: barBg,
           paddingHorizontal: 8,
           paddingVertical: 8,
           shadowColor: "#000",
-          shadowOpacity: 0.4,
-          shadowRadius: 20,
-          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: isDark ? 0.35 : 0.08,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 12 },
           elevation: 20,
           overflow: "hidden",
         }}
@@ -92,7 +108,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
             left: 20, 
             right: 20, 
             height: 1, 
-            backgroundColor: "rgba(255,255,255,0.08)" 
+            backgroundColor: edgeHighlight 
           }} 
         />
 
@@ -116,9 +132,9 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               width: "85%",
               height: "100%",
               borderRadius: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              backgroundColor: indicatorBg,
               borderWidth: 1,
-              borderColor: "rgba(255, 255, 255, 0.08)",
+              borderColor: indicatorBorder,
             }}
           />
         </Animated.View>
@@ -164,6 +180,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
                 isCreate={isCreate}
                 onPress={onPress}
                 onLongPress={onLongPress}
+                isDark={isDark}
               />
             );
           })}
@@ -178,13 +195,15 @@ function TabItem({
   meta, 
   isCreate, 
   onPress, 
-  onLongPress 
+  onLongPress,
+  isDark
 }: { 
   focused: boolean; 
   meta: any; 
   isCreate: boolean; 
   onPress: () => void;
   onLongPress: () => void;
+  isDark: boolean;
 }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(focused ? 1 : 0.4);
@@ -202,6 +221,9 @@ function TabItem({
     opacity: opacity.value,
   }));
 
+  const activeColor = webTheme.accent;
+  const inactiveColor = isDark ? "#FFF" : "#737373";
+
   if (isCreate) {
     return (
       <HapticPressable
@@ -212,7 +234,7 @@ function TabItem({
         onPressOut={() => { scale.value = withSpring(1); }}
       >
         <LinearGradient
-          colors={focused ? ["#FF4D5E", "#D63048"] : ["#2A2A35", "#1A1A22"]}
+          colors={focused ? ["#FF4D5E", "#D63048"] : (isDark ? ["#2A2A35", "#1A1A22"] : ["#E5E5E5", "#D4D4D4"])}
           style={{
             width: 42,
             height: 42,
@@ -220,15 +242,15 @@ function TabItem({
             alignItems: "center",
             justifyContent: "center",
             borderWidth: 1,
-            borderColor: focused ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)",
+            borderColor: focused ? "rgba(255,255,255,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)"),
             shadowColor: focused ? webTheme.red : "#000",
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: focused ? 0.3 : 0.2,
+            shadowOpacity: focused ? 0.3 : (isDark ? 0.2 : 0.06),
             shadowRadius: 8,
             elevation: 4,
           }}
         >
-          <Feather name="plus" size={22} color="#fff" />
+          <Feather name="plus" size={22} color={focused ? "#fff" : (isDark ? "#fff" : "#404040")} />
         </LinearGradient>
       </HapticPressable>
     );
@@ -246,13 +268,13 @@ function TabItem({
         <Feather 
           name={meta.icon} 
           size={19} 
-          color={focused ? webTheme.accent : "#FFF"} 
+          color={focused ? activeColor : inactiveColor} 
         />
         <Animated.Text
           style={[
             {
               fontFamily: focused ? fontFaces.bold : fontFaces.semibold,
-              color: focused ? webTheme.text : "#FFF",
+              color: focused ? webTheme.text : inactiveColor,
               fontSize: 9,
               marginTop: 4,
               letterSpacing: 0.2,
@@ -266,3 +288,4 @@ function TabItem({
     </HapticPressable>
   );
 }
+

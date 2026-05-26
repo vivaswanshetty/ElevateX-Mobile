@@ -1,16 +1,17 @@
 import { Feather } from "@expo/vector-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Animated, Easing, Pressable, RefreshControl, ScrollView, Text, View, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { GradientText } from "../components/GradientText";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { api } from "../lib/api";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { GradientText } from "../../components/GradientText";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { api } from "../../lib/api";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 interface ResonanceTask {
   _id: string;
@@ -247,6 +248,8 @@ function getRecentBursts(posts: ResonancePost[]) {
 }
 
 export default function ResonanceScreen() {
+  const params = useLocalSearchParams();
+  const from = params.from;
   const [waveEmissions, setWaveEmissions] = useState(0);
   const heroIn = useRef(new Animated.Value(0)).current;
   const statsIn = useRef(new Animated.Value(0)).current;
@@ -457,12 +460,14 @@ export default function ResonanceScreen() {
   const feedY = feedIn.interpolate({ inputRange: [0, 1], outputRange: [16, 0] });
   const snapshotY = snapshotIn.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
 
+  const tabBarPadding = useTabBarPadding();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <BackgroundParticles />
       <AppStackHeader title="Resonance Chamber" detail="Tap to emit energy waves across the collective." />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -644,7 +649,7 @@ export default function ResonanceScreen() {
             <Text style={{ ...type.black, color: webTheme.text, fontSize: 20 }}>
               Latest Harmonizations
             </Text>
-            <Pressable onPress={() => router.push("/feed")}>
+            <Pressable onPress={() => router.navigate(from ? `/feed?from=${from}` : "/feed")}>
               <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 12 }}>
                 Open feed
               </Text>

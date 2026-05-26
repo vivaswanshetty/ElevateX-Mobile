@@ -14,6 +14,7 @@ import { api } from "../../lib/api";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
+import { TabTransitionView } from "../../components/TabTransitionView";
 
 const activityAccent = {
   reward: webTheme.green,
@@ -84,7 +85,8 @@ export default function ActivityScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
-      <ScreenBackdrop accent={webTheme.orange} secondaryAccent={webTheme.accent} />
+      <TabTransitionView index={3}>
+        <ScreenBackdrop accent={webTheme.orange} secondaryAccent={webTheme.accent} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: tabBarPadding }}>
         <FadeSlideIn delay={50} distance={10}>
           <ScreenHeader
@@ -196,6 +198,7 @@ export default function ActivityScreen() {
           )}
         </View>
       </ScrollView>
+      </TabTransitionView>
     </SafeAreaView>
   );
 }

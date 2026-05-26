@@ -14,13 +14,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { ConfirmDialog } from "../components/ConfirmDialog";
-import { notify } from "../stores/toastStore";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { api, getErrorMessage } from "../lib/api";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { notify } from "../../stores/toastStore";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { api, getErrorMessage } from "../../lib/api";
+import { useThemeStore } from "../../stores/themeStore";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 interface Relic {
   id: string;
@@ -175,6 +177,7 @@ function BackgroundParticles() {
 }
 
 export default function AlchemyScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const [selectedRelic, setSelectedRelic] = useState<Relic | null>(null);
   const [transmuteFrom, setTransmuteFrom] = useState<"focus" | "creativity" | "discipline">("focus");
@@ -276,6 +279,8 @@ export default function AlchemyScreen() {
     );
   };
 
+  const tabBarPadding = useTabBarPadding();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <BackgroundParticles />
@@ -292,7 +297,7 @@ export default function AlchemyScreen() {
         }}
       />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={<RefreshControl refreshing={profile.isFetching || relics.isFetching} onRefresh={() => {
           profile.refetch();
           relics.refetch();
@@ -308,14 +313,44 @@ export default function AlchemyScreen() {
           <View style={{ flexDirection: "row", gap: 12 }}>
             {essenceLabels.map((item) => (
               <View key={item.key} style={{ flex: 1 }}>
-                <SurfaceCard>
-                  <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 10, letterSpacing: 1.8, textTransform: "uppercase" }}>
+                <View
+                  style={{
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: webTheme.border,
+                    backgroundColor: theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                    padding: 12,
+                    minHeight: 78,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                    style={{
+                      ...type.bold,
+                      color: webTheme.faint,
+                      fontSize: 8.5,
+                      letterSpacing: 1.0,
+                      textTransform: "uppercase",
+                    }}
+                  >
                     {item.label}
                   </Text>
-                  <Text style={{ ...type.black, color: item.accent, fontSize: 28, marginTop: 10 }}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    style={{
+                      ...type.black,
+                      color: item.accent,
+                      fontSize: 22,
+                      marginTop: 4,
+                    }}
+                  >
                     {profile.data?.essences?.[item.key] || 0}
                   </Text>
-                </SurfaceCard>
+                </View>
               </View>
             ))}
           </View>
@@ -447,7 +482,7 @@ export default function AlchemyScreen() {
             return (
               <SurfaceCard key={relic.id} accent={owned ? webTheme.purple : available ? webTheme.red : undefined}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, minHeight: 52 }}>
                     <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
                       {relic.name}
                     </Text>
@@ -480,15 +515,36 @@ export default function AlchemyScreen() {
                           borderRadius: 16,
                           borderWidth: 1,
                           borderColor: webTheme.border,
-                          backgroundColor: "rgba(255,255,255,0.03)",
+                          backgroundColor: theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
                           padding: 12,
-                          alignItems: "center",
+                          minHeight: 74,
+                          justifyContent: "space-between",
                         }}
                       >
-                        <Text style={{ ...type.bold, color: essence.accent, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                        <Text
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.7}
+                          style={{
+                            ...type.bold,
+                            color: essence.accent,
+                            fontSize: 8.5,
+                            letterSpacing: 1.0,
+                            textTransform: "uppercase",
+                          }}
+                        >
                           {essence.label}
                         </Text>
-                        <Text style={{ ...type.black, color: webTheme.text, fontSize: 18, marginTop: 8 }}>
+                        <Text
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          style={{
+                            ...type.black,
+                            color: webTheme.text,
+                            fontSize: 22,
+                            marginTop: 4,
+                          }}
+                        >
                           {relic.recipe[essence.key]}
                         </Text>
                       </View>
@@ -496,23 +552,45 @@ export default function AlchemyScreen() {
                   ))}
                 </View>
 
-                {!owned ? (
-                  <Pressable
-                    onPress={() => setSelectedRelic(relic)}
-                    disabled={!available || craftMutation.isPending}
+                <Pressable
+                  onPress={() => {
+                    if (!owned && available) setSelectedRelic(relic);
+                  }}
+                  disabled={owned || !available || craftMutation.isPending}
+                  style={{
+                    marginTop: 16,
+                    borderRadius: 999,
+                    backgroundColor: owned
+                      ? "rgba(139,92,246,0.10)"
+                      : available
+                      ? webTheme.red
+                      : "rgba(255,255,255,0.08)",
+                    borderWidth: owned ? 1 : 0,
+                    borderColor: owned ? "rgba(139,92,246,0.22)" : "transparent",
+                    paddingVertical: 14,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  {owned && <Feather name="check" size={14} color={webTheme.purple} />}
+                  <Text
                     style={{
-                      marginTop: 16,
-                      borderRadius: 999,
-                      backgroundColor: available ? webTheme.red : "rgba(255,255,255,0.08)",
-                      paddingVertical: 14,
-                      alignItems: "center",
+                      ...type.bold,
+                      color: owned ? webTheme.purple : webTheme.text,
+                      fontSize: 13
                     }}
                   >
-                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                      {craftMutation.isPending && selectedRelic?.id === relic.id ? "Crafting..." : available ? "Craft relic" : "Need more essences"}
-                    </Text>
-                  </Pressable>
-                ) : null}
+                    {owned
+                      ? "Owned & Active"
+                      : craftMutation.isPending && selectedRelic?.id === relic.id
+                      ? "Crafting..."
+                      : available
+                      ? "Craft Relic"
+                      : "Insufficient Essences"}
+                  </Text>
+                </Pressable>
               </SurfaceCard>
             );
           })}

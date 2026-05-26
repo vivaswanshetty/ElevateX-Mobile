@@ -15,6 +15,7 @@ import { formatTimeAgo, getImageUrl, getInitials } from "../../lib/media";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useAuthStore } from "../../stores/authStore";
+import { UserAvatar } from "../../components/UserAvatar";
 
 interface TaskDetail {
   _id: string;
@@ -108,7 +109,6 @@ export default function TaskDetailScreen() {
   const statusAccent = getStatusAccent(task?.status);
   const isOwner = task?.createdBy?._id === currentUser?.id;
   const hasApplied = Boolean(task?.applicants?.some((item) => item.user?._id === currentUser?.id));
-  const creatorAvatar = getImageUrl(task?.createdBy?.avatar);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
@@ -269,27 +269,12 @@ export default function TaskDetailScreen() {
                     Creator Profile
                   </Text>
                   <View style={{ marginTop: 16, flexDirection: "row", alignItems: "center", gap: 16 }}>
-                    <View
-                      style={{
-                        width: 58,
-                        height: 58,
-                        borderRadius: 999,
-                        overflow: "hidden",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderWidth: 2,
-                        borderColor: "rgba(255,255,255,0.1)",
-                        backgroundColor: "rgba(255,255,255,0.05)",
-                      }}
-                    >
-                      {creatorAvatar ? (
-                        <Image source={{ uri: creatorAvatar }} style={{ width: "100%", height: "100%" }} />
-                      ) : (
-                        <Text style={{ ...type.black, color: webTheme.text, fontSize: 20 }}>
-                          {getInitials(task.createdBy?.name)}
-                        </Text>
-                      )}
-                    </View>
+                    <UserAvatar
+                      avatar={task.createdBy?.avatar}
+                      size={58}
+                      borderWidth={2}
+                      borderColor="rgba(255,255,255,0.1)"
+                    />
                     <View style={{ flex: 1 }}>
                       <Text style={{ ...type.black, color: webTheme.text, fontSize: 18 }}>
                         {task.createdBy?.name || "Anonymous"}

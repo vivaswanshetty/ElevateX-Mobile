@@ -2,7 +2,7 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 import type { Task } from "../lib/tasks";
 import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
+import { pillStyle, webTheme } from "../lib/webTheme";
 import { SurfaceCard } from "./SurfaceCard";
 
 const difficultyStyles = {
@@ -56,19 +56,18 @@ export function TaskCard({ task, onPress }: TaskCardProps) {
           >
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1 }}>
               <View
-                style={{
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: webTheme.borderStrong,
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                }}
+                style={[
+                  { ...pillStyle },
+                  {
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                  },
+                ]}
               >
                 <Text
                   style={{
                     ...type.label,
-                    color: "rgba(255,255,255,0.65)",
+                    color: webTheme.textSecondary,
                     fontSize: 10,
                     letterSpacing: 1.4,
                   }}

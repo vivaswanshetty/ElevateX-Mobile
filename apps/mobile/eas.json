@@ -21,7 +21,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://elevatexco.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://elevatexco.up.railway.app",
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
       }
     },
     "production": {

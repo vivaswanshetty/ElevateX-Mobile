@@ -25,6 +25,8 @@ import { normalizeUserPayload } from "../lib/user";
 import { usePushNotifications } from "../lib/pushNotifications";
 import { useCheckUpdates } from "../lib/checkUpdates";
 import { UpdatePrompt } from "../components/UpdatePrompt";
+import { useThemeStore } from "../stores/themeStore";
+import { webTheme } from "../lib/webTheme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -120,6 +122,8 @@ export default function RootLayout() {
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const showUpdatePrompt = Boolean(updateInfo?.isUpdateAvailable) && !updateDismissed;
 
+  const theme = useThemeStore((state) => state.theme);
+
   if (isLoading || (!fontsLoaded && !fontError)) {
     return (
       <FullscreenMessage
@@ -135,15 +139,15 @@ export default function RootLayout() {
   }
 
   return (
-    <AppErrorBoundary>
+    <AppErrorBoundary key={theme}>
       <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#07080a' }}>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#07080a' } }}>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: webTheme.bg }}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: webTheme.bg } }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="auth" />
           </Stack>
           <GlobalToast />
-          <StatusBar style="light" />
+          <StatusBar style={theme === "dark" ? "light" : "dark"} />
           <UpdatePrompt
             visible={showUpdatePrompt}
             updateInfo={updateInfo}

@@ -11,13 +11,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { EmptyState } from "../components/EmptyState";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
-import { useAuthStore } from "../stores/authStore";
-import { api } from "../lib/api";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { EmptyState } from "../../components/EmptyState";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { useAuthStore } from "../../stores/authStore";
+import { api } from "../../lib/api";
+import { useThemeStore } from "../../stores/themeStore";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 interface LeaderboardUser {
   _id: string;
@@ -42,10 +44,12 @@ interface CurrentSeasonResponse {
 }
 
 export default function LeaderboardScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const currentUser = useAuthStore((state) => state.user);
   const [mode, setMode] = useState<"alltime" | "season">("alltime");
   const [sortBy, setSortBy] = useState<"xp" | "coins" | "level">("xp");
   const [query, setQuery] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const allTime = useQuery<LeaderboardUser[]>({
     queryKey: ["leaderboard", sortBy],
@@ -70,11 +74,13 @@ export default function LeaderboardScreen() {
   const topThree = filteredRows.slice(0, 3);
   const rest = filteredRows.slice(3);
 
+  const tabBarPadding = useTabBarPadding();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <AppStackHeader title="Leaderboard" detail="All-time and season performance from the web backend." />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={
           <RefreshControl
             refreshing={allTime.isFetching || season.isFetching}
@@ -100,8 +106,8 @@ export default function LeaderboardScreen() {
                   flex: 1,
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: active ? "rgba(214,60,71,0.3)" : webTheme.border,
-                  backgroundColor: active ? "rgba(214,60,71,0.14)" : "rgba(255,255,255,0.03)",
+                  borderColor: active ? "rgba(229,54,75,0.3)" : webTheme.border,
+                  backgroundColor: active ? "rgba(229,54,75,0.12)" : webTheme.cardBg,
                   paddingVertical: 12,
                   alignItems: "center",
                 }}
@@ -130,7 +136,7 @@ export default function LeaderboardScreen() {
                     borderRadius: 999,
                     borderWidth: 1,
                     borderColor: active ? "rgba(251,146,60,0.3)" : webTheme.border,
-                    backgroundColor: active ? "rgba(251,146,60,0.12)" : "rgba(255,255,255,0.03)",
+                    backgroundColor: active ? "rgba(251,146,60,0.12)" : webTheme.cardBg,
                     paddingHorizontal: 14,
                     paddingVertical: 10,
                   }}
@@ -163,25 +169,32 @@ export default function LeaderboardScreen() {
         <View
           style={{
             marginTop: 16,
-            borderRadius: 16,
+            borderRadius: 14,
             borderWidth: 1,
-            borderColor: webTheme.border,
-            backgroundColor: "rgba(255,255,255,0.03)",
-            paddingHorizontal: 14,
-            paddingVertical: 14,
+            borderColor: isFocused ? webTheme.accent : webTheme.border,
+            backgroundColor: webTheme.inputBg,
+            paddingHorizontal: 16,
+            height: 50,
             flexDirection: "row",
             alignItems: "center",
             gap: 10,
           }}
         >
-          <Feather name="search" size={16} color={webTheme.muted} />
+          <Feather name="search" size={16} color={isFocused ? webTheme.accent : webTheme.muted} />
           <TextInput
             value={query}
             onChangeText={setQuery}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder="Search members"
-            placeholderTextColor="rgba(255,255,255,0.24)"
-            style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14 }}
+            placeholderTextColor={webTheme.faint}
+            style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent", padding: 0 }}
           />
+          {query.length > 0 && (
+            <Pressable onPress={() => setQuery("")}>
+              <Feather name="x-circle" size={16} color={webTheme.muted} />
+            </Pressable>
+          )}
         </View>
 
         {filteredRows.length === 0 && !allTime.isFetching && !season.isFetching && (

@@ -15,6 +15,7 @@ import { type } from "../lib/typography";
 import { normalizeUserPayload } from "../lib/user";
 import { webTheme } from "../lib/webTheme";
 import { useAuthStore } from "../stores/authStore";
+import { useThemeStore } from "../stores/themeStore";
 
 interface WorkItem {
   id: number;
@@ -63,6 +64,7 @@ interface ProfileResponse {
 }
 
 export default function EditProfileScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const { user, setUser } = useAuthStore();
   const maxBioLength = 160;
@@ -273,9 +275,17 @@ export default function EditProfileScreen() {
                   onError={() => setLocalAvatarUri(null)}
                 />
               ) : (
-                <Text style={{ ...type.black, color: webTheme.accent, fontSize: 32 }}>
-                  {getInitials(form.name)}
-                </Text>
+                <View
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: "rgba(255,255,255,0.05)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Feather name="user" size={44} color={webTheme.faint} />
+                </View>
               )}
             </View>
             <View
@@ -342,7 +352,7 @@ export default function EditProfileScreen() {
                       setForm((current) => ({ ...current, [field.key]: cleaned }));
                     }}
                     placeholder={field.placeholder}
-                    placeholderTextColor="rgba(255,255,255,0.22)"
+                    placeholderTextColor={webTheme.muted}
                     autoCapitalize={field.key === "username" ? "none" : undefined}
                     autoCorrect={field.key === "username" ? false : undefined}
                   style={{
@@ -350,7 +360,7 @@ export default function EditProfileScreen() {
                     flex: 1,
                     minHeight: field.multiline ? 96 : undefined,
                     textAlignVertical: field.multiline ? "top" : "center",
-                    backgroundColor: "rgba(255,255,255,0.04)",
+                    backgroundColor: webTheme.inputBg,
                     borderWidth: 1,
                     borderColor: webTheme.border,
                     color: webTheme.text,
@@ -427,12 +437,12 @@ export default function EditProfileScreen() {
                         value={field.value}
                         onChangeText={(value) => updateWorkItem(item.id, field.field as keyof WorkItem, value)}
                         placeholder={field.placeholder}
-                        placeholderTextColor="rgba(255,255,255,0.22)"
+                        placeholderTextColor={webTheme.muted}
                         style={{
                           ...type.regular,
                           minHeight: field.multiline ? 80 : undefined,
                           textAlignVertical: field.multiline ? "top" : "center",
-                          backgroundColor: "rgba(255,255,255,0.04)",
+                          backgroundColor: webTheme.inputBg,
                           borderWidth: 1,
                           borderColor: webTheme.border,
                           color: webTheme.text,
@@ -523,10 +533,10 @@ export default function EditProfileScreen() {
                         value={field.value}
                         onChangeText={(value) => updateEducationItem(item.id, field.field as keyof EducationItem, value)}
                         placeholder={field.placeholder}
-                        placeholderTextColor="rgba(255,255,255,0.22)"
+                        placeholderTextColor={webTheme.muted}
                         style={{
                           ...type.regular,
-                          backgroundColor: "rgba(255,255,255,0.04)",
+                          backgroundColor: webTheme.inputBg,
                           borderWidth: 1,
                           borderColor: webTheme.border,
                           color: webTheme.text,

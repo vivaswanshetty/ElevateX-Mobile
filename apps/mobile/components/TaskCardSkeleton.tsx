@@ -6,7 +6,7 @@ export function TaskCardSkeleton() {
   return (
     <View
       style={[
-        surfaceCardStyle,
+        { ...surfaceCardStyle },
         {
           overflow: "hidden",
           padding: 22,

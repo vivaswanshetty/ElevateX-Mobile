@@ -11,16 +11,18 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { ScreenBackdrop } from "../components/ScreenBackdrop";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { api, getErrorMessage } from "../lib/api";
-import { depositCoins } from "../lib/payment";
-import { type } from "../lib/typography";
-import { normalizeUserPayload } from "../lib/user";
-import { webTheme } from "../lib/webTheme";
-import { useAuthStore } from "../stores/authStore";
-import { notify } from "../stores/toastStore";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { ScreenBackdrop } from "../../components/ScreenBackdrop";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { api, getErrorMessage } from "../../lib/api";
+import { depositCoins } from "../../lib/payment";
+import { type } from "../../lib/typography";
+import { normalizeUserPayload } from "../../lib/user";
+import { webTheme } from "../../lib/webTheme";
+import { useAuthStore } from "../../stores/authStore";
+import { notify } from "../../stores/toastStore";
+import { useThemeStore } from "../../stores/themeStore";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 interface ProfileResponse {
   coins?: number;
@@ -61,6 +63,7 @@ function formatDate(value: string) {
 }
 
 export default function WalletScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const setUser = useAuthStore((state) => state.setUser);
   const [mode, setMode] = useState<"deposit" | "withdraw">("deposit");
@@ -166,13 +169,15 @@ export default function WalletScreen() {
   const depositLimit = planLabel === "ELITE" ? "Unlimited" : planLabel === "PRO" ? "1,000" : "200";
   const depositBarWidth = planLabel === "ELITE" ? "100%" : planLabel === "PRO" ? "66%" : "20%";
 
+  const tabBarPadding = useTabBarPadding();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <ScreenBackdrop accent={webTheme.red} secondaryAccent={webTheme.gold} />
       <AppStackHeader title="Wallet" detail="Coins, deposits, withdrawals, and rewards." />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={webTheme.red} />}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -181,7 +186,7 @@ export default function WalletScreen() {
           <Text
             style={{
               ...type.bold,
-              color: "rgba(255,255,255,0.45)",
+              color: webTheme.faint,
               fontSize: 10,
               letterSpacing: 2.2,
               textTransform: "uppercase",
@@ -225,7 +230,7 @@ export default function WalletScreen() {
                 <Feather name="credit-card" size={17} color={webTheme.red} />
               </View>
               <View>
-                <Text style={{ ...type.bold, color: "rgba(255,255,255,0.45)", fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}>
+                <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 10, letterSpacing: 2, textTransform: "uppercase" }}>
                   Total Balance
                 </Text>
                 <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 12, marginTop: 4 }}>
@@ -342,15 +347,48 @@ export default function WalletScreen() {
             { label: "XP", value: `${profile?.xp || 0}`, icon: "zap", accent: webTheme.blue },
           ].map((item) => (
             <View key={item.label} style={{ flex: 1 }}>
-              <SurfaceCard>
-                <Feather name={item.icon as "trending-up" | "trending-down" | "zap"} size={18} color={item.accent} />
-                <Text style={{ ...type.bold, color: "rgba(255,255,255,0.40)", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginTop: 10 }}>
-                  {item.label}
-                </Text>
-                <Text style={{ ...type.black, color: item.accent, fontSize: 21, marginTop: 8 }}>
-                  {item.value}
-                </Text>
-              </SurfaceCard>
+              <View
+                style={{
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: webTheme.border,
+                  backgroundColor: theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                  padding: 12,
+                  minHeight: 78,
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                    style={{
+                      ...type.bold,
+                      color: webTheme.faint,
+                      fontSize: 8.5,
+                      letterSpacing: 1.0,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                  <Feather name={item.icon as any} size={13} color={item.accent} />
+                </View>
+                <View style={{ marginTop: 4 }}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    style={{
+                      ...type.extrabold,
+                      color: item.accent,
+                      fontSize: 18,
+                    }}
+                  >
+                    {item.value}
+                  </Text>
+                </View>
+              </View>
             </View>
           ))}
         </View>
@@ -378,8 +416,8 @@ export default function WalletScreen() {
                     flex: 1,
                     borderRadius: 999,
                     borderWidth: 1,
-                    borderColor: active ? "rgba(214,60,71,0.28)" : webTheme.border,
-                    backgroundColor: active ? "rgba(214,60,71,0.12)" : "rgba(255,255,255,0.03)",
+                    borderColor: active ? "rgba(229,54,75,0.28)" : webTheme.border,
+                    backgroundColor: active ? "rgba(229,54,75,0.12)" : webTheme.cardBg,
                     paddingVertical: 12,
                     alignItems: "center",
                   }}
@@ -391,20 +429,20 @@ export default function WalletScreen() {
               );
             })}
           </View>
-
+ 
           <TextInput
             value={amount}
             onChangeText={setAmount}
             keyboardType="numeric"
             placeholder="Amount"
-            placeholderTextColor="rgba(255,255,255,0.24)"
+            placeholderTextColor={webTheme.muted}
             style={{
               ...type.regular,
               marginTop: 16,
               borderRadius: 16,
               borderWidth: 1,
               borderColor: webTheme.border,
-              backgroundColor: "rgba(255,255,255,0.04)",
+              backgroundColor: webTheme.inputBg,
               color: webTheme.text,
               paddingHorizontal: 16,
               paddingVertical: 14,

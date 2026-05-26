@@ -8,7 +8,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  Switch,
   Text,
   TextInput,
   View,
@@ -33,6 +32,10 @@ import { webTheme, inputFieldStyle } from "../../lib/webTheme";
 import { api, getErrorMessage } from "../../lib/api";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { useAuthStore } from "../../stores/authStore";
+import { TabTransitionView } from "../../components/TabTransitionView";
+import { UserListModal } from "../../components/UserListModal";
+import { useThemeStore } from "../../stores/themeStore";
+import { UserAvatar } from "../../components/UserAvatar";
 
 interface WorkItem {
   id: number;
@@ -108,10 +111,13 @@ function getLevelTitle(level: number) {
 export default function ProfileScreen() {
   const tabBarPadding = useTabBarPadding();
   const queryClient = useQueryClient();
+  const theme = useThemeStore((s) => s.theme);
   const { user, setUser, signOut } = useAuthStore();
   const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "posts" | "activity">("overview");
   const [avatarError, setAvatarError] = useState(false);
   const [showEnlargedAvatar, setShowEnlargedAvatar] = useState(false);
+  const [userListModalVisible, setUserListModalVisible] = useState(false);
+  const [userListTitle, setUserListTitle] = useState<"Followers" | "Following">("Followers");
 
   const {
     data: profile,
@@ -130,6 +136,18 @@ export default function ProfileScreen() {
   const { data: posts = [], isFetching: isFetchingPosts } = useQuery<FeedPost[]>({
     queryKey: ["posts", "profile"],
     queryFn: () => api.get("/api/posts"),
+  });
+
+  const followersQuery = useQuery<any[]>({
+    queryKey: ["userFollowers", user?.id],
+    queryFn: () => api.get(`/api/users/${user?.id}/followers`),
+    enabled: Boolean(user?.id),
+  });
+
+  const followingQuery = useQuery<any[]>({
+    queryKey: ["userFollowing", user?.id],
+    queryFn: () => api.get(`/api/users/${user?.id}/following`),
+    enabled: Boolean(user?.id),
   });
 
   useEffect(() => {
@@ -189,10 +207,10 @@ export default function ProfileScreen() {
   );
 
   const statCards: any[] = [
-    { label: "Level", value: `${level}`, sub: levelTitle, icon: "award", accent: webTheme.gold, bg: "rgba(251,191,36,0.12)", route: "/leaderboard" },
+    { label: "Level", value: `${level}`, sub: levelTitle, icon: "award", accent: webTheme.gold, bg: "rgba(251,191,36,0.12)", route: "/leaderboard?from=profile" },
     { label: "Tasks Posted", value: `${ownTasks.length}`, sub: "All time", icon: "layers", accent: webTheme.blue, bg: "rgba(96,165,250,0.12)", action: () => setActiveTab("tasks") },
-    { label: "Coins", value: `${displayProfile.coins || 0}`, sub: "Balance", icon: "credit-card", accent: webTheme.green, bg: "rgba(52,211,153,0.12)", route: "/wallet" },
-    { label: "Plan", value: planLabel, sub: "Subscription", icon: "star", accent: webTheme.accent, bg: "rgba(229,54,75,0.12)", route: "/subscription" },
+    { label: "Coins", value: `${displayProfile.coins || 0}`, sub: "Balance", icon: "credit-card", accent: webTheme.green, bg: "rgba(52,211,153,0.12)", route: "/wallet?from=profile" },
+    { label: "Plan", value: planLabel, sub: "Subscription", icon: "star", accent: webTheme.accent, bg: "rgba(229,54,75,0.12)", route: "/subscription?from=profile" },
   ];
 
   const socials = [
@@ -226,48 +244,34 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
-      <ScreenBackdrop />
-      <ScrollView
+      <TabTransitionView index={4}>
+        <ScreenBackdrop />
+        <ScrollView
         contentContainerStyle={{ paddingBottom: tabBarPadding }}
-        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={webTheme.accent} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching || followersQuery.isFetching || followingQuery.isFetching}
+            onRefresh={() => {
+              refetch();
+              followersQuery.refetch();
+              followingQuery.refetch();
+            }}
+            tintColor={webTheme.accent}
+          />
+        }
         showsVerticalScrollIndicator={false}
       >
         {/* ── header backdrop ── */}
         <View style={{ height: 200, overflow: "hidden", backgroundColor: webTheme.bg }}>
           <LinearGradient
-            colors={["#1A1015", "#120D10", webTheme.bg]}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 0.7, y: 1 }}
-            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              top: 0, right: 0, bottom: 0, left: 0,
-              backgroundColor: "rgba(229,54,75,0.03)",
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              top: -52,
-              right: -54,
-              width: 260,
-              height: 260,
-              borderRadius: 999,
-              backgroundColor: "rgba(229,54,75,0.10)",
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              bottom: -112,
-              left: -72,
-              width: 220,
-              height: 220,
-              borderRadius: 999,
-              backgroundColor: "rgba(139,92,246,0.05)",
-            }}
+            colors={
+              theme === "dark"
+                ? ["#1A0C0E", "#0A0506", "#000000"]
+                : ["#FFEBEF", "#F5E2E5", webTheme.bg]
+            }
+            start={{ x: 0.15, y: 0 }}
+            end={{ x: 0.85, y: 1 }}
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
           />
           <LinearGradient
             colors={["transparent", webTheme.bg]}
@@ -275,46 +279,109 @@ export default function ProfileScreen() {
             end={{ x: 0.5, y: 1 }}
             style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 112 }}
           />
+
+          {/* Subtle Classy Background Graphic */}
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", opacity: 0.8 }}>
+            <View
+              style={{
+                position: "absolute",
+                right: -70,
+                top: -50,
+                width: 240,
+                height: 240,
+                borderRadius: 120,
+                borderWidth: 1,
+                borderColor: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                borderStyle: "dashed",
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                right: -30,
+                top: -10,
+                width: 160,
+                height: 160,
+                borderRadius: 80,
+                borderWidth: 1,
+                borderColor: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                left: -40,
+                bottom: 30,
+                width: "120%",
+                height: 1,
+                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+                transform: [{ rotate: "-15deg" }],
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                left: -40,
+                bottom: 55,
+                width: "120%",
+                height: 1,
+                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                transform: [{ rotate: "-10deg" }],
+              }}
+            />
+          </View>
+
+          {/* Floating settings gear and header title overlay */}
+          <View
+            style={{
+              position: "absolute",
+              top: 20,
+              left: 22,
+              right: 22,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              zIndex: 10,
+            }}
+          >
+            <Text style={{ ...type.h2, color: theme === "dark" ? "#ffffff" : webTheme.text, fontSize: 22 }}>My Profile</Text>
+            <HapticPressable
+              onPress={() => router.push("/manage-account")}
+              hapticType="light"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.05)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.18)" : "rgba(0, 0, 0, 0.08)",
+              }}
+            >
+              <Feather name="settings" size={20} color={theme === "dark" ? "#ffffff" : webTheme.text} />
+            </HapticPressable>
+          </View>
         </View>
 
-        {/* ── profile card ── */}
-        <FadeSlideIn delay={100} distance={20} style={{ width: "100%" }}>
-          <View style={{ paddingHorizontal: 22, marginTop: -28 }}>
-            <View style={{ alignItems: "center" }}>
-            {/* avatar */}
-            <Pressable onPress={() => showAvatar && setShowEnlargedAvatar(true)}>
-              <View
-                style={{
-                  width: 116,
-                  height: 116,
-                  borderRadius: 999,
-                  backgroundColor: showAvatar ? webTheme.bg : webTheme.surfaceRaised,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 4,
-                  borderColor: showAvatar ? webTheme.bg : webTheme.accentBorder,
-                  overflow: "hidden",
-                  zIndex: 2,
-                  opacity: showAvatar ? 1 : 1,
-                }}
-              >
-                {showAvatar ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                    onError={() => setAvatarError(true)}
-                  />
-                ) : (
-                  <Text style={{ ...type.black, color: webTheme.accent, fontSize: 34 }}>
-                    {getInitials(displayProfile.name)}
-                  </Text>
-                )}
-              </View>
-            </Pressable>
+        {/* Breathable horizontal gutter wrapper for all body sections */}
+        <View style={{ paddingHorizontal: 22, width: "100%", marginTop: -28 }}>
+          {/* ── profile card ── */}
+          <FadeSlideIn delay={100} distance={20} style={{ width: "100%" }}>
+            <View>
+              <View style={{ alignItems: "center" }}>
+              {/* avatar */}
+              <Pressable onPress={() => setShowEnlargedAvatar(true)} style={{ zIndex: 10 }}>
+                <UserAvatar
+                  avatar={displayProfile.avatar}
+                  size={116}
+                  borderWidth={4}
+                  borderColor={showAvatar ? webTheme.bg : webTheme.accentBorder}
+                />
+              </Pressable>
 
-            {/* info card */}
-            <SurfaceCard style={{ width: "100%", marginTop: -22 }} contentStyle={{ paddingTop: 44 }}>
+              {/* info card */}
+              <SurfaceCard style={{ width: "100%", marginTop: -22 }} contentStyle={{ paddingTop: 44 }}>
               <View style={{ alignItems: "center" }}>
                 <Text style={{ ...type.h1, color: webTheme.text, fontSize: 28 }}>
                   {displayProfile.name}
@@ -357,6 +424,24 @@ export default function ProfileScreen() {
                   {displayProfile.bio || "Add a short bio so your profile feels deliberate, not empty."}
                 </Text>
 
+                {/* Followers, Following, Posts counts */}
+                <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%", marginTop: 18, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: webTheme.border }}>
+                  <Pressable onPress={() => { setUserListTitle("Followers"); setUserListModalVisible(true); }} style={{ alignItems: "center", flex: 1 }}>
+                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{followersQuery.data?.length || 0}</Text>
+                    <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Followers</Text>
+                  </Pressable>
+                  <View style={{ width: 1, backgroundColor: webTheme.border }} />
+                  <Pressable onPress={() => { setUserListTitle("Following"); setUserListModalVisible(true); }} style={{ alignItems: "center", flex: 1 }}>
+                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{followingQuery.data?.length || 0}</Text>
+                    <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Following</Text>
+                  </Pressable>
+                  <View style={{ width: 1, backgroundColor: webTheme.border }} />
+                  <Pressable onPress={() => setActiveTab("posts")} style={{ alignItems: "center", flex: 1 }}>
+                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{ownPosts.length}</Text>
+                    <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Posts</Text>
+                  </Pressable>
+                </View>
+
                 {/* XP progress */}
                 <View style={{ marginTop: 20, width: "100%" }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -390,23 +475,14 @@ export default function ProfileScreen() {
                 </View>
 
                 {/* action buttons */}
-                <View style={{ marginTop: 20, flexDirection: "row", gap: 10, width: "100%" }}>
+                <View style={{ marginTop: 20, width: "100%" }}>
                   <HapticPressable 
                     onPress={() => router.push("/edit-profile")}
                     hapticType="light"
-                    style={{ flex: 1 }}
+                    style={{ width: "100%" }}
                   >
                     <View style={{ borderRadius: 999, backgroundColor: webTheme.accent, paddingVertical: 14, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", minHeight: 52 }}>
-                      <Text style={{ ...type.buttonLabel, color: "#fff" }}>Edit</Text>
-                    </View>
-                  </HapticPressable>
-                  <HapticPressable 
-                    onPress={handleSignOut}
-                    hapticType="light"
-                    style={{ flex: 1 }}
-                  >
-                    <View style={{ borderRadius: 999, borderWidth: 1, borderColor: webTheme.red, backgroundColor: "rgba(229,54,75,0.1)", paddingVertical: 14, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", minHeight: 52 }}>
-                      <Text style={{ ...type.buttonLabel, color: webTheme.red, fontWeight: "600" }}>Sign out</Text>
+                      <Text style={{ ...type.buttonLabel, color: "#fff" }}>Edit Profile</Text>
                     </View>
                   </HapticPressable>
                 </View>
@@ -417,8 +493,8 @@ export default function ProfileScreen() {
         </FadeSlideIn>
 
           {/* ── stat cards ── */}
-          <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            <AnimatedList baseDelay={220} stagger={60} distance={10} itemStyle={{ width: "47%" }}>
+          <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
+            <AnimatedList baseDelay={220} stagger={60} distance={10} itemStyle={{ width: "48%", marginBottom: 12 }}>
               {statCards.map((stat) => {
                 return (
                   <View key={stat.label}>
@@ -426,39 +502,45 @@ export default function ProfileScreen() {
                       hapticType="light"
                       onPress={() => {
                         if (stat.action) stat.action();
-                        else if (stat.route) router.push(stat.route);
+                        else if (stat.route) router.navigate(stat.route as any);
                       }}
                     >
-                      <SurfaceCard contentStyle={{ padding: 18, position: "relative", overflow: "hidden" }}>
-                        <LinearGradient
-                          colors={[stat.bg, "transparent"]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.5 }}
-                        />
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                          <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: stat.bg, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
-                            <Feather name={stat.icon as any} size={18} color={stat.accent} />
-                          </View>
+                      <View
+                        style={{
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: webTheme.border,
+                          backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                          padding: 12,
+                          minHeight: 76,
+                          justifyContent: "space-between"
+                        }}
+                      >
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <Text
+                            style={{
+                              ...type.bold,
+                              color: webTheme.faint,
+                              fontSize: 9,
+                              letterSpacing: 1.2,
+                              textTransform: "uppercase"
+                            }}
+                          >
+                            {stat.label}
+                          </Text>
+                          <Feather name={stat.icon as any} size={13} color={stat.accent} />
                         </View>
-                        <Text
-                          style={{
-                            ...type.label,
-                            color: webTheme.faint,
-                            fontSize: 10,
-                            letterSpacing: 1.6,
-                            textTransform: "uppercase"
-                          }}
-                        >
-                          {stat.label}
-                        </Text>
-                        <Text style={{ ...type.black, marginTop: 4, color: webTheme.text, fontSize: 24 }}>
-                          {stat.value}
-                        </Text>
-                        <Text style={{ ...type.caption, marginTop: 2, color: webTheme.muted }}>
-                          {stat.sub}
-                        </Text>
-                      </SurfaceCard>
+                        <View style={{ marginTop: 4 }}>
+                          <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
+                            {stat.value}
+                          </Text>
+                          {stat.sub ? (
+                            <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 9, marginTop: 1 }} numberOfLines={1}>
+                              {stat.sub}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
                     </HapticPressable>
                   </View>
                 );
@@ -672,35 +754,6 @@ export default function ProfileScreen() {
                 </View>
               </SurfaceCard>
 
-              {/* manage account link */}
-              <HapticPressable onPress={() => router.push("/manage-account")}>
-                <SurfaceCard tone="muted">
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ ...type.h2, color: webTheme.text }}>
-                        Manage Account
-                      </Text>
-                      <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13, marginTop: 4 }}>
-                        Privacy, password, and account controls.
-                      </Text>
-                    </View>
-                    <View 
-                      style={{ 
-                        width: 44, 
-                        height: 44, 
-                        borderRadius: 22, 
-                        backgroundColor: "rgba(255,255,255,0.05)", 
-                        alignItems: "center", 
-                        justifyContent: "center",
-                        borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.1)"
-                      }}
-                    >
-                      <Feather name="settings" size={20} color={webTheme.accent} />
-                    </View>
-                  </View>
-                </SurfaceCard>
-              </HapticPressable>
             </View>
           ) : null}
 
@@ -768,7 +821,7 @@ export default function ProfileScreen() {
                   <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8 }}>
                     Share progress in the feed and your posts will show up here just like the web profile.
                   </Text>
-                  <HapticPressable onPress={() => router.push("/feed")}>
+                  <HapticPressable onPress={() => router.navigate("/feed?from=profile")}>
                     <View style={{ marginTop: 16, alignSelf: "flex-start", borderRadius: 999, backgroundColor: webTheme.accent, paddingHorizontal: 16, paddingVertical: 12 }}>
                       <Text style={{ ...type.buttonLabel, color: "#fff" }}>Open feed</Text>
                     </View>
@@ -795,7 +848,7 @@ export default function ProfileScreen() {
                   ].map((item) => (
                     <Pressable
                       key={item.label}
-                      onPress={() => router.push(item.route as "/feed" | "/wallet" | "/leaderboard" | "/chat" | "/hub")}
+                      onPress={() => router.navigate(`${item.route}?from=profile` as any)}
                       style={({ pressed }) => ({
                         width: "47%",
                         borderRadius: 20,
@@ -831,7 +884,9 @@ export default function ProfileScreen() {
           </FadeSlideIn>
 
           <Watermark />
-      </ScrollView>
+          </View>
+        </ScrollView>
+      </TabTransitionView>
 
       {/* Enlarged Avatar Modal */}
       <Modal
@@ -849,31 +904,29 @@ export default function ProfileScreen() {
           }}
           onPress={() => setShowEnlargedAvatar(false)}
         >
-          {showAvatar && (
-            <>
-              <Image
-                source={{ uri: avatarUrl }}
-                style={{
-                  width: "85%",
-                  height: "60%",
-                  borderRadius: 20,
-                  resizeMode: "contain",
-                }}
-              />
-              <Text
-                style={{
-                  ...type.body,
-                  color: "#fff",
-                  marginTop: 20,
-                  textAlign: "center",
-                }}
-              >
-                Tap anywhere to close
-              </Text>
-            </>
+          {showAvatar ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{
+                width: "85%",
+                height: "60%",
+                borderRadius: 20,
+                resizeMode: "contain",
+              }}
+            />
+          ) : (
+            <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 16 }}>No profile photo</Text>
           )}
         </Pressable>
       </Modal>
+
+      <UserListModal
+        visible={userListModalVisible}
+        title={userListTitle}
+        users={userListTitle === "Followers" ? (followersQuery.data || []) : (followingQuery.data || [])}
+        isLoading={userListTitle === "Followers" ? followersQuery.isFetching : followingQuery.isFetching}
+        onClose={() => setUserListModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

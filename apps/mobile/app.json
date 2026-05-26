@@ -54,7 +54,8 @@
         {
           "launchWaitMs": 2000
         }
-      ]
+      ],
+      "./plugins/withGradleMemory"
     ],
     "updates": {
       "enabled": true,

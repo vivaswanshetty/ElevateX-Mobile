@@ -17,6 +17,18 @@ import { mapTaskToCard, type TaskCardSource } from "../../lib/tasks";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
+import { TabTransitionView } from "../../components/TabTransitionView";
+import { useThemeStore } from "../../stores/themeStore";
+
+const quickTools = [
+  { label: "Wallet", route: "/wallet?from=home", icon: "credit-card", color: webTheme.gold, detail: "Balance & flow" },
+  { label: "Chat", route: "/chat?from=home", icon: "message-circle", color: webTheme.blue, detail: "Direct messages" },
+  { label: "Leaderboard", route: "/leaderboard?from=home", icon: "award", color: webTheme.red, detail: "Global rankings" },
+  { label: "Feed", route: "/feed?from=home", icon: "users", color: webTheme.green, detail: "Public momentum" },
+  { label: "Duels", route: "/duels?from=home", icon: "zap", color: webTheme.violet, detail: "Live challenges" },
+  { label: "Alchemy Lab", route: "/alchemy?from=home", icon: "box", color: webTheme.purple, detail: "Essences & relics" },
+] as const;
+
 
 function HeroButton({
   label,
@@ -69,6 +81,7 @@ function HeroButton({
 }
 
 export default function HomeScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const tabBarPadding = useTabBarPadding();
   const { data: tasks = [], isFetching } = useQuery<TaskCardSource[]>({
     queryKey: ["tasks"],
@@ -84,7 +97,8 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
-      <ScreenBackdrop />
+      <TabTransitionView index={0}>
+        <ScreenBackdrop />
       <ScrollView
         contentContainerStyle={{ paddingBottom: tabBarPadding }}
         showsVerticalScrollIndicator={false}
@@ -99,11 +113,13 @@ export default function HomeScreen() {
             paddingBottom: 40,
           }}
         >
-          {/* background blobs */}
-          <View style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, opacity: 0.6, pointerEvents: "none" }}>
-            <View style={{ position: "absolute", top: -80, left: -40, width: 280, height: 280, backgroundColor: "rgba(229,54,75,0.12)", borderRadius: 999 }} />
-            <View style={{ position: "absolute", top: 120, right: -100, width: 250, height: 250, backgroundColor: "rgba(139,92,246,0.12)", borderRadius: 999 }} />
-          </View>
+          {/* background gradient wash */}
+          <LinearGradient
+            colors={theme === "dark" ? ["rgba(229,54,75,0.05)", "rgba(139,92,246,0.04)", "transparent"] : ["rgba(229,54,75,0.02)", "rgba(139,92,246,0.02)", "transparent"]}
+            start={{ x: 0.1, y: 0.1 }}
+            end={{ x: 0.9, y: 0.9 }}
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.8, pointerEvents: "none" }}
+          />
 
           {/* top edge highlight */}
           <View
@@ -123,7 +139,7 @@ export default function HomeScreen() {
                   borderRadius: 999,
                   borderWidth: 1,
                   borderColor: webTheme.border,
-                  backgroundColor: "rgba(255,255,255,0.03)",
+                  backgroundColor: webTheme.cardBg,
                   paddingHorizontal: 16,
                   paddingVertical: 8,
                   flexDirection: "row",
@@ -206,7 +222,7 @@ export default function HomeScreen() {
 
             {/* workspace link */}
             <FadeSlideIn delay={420} distance={8}>
-              <HapticPressable hapticType="medium" onPress={() => router.push("/hub")}>
+              <HapticPressable hapticType="medium" onPress={() => router.navigate("/hub?from=home")}>
                 <View
                   style={{
                     marginTop: 16,
@@ -233,13 +249,83 @@ export default function HomeScreen() {
                     }}
                   >
                     <Feather name="hexagon" size={15} color={webTheme.accent} />
-                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13, letterSpacing: 0.3 }}>
+                    <Text style={{ ...type.bold, color: "#FFFFFF", fontSize: 13, letterSpacing: 0.3 }}>
                       Open workspace
                     </Text>
-                    <Feather name="arrow-right" size={14} color={webTheme.faint} />
+                    <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.6)" />
                   </View>
                 </View>
               </HapticPressable>
+            </FadeSlideIn>
+
+            {/* Quick Access Tools */}
+            <FadeSlideIn delay={460} distance={10} style={{ width: "100%" }}>
+              <View style={{ marginTop: 28, width: "100%" }}>
+                <Text
+                  style={{
+                    ...type.bold,
+                    color: webTheme.muted,
+                    fontSize: 10,
+                    letterSpacing: 1.8,
+                    textTransform: "uppercase",
+                    paddingHorizontal: 22,
+                    marginBottom: 14,
+                  }}
+                >
+                  Quick Tools
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 22, gap: 12, paddingBottom: 4 }}
+                >
+                  {quickTools.map((tool) => (
+                    <HapticPressable
+                      key={tool.label}
+                      onPress={() => router.navigate(tool.route as any)}
+                      hapticType="light"
+                    >
+                      <View
+                        style={{
+                          width: 142,
+                          height: 112,
+                          borderRadius: 22,
+                          borderWidth: 1,
+                          borderColor: webTheme.border,
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          padding: 15,
+                          justifyContent: "space-between",
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 12,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: `${tool.color}1C`,
+                            borderWidth: 1,
+                            borderColor: `${tool.color}3A`,
+                          }}
+                        >
+                          <Feather name={tool.icon as any} size={16} color={tool.color} />
+                        </View>
+                        <View>
+                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
+                            {tool.label}
+                          </Text>
+                          <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 10, marginTop: 3 }} numberOfLines={1}>
+                            {tool.detail}
+                          </Text>
+                        </View>
+                      </View>
+                    </HapticPressable>
+                  ))}
+                </ScrollView>
+              </View>
             </FadeSlideIn>
 
             <FadeSlideIn delay={500}>
@@ -373,12 +459,13 @@ export default function HomeScreen() {
               </Text>
               <View style={{ marginTop: 22, gap: 12 }}>
                 <HeroButton label="Post Your First Task" icon="arrow-right" onPress={() => router.push("/create")} primary />
-                <HeroButton label="Open Workspace" icon="arrow-up-right" onPress={() => router.push("/hub")} />
+                <HeroButton label="Open Workspace" icon="arrow-up-right" onPress={() => router.navigate("/hub?from=home")} />
               </View>
             </SurfaceCard>
           </FadeSlideIn>
         </View>
       </ScrollView>
+      </TabTransitionView>
     </SafeAreaView>
   );
 }

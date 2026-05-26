@@ -15,17 +15,20 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { ConfirmDialog } from "../components/ConfirmDialog";
-import { EmptyState } from "../components/EmptyState";
-import { ScreenBackdrop } from "../components/ScreenBackdrop";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { api, getErrorMessage } from "../lib/api";
-import { formatTimeAgo, getImageUrl, getInitials } from "../lib/media";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
-import { useAuthStore } from "../stores/authStore";
-import { notify } from "../stores/toastStore";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { EmptyState } from "../../components/EmptyState";
+import { ScreenBackdrop } from "../../components/ScreenBackdrop";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { api, getErrorMessage } from "../../lib/api";
+import { formatTimeAgo, getImageUrl, getInitials } from "../../lib/media";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { useAuthStore } from "../../stores/authStore";
+import { notify } from "../../stores/toastStore";
+import { useThemeStore } from "../../stores/themeStore";
+import { UserAvatar } from "../../components/UserAvatar";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 interface FeedUser {
   _id: string;
@@ -58,6 +61,7 @@ function getLevel(xp?: number) {
 }
 
 export default function FeedScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [mode, setMode] = useState<"all" | "following">("all");
@@ -146,6 +150,8 @@ export default function FeedScreen() {
     },
   });
 
+  const tabBarPadding = useTabBarPadding();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <ScreenBackdrop accent={webTheme.red} secondaryAccent={webTheme.blue} />
@@ -164,7 +170,7 @@ export default function FeedScreen() {
         }}
       />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={webTheme.red} />}
         showsVerticalScrollIndicator={false}
       >
@@ -174,35 +180,17 @@ export default function FeedScreen() {
               onPress={() => setComposerOpen(true)}
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
-              <View
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 999,
-                  overflow: "hidden",
-                  backgroundColor: "rgba(214,60,71,0.16)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {currentUser?.avatarUrl ? (
-                  <Image source={{ uri: getImageUrl(currentUser.avatarUrl) || undefined }} style={{ width: "100%", height: "100%" }} />
-                ) : (
-                  <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
-                    {getInitials(currentUser?.displayName || currentUser?.username)}
-                  </Text>
-                )}
-              </View>
+              <UserAvatar avatar={currentUser?.avatarUrl} size={42} />
               <View
                 style={{
                   flex: 1,
                   borderRadius: 999,
-                  backgroundColor: "rgba(255,255,255,0.05)",
+                  backgroundColor: webTheme.inputBg,
                   paddingHorizontal: 16,
                   paddingVertical: 13,
                 }}
               >
-                <Text style={{ ...type.regular, color: "rgba(255,255,255,0.40)", fontSize: 14 }}>
+                <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 14 }}>
                   {"What's on your mind, "}{(currentUser?.displayName || "Member").split(" ")[0]}?
                 </Text>
               </View>
@@ -222,25 +210,7 @@ export default function FeedScreen() {
           ) : (
             <View>
               <View style={{ flexDirection: "row", gap: 12 }}>
-                <View
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 999,
-                    overflow: "hidden",
-                    backgroundColor: "rgba(214,60,71,0.16)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {currentUser?.avatarUrl ? (
-                    <Image source={{ uri: getImageUrl(currentUser.avatarUrl) || undefined }} style={{ width: "100%", height: "100%" }} />
-                  ) : (
-                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
-                      {getInitials(currentUser?.displayName || currentUser?.username)}
-                    </Text>
-                  )}
-                </View>
+                <UserAvatar avatar={currentUser?.avatarUrl} size={42} />
                   <View style={{ flex: 1 }}>
                     <TextInput
                       autoFocus
@@ -248,7 +218,7 @@ export default function FeedScreen() {
                       value={composer}
                       onChangeText={setComposer}
                       placeholder="Share something with the community..."
-                      placeholderTextColor="rgba(255,255,255,0.28)"
+                      placeholderTextColor={webTheme.muted}
                       maxLength={MAX_CHARS}
                       style={{
                         ...type.regular,
@@ -258,6 +228,7 @@ export default function FeedScreen() {
                         fontSize: 15,
                         lineHeight: 24,
                         textAlignVertical: "top",
+                        backgroundColor: "transparent",
                       }}
                     />
                     
@@ -364,8 +335,8 @@ export default function FeedScreen() {
                 style={{
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: active ? "rgba(214,60,71,0.30)" : webTheme.border,
-                  backgroundColor: active ? "rgba(214,60,71,0.14)" : "rgba(255,255,255,0.03)",
+                  borderColor: active ? "rgba(229,54,75,0.30)" : webTheme.border,
+                  backgroundColor: active ? "rgba(229,54,75,0.12)" : webTheme.cardBg,
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                 }}
@@ -392,7 +363,6 @@ export default function FeedScreen() {
           {posts.map((post) => {
             const isOwnPost = post.author?._id === currentUser?.id;
             const isLiked = post.likes?.includes(currentUser?.id || "");
-            const avatar = getImageUrl(post.author?.avatar);
             const image = getImageUrl(post.image);
             const isExpanded = expandedPostId === post._id;
             const likeCount = post.likes?.length || 0;
@@ -407,25 +377,7 @@ export default function FeedScreen() {
                     style={{ flexDirection: "row", gap: 12, flex: 1 }}
                   >
                     <View style={{ position: "relative" }}>
-                      <View
-                        style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 999,
-                          overflow: "hidden",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: "rgba(214,60,71,0.16)",
-                        }}
-                      >
-                        {avatar ? (
-                          <Image source={{ uri: avatar }} style={{ width: "100%", height: "100%" }} />
-                        ) : (
-                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
-                            {getInitials(post.author?.name)}
-                          </Text>
-                        )}
-                      </View>
+                      <UserAvatar avatar={post.author?.avatar} size={44} />
                       <View
                         style={{
                           position: "absolute",
@@ -579,7 +531,7 @@ export default function FeedScreen() {
                         key={comment._id || `${post._id}-${index}`}
                         style={{
                           borderRadius: 16,
-                          backgroundColor: "rgba(255,255,255,0.03)",
+                          backgroundColor: webTheme.cardBg,
                           paddingHorizontal: 14,
                           paddingVertical: 12,
                         }}
@@ -598,7 +550,7 @@ export default function FeedScreen() {
                         borderRadius: 16,
                         borderWidth: 1,
                         borderColor: webTheme.border,
-                        backgroundColor: "rgba(255,255,255,0.03)",
+                        backgroundColor: webTheme.inputBg,
                         padding: 12,
                       }}
                     >
@@ -611,8 +563,8 @@ export default function FeedScreen() {
                           }))
                         }
                         placeholder="Write a comment"
-                        placeholderTextColor="rgba(255,255,255,0.24)"
-                        style={{ ...type.regular, color: webTheme.text, fontSize: 14 }}
+                        placeholderTextColor={webTheme.muted}
+                        style={{ ...type.regular, color: webTheme.text, fontSize: 14, backgroundColor: "transparent" }}
                       />
                       <Pressable
                         onPress={() => {

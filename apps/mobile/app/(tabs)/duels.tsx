@@ -12,14 +12,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppStackHeader } from "../components/AppStackHeader";
-import { EmptyState } from "../components/EmptyState";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { notify } from "../stores/toastStore";
-import { api, getErrorMessage } from "../lib/api";
-import { type } from "../lib/typography";
-import { webTheme } from "../lib/webTheme";
-import { useAuthStore } from "../stores/authStore";
+import { AppStackHeader } from "../../components/AppStackHeader";
+import { EmptyState } from "../../components/EmptyState";
+import { SurfaceCard } from "../../components/SurfaceCard";
+import { notify } from "../../stores/toastStore";
+import { api, getErrorMessage } from "../../lib/api";
+import { type } from "../../lib/typography";
+import { webTheme } from "../../lib/webTheme";
+import { useAuthStore } from "../../stores/authStore";
+import { useThemeStore } from "../../stores/themeStore";
+import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 type DuelType = "task-sprint" | "habit-streak" | "study-duel";
 
@@ -197,6 +199,7 @@ function DuelCard({
 }
 
 export default function DuelsScreen() {
+  const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [mode, setMode] = useState<"my" | "live" | "create">("my");
@@ -265,11 +268,13 @@ export default function DuelsScreen() {
   const live = liveDuels.data || [];
   const searchedUsers = (userSearch.data || []).filter((item) => item._id !== currentUser?.id);
 
+  const tabBarPadding = useTabBarPadding();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <AppStackHeader title="Duels" detail="Challenges, live races, shadow runs, and active competition." />
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarPadding }}
         refreshControl={
           <RefreshControl
             refreshing={myDuels.isFetching || liveDuels.isFetching}
@@ -297,8 +302,8 @@ export default function DuelsScreen() {
                   flex: 1,
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: activeTab ? "rgba(214,60,71,0.28)" : webTheme.border,
-                  backgroundColor: activeTab ? "rgba(214,60,71,0.12)" : "rgba(255,255,255,0.03)",
+                  borderColor: activeTab ? "rgba(229,54,75,0.28)" : webTheme.border,
+                  backgroundColor: activeTab ? "rgba(229,54,75,0.12)" : webTheme.cardBg,
                   paddingVertical: 12,
                   alignItems: "center",
                 }}
@@ -399,8 +404,8 @@ export default function DuelsScreen() {
                         flex: 1,
                         borderRadius: 16,
                         borderWidth: 1,
-                        borderColor: activeType ? "rgba(214,60,71,0.28)" : webTheme.border,
-                        backgroundColor: activeType ? "rgba(214,60,71,0.10)" : "rgba(255,255,255,0.03)",
+                        borderColor: activeType ? "rgba(229,54,75,0.28)" : webTheme.border,
+                        backgroundColor: activeType ? "rgba(229,54,75,0.10)" : webTheme.cardBg,
                         paddingVertical: 12,
                         alignItems: "center",
                       }}
@@ -412,14 +417,14 @@ export default function DuelsScreen() {
                   );
                 })}
               </View>
-
+ 
               <View
                 style={{
                   marginTop: 16,
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: webTheme.border,
-                  backgroundColor: "rgba(255,255,255,0.03)",
+                  backgroundColor: webTheme.inputBg,
                   paddingHorizontal: 14,
                   paddingVertical: 14,
                   flexDirection: "row",
@@ -432,8 +437,8 @@ export default function DuelsScreen() {
                   value={search}
                   onChangeText={setSearch}
                   placeholder="Search opponent by name"
-                  placeholderTextColor="rgba(255,255,255,0.24)"
-                  style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14 }}
+                  placeholderTextColor={webTheme.muted}
+                  style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 14, backgroundColor: "transparent" }}
                 />
               </View>
 
@@ -449,8 +454,8 @@ export default function DuelsScreen() {
                         style={{
                           borderRadius: 16,
                           borderWidth: 1,
-                          borderColor: selected ? "rgba(214,60,71,0.28)" : webTheme.border,
-                          backgroundColor: selected ? "rgba(214,60,71,0.10)" : "rgba(255,255,255,0.03)",
+                          borderColor: selected ? "rgba(229,54,75,0.28)" : webTheme.border,
+                          backgroundColor: selected ? "rgba(229,54,75,0.10)" : webTheme.cardBg,
                           paddingHorizontal: 14,
                           paddingVertical: 14,
                         }}
@@ -479,7 +484,7 @@ export default function DuelsScreen() {
                       borderRadius: 16,
                       borderWidth: 1,
                       borderColor: webTheme.border,
-                      backgroundColor: "rgba(255,255,255,0.03)",
+                      backgroundColor: webTheme.inputBg,
                       color: webTheme.text,
                       paddingHorizontal: 14,
                       paddingVertical: 14,
@@ -496,7 +501,7 @@ export default function DuelsScreen() {
                 onChangeText={setMessage}
                 multiline
                 placeholder={`Challenge copy for ${selectedType.label}`}
-                placeholderTextColor="rgba(255,255,255,0.24)"
+                placeholderTextColor={webTheme.muted}
                 style={{
                   ...type.regular,
                   minHeight: 96,
@@ -504,7 +509,7 @@ export default function DuelsScreen() {
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: webTheme.border,
-                  backgroundColor: "rgba(255,255,255,0.03)",
+                  backgroundColor: webTheme.inputBg,
                   color: webTheme.text,
                   paddingHorizontal: 14,
                   paddingVertical: 14,
