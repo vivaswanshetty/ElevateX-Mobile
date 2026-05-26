@@ -480,6 +480,77 @@ export default function HomeScreen() {
           </FadeSlideIn>
         </View>
       </ScrollView>
+
+      {/* Floating AI Assistant Shortcut Button */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: tabBarPadding + 16,
+          right: 20,
+          zIndex: 9999,
+        }}
+      >
+        <HapticPressable
+          hapticType="medium"
+          onPress={() => router.push("/assistant?from=home" as any)}
+        >
+          <View
+            style={{
+              width: 58,
+              height: 58,
+              borderRadius: 29,
+              backgroundColor: "rgba(229, 54, 75, 0.15)",
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#E5364B",
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.5,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <LinearGradient
+              colors={["#E5364B", "#8B5CF6"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                borderRadius: 29,
+              }}
+            />
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                backgroundColor: "rgba(13, 10, 12, 0.95)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: "rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <View
+                style={{
+                  position: "absolute",
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 25,
+                  borderWidth: 1.5,
+                  borderColor: "rgba(229, 54, 75, 0.3)",
+                }}
+              />
+              <Feather name="cpu" size={22} color={webTheme.accent} />
+            </View>
+          </View>
+        </HapticPressable>
+      </View>
       </TabTransitionView>
     </SafeAreaView>
   );

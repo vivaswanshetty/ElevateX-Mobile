@@ -257,6 +257,7 @@ export default function HubScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+          <ToolCard label="Elev AI Assistant" detail="AI Companion, task matchmaking, and productivity guide." icon="cpu" accent={webTheme.red} onPress={() => router.navigate(`/assistant?from=${workspaceFrom}` as any)} />
           <ToolCard label="Wallet" detail="Balance, deposits, withdrawals, and coin flow." icon="credit-card" accent={webTheme.gold} onPress={() => router.navigate(`/wallet?from=${workspaceFrom}` as any)} />
           <ToolCard label="Chat" detail="Direct messages and user search." icon="message-circle" accent={webTheme.blue} onPress={() => router.navigate(`/chat?from=${workspaceFrom}` as any)} />
           <ToolCard label="Leaderboard" detail="All-time and seasonal performance." icon="award" accent={webTheme.red} onPress={() => router.navigate(`/leaderboard?from=${workspaceFrom}` as any)} />
@@ -265,7 +266,6 @@ export default function HubScreen() {
           <ToolCard label="Alchemy Lab" detail="Relics, essences, and crafting paths." icon="box" accent={webTheme.purple} onPress={() => router.navigate(`/alchemy?from=${workspaceFrom}` as any)} />
           <ToolCard label="Duels" detail="Pending challenges and live competitions." icon="zap" accent={webTheme.red} badge={pendingDuels.length} onPress={() => router.navigate(`/duels?from=${workspaceFrom}` as any)} />
           <ToolCard label="Resonance Room" detail="Live task energy, open opportunities, and momentum." icon="activity" accent={webTheme.blue} badge={openTasks} onPress={() => router.navigate(`/resonance?from=${workspaceFrom}` as any)} />
-          <ToolCard label="Elev AI Assistant" detail="AI Companion, task matchmaking, and productivity guide." icon="cpu" accent={webTheme.red} onPress={() => router.navigate(`/assistant?from=${workspaceFrom}` as any)} />
         </View>
 
         <SurfaceCard style={{ marginTop: 18 }}>
