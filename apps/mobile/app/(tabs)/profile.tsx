@@ -150,6 +150,18 @@ export default function ProfileScreen() {
     enabled: Boolean(user?.id),
   });
 
+  const handleRemoveFollower = async (userId: string, userName: string) => {
+    try {
+      await api.put(`/api/users/${userId}/remove-follower`);
+      notify.success(`${userName} has been removed from your followers.`);
+      followersQuery.refetch();
+      refetch();
+    } catch (error) {
+      console.error("Error removing follower:", error);
+      notify.error("Failed to remove follower. Please try again.");
+    }
+  };
+
   useEffect(() => {
     if (!profile) return;
     setAvatarError(false);
@@ -930,6 +942,7 @@ export default function ProfileScreen() {
         users={userListTitle === "Followers" ? (followersQuery.data || []) : (followingQuery.data || [])}
         isLoading={userListTitle === "Followers" ? followersQuery.isFetching : followingQuery.isFetching}
         onClose={() => setUserListModalVisible(false)}
+        onRemoveUser={userListTitle === "Followers" ? handleRemoveFollower : undefined}
       />
     </SafeAreaView>
   );

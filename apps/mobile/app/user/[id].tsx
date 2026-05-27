@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, Text, View, Modal, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 
 import { AppStackHeader } from "../../components/AppStackHeader";
 import { notify } from "../../stores/toastStore";
@@ -31,6 +32,7 @@ interface UserProfile {
   coins?: number;
   isPrivate?: boolean;
   followRequests?: string[];
+  createdAt?: string;
   socials?: {
     twitter?: string;
     linkedin?: string;
@@ -44,6 +46,7 @@ interface LightweightUser {
   name: string;
   avatar?: string;
   xp?: number;
+  followedAt?: string;
 }
 
 interface PostItem {
@@ -61,6 +64,21 @@ export default function UserDetailScreen() {
   const [userListModalVisible, setUserListModalVisible] = useState(false);
   const [userListTitle, setUserListTitle] = useState<"Followers" | "Following">("Followers");
   const [showEnlargedAvatar, setShowEnlargedAvatar] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "N/A";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (e) {
+      return "N/A";
+    }
+  };
 
   const userQuery = useQuery<UserProfile>({
     queryKey: ["user", id],
@@ -110,6 +128,18 @@ export default function UserDetailScreen() {
       })
     );
   }, [profile, currentUser]);
+
+  const youFollowedRecord = useMemo(() => {
+    return (followersQuery.data || []).find(
+      (u) => String(u._id) === String(currentUser?.id)
+    );
+  }, [followersQuery.data, currentUser?.id]);
+
+  const theyFollowedRecord = useMemo(() => {
+    return (followingQuery.data || []).find(
+      (u) => String(u._id) === String(currentUser?.id)
+    );
+  }, [followingQuery.data, currentUser?.id]);
 
   const ownTasks = useMemo(
     () =>
@@ -292,6 +322,23 @@ export default function UserDetailScreen() {
                       <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
                         Message
                       </Text>
+                    </HapticPressable>
+                    <HapticPressable
+                      hapticType="light"
+                      onPress={() => setInfoModalVisible(true)}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 24,
+                        borderWidth: 1,
+                        borderColor: webTheme.border,
+                        backgroundColor: "rgba(255,255,255,0.03)",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        alignSelf: "center",
+                      }}
+                    >
+                      <Feather name="info" size={16} color={webTheme.text} />
                     </HapticPressable>
                   </View>
                 ) : null}
@@ -507,6 +554,117 @@ export default function UserDetailScreen() {
             <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 16 }}>No profile photo</Text>
           )}
         </Pressable>
+      </Modal>
+
+      {/* Connection Info Modal */}
+      <Modal
+        visible={infoModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Pressable style={{ flex: 1 }} onPress={() => setInfoModalVisible(false)} />
+          <BlurView
+            intensity={95}
+            tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
+            style={{
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              borderWidth: 1,
+              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.95)" : "rgba(255, 255, 255, 0.95)",
+              paddingBottom: 34,
+            }}
+          >
+            {/* Header handle */}
+            <View style={{ alignItems: "center", paddingVertical: 12 }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)",
+                }}
+              />
+            </View>
+
+            {/* Title and Close */}
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 24, marginBottom: 20 }}>
+              <Text style={{ ...type.h2, color: webTheme.text, fontSize: 22 }}>
+                About this connection
+              </Text>
+              <Pressable onPress={() => setInfoModalVisible(false)}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", alignItems: "center", justifyContent: "center" }}>
+                  <Feather name="x" size={16} color={webTheme.text} />
+                </View>
+              </Pressable>
+            </View>
+
+            {/* Content info card */}
+            <View style={{ paddingHorizontal: 24, gap: 16 }}>
+              {/* User overview */}
+              <View style={{ flexDirection: "row", alignItems: "center", paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: webTheme.borderSoft }}>
+                <UserAvatar avatar={profile?.avatar} size={54} />
+                <View style={{ marginLeft: 14 }}>
+                  <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{profile?.name}</Text>
+                  <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, marginTop: 2 }}>Level {level} Member</Text>
+                </View>
+              </View>
+
+              {/* Date Joined */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", alignItems: "center", justifyContent: "center" }}>
+                  <Feather name="calendar" size={16} color={webTheme.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 14 }}>Joined ElevateX</Text>
+                  <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, marginTop: 2 }}>
+                    Member since {formatDate(profile?.createdAt)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* You following them */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", alignItems: "center", justifyContent: "center" }}>
+                  <Feather name="user-check" size={16} color="#06b6d4" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 14 }}>Following State</Text>
+                  <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, marginTop: 2 }}>
+                    {youFollowedRecord 
+                      ? `You started following ${profile?.name} on ${formatDate(youFollowedRecord.followedAt)}`
+                      : `You do not follow ${profile?.name}`
+                    }
+                  </Text>
+                </View>
+              </View>
+
+              {/* They following you */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", alignItems: "center", justifyContent: "center" }}>
+                  <Feather name="users" size={16} color="#d946ef" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 14 }}>Follower State</Text>
+                  <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, marginTop: 2 }}>
+                    {theyFollowedRecord
+                      ? `${profile?.name} started following you on ${formatDate(theyFollowedRecord.followedAt)}`
+                      : `${profile?.name} does not follow you`
+                    }
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </BlurView>
+        </View>
       </Modal>
     </SafeAreaView>
   );

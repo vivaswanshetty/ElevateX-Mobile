@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Pressable, Text, View, ScrollView, Image, ActivityIndicator, TextInput } from "react-native";
+import { Modal, Pressable, Text, View, ScrollView, Image, ActivityIndicator, TextInput, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -14,6 +14,7 @@ interface LightweightUser {
   name: string;
   avatar?: string;
   xp?: number;
+  followedAt?: string;
 }
 
 interface UserListModalProps {
@@ -22,9 +23,10 @@ interface UserListModalProps {
   users: LightweightUser[];
   isLoading: boolean;
   onClose: () => void;
+  onRemoveUser?: (userId: string, userName: string) => void;
 }
 
-export function UserListModal({ visible, title, users, isLoading, onClose }: UserListModalProps) {
+export function UserListModal({ visible, title, users, isLoading, onClose, onRemoveUser }: UserListModalProps) {
   const [search, setSearch] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const theme = useThemeStore((s) => s.theme);
@@ -141,9 +143,8 @@ export function UserListModal({ visible, title, users, isLoading, onClose }: Use
                 const avatar = getImageUrl(item.avatar);
                 const userLevel = Math.floor((item.xp || 0) / 500) + 1;
                 return (
-                  <Pressable
+                  <View
                     key={item._id}
-                    onPress={() => handleUserPress(item._id)}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -152,25 +153,67 @@ export function UserListModal({ visible, title, users, isLoading, onClose }: Use
                       borderBottomColor: webTheme.borderSoft,
                     }}
                   >
-                    {/* Avatar */}
-                    <UserAvatar
-                      avatar={item.avatar}
-                      size={44}
-                      style={{ marginRight: 12 }}
-                    />
+                    <Pressable
+                      onPress={() => handleUserPress(item._id)}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        flex: 1,
+                      }}
+                    >
+                      {/* Avatar */}
+                      <UserAvatar
+                        avatar={item.avatar}
+                        size={44}
+                        style={{ marginRight: 12 }}
+                      />
 
-                    {/* Name and Level */}
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 16 }}>
-                        {item.name || "ElevateX Member"}
-                      </Text>
-                      <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>
-                        Level {userLevel}
-                      </Text>
-                    </View>
+                      {/* Name and Level */}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 16 }} numberOfLines={1}>
+                          {item.name || "ElevateX Member"}
+                        </Text>
+                        <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>
+                          Level {userLevel}
+                        </Text>
+                      </View>
+                    </Pressable>
 
-                    <Feather name="chevron-right" size={16} color={webTheme.faint} />
-                  </Pressable>
+                    {onRemoveUser ? (
+                      <Pressable
+                        onPress={() => {
+                          Alert.alert(
+                            "Remove follower?",
+                            `ElevateX won't tell ${item.name || "them"} they were removed from your followers.`,
+                            [
+                              { text: "Cancel", style: "cancel" },
+                              {
+                                text: "Remove",
+                                style: "destructive",
+                                onPress: () => onRemoveUser(item._id, item.name || "User"),
+                              },
+                            ]
+                          );
+                        }}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 8,
+                          backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                          borderWidth: 1,
+                          borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
+                        }}
+                      >
+                        <Text style={{ ...type.bold, fontSize: 11, color: webTheme.text }}>
+                          Remove
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <Pressable onPress={() => handleUserPress(item._id)} style={{ padding: 4 }}>
+                        <Feather name="chevron-right" size={16} color={webTheme.faint} />
+                      </Pressable>
+                    )}
+                  </View>
                 );
               })
             ) : (
