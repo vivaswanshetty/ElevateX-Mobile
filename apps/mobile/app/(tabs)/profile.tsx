@@ -274,7 +274,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── header backdrop ── */}
-        <View style={{ height: 200, overflow: "hidden", backgroundColor: webTheme.bg }}>
+        <View style={{ height: 150, overflow: "hidden", backgroundColor: webTheme.bg }}>
           <LinearGradient
             colors={
               theme === "dark"
@@ -289,7 +289,7 @@ export default function ProfileScreen() {
             colors={["transparent", webTheme.bg]}
             start={{ x: 0.5, y: 0.55 }}
             end={{ x: 0.5, y: 1 }}
-            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 112 }}
+            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 80 }}
           />
 
           {/* Subtle Classy Background Graphic */}
@@ -347,7 +347,7 @@ export default function ProfileScreen() {
           <View
             style={{
               position: "absolute",
-              top: 20,
+              top: 15,
               left: 22,
               right: 22,
               flexDirection: "row",
@@ -377,7 +377,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Breathable horizontal gutter wrapper for all body sections */}
-        <View style={{ paddingHorizontal: 22, width: "100%", marginTop: -28 }}>
+        <View style={{ paddingHorizontal: 22, width: "100%", marginTop: -32 }}>
           {/* ── profile card ── */}
           <FadeSlideIn delay={100} distance={20} style={{ width: "100%" }}>
             <View>
