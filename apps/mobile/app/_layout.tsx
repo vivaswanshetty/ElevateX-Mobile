@@ -25,6 +25,7 @@ import { normalizeUserPayload } from "../lib/user";
 import { usePushNotifications } from "../lib/pushNotifications";
 import { useCheckUpdates } from "../lib/checkUpdates";
 import { UpdatePrompt } from "../components/UpdatePrompt";
+import { GamificationOverlay } from "../components/GamificationOverlay";
 import { useThemeStore } from "../stores/themeStore";
 import { webTheme } from "../lib/webTheme";
 
@@ -158,6 +159,7 @@ export default function RootLayout() {
             <Stack.Screen name="auth" />
           </Stack>
           <GlobalToast />
+          <GamificationOverlay />
           <StatusBar style={theme === "dark" ? "light" : "dark"} />
           <UpdatePrompt
             visible={showUpdatePrompt}

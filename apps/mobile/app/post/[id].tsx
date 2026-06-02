@@ -3,7 +3,6 @@ import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,6 +12,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppStackHeader } from "../../components/AppStackHeader";
 import { SurfaceCard } from "../../components/SurfaceCard";
@@ -241,7 +241,7 @@ export default function PostDetailScreen() {
             {/* Post image */}
             {image ? (
               <Image
-                source={{ uri: image }}
+                source={image}
                 style={{
                   width: "100%",
                   height: 260,
@@ -249,6 +249,8 @@ export default function PostDetailScreen() {
                   marginTop: 16,
                   backgroundColor: "#111",
                 }}
+                contentFit="cover"
+                transition={200}
               />
             ) : null}
 

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Platform } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
-import { Alert, Pressable, ScrollView, Text, TextInput, View, Image } from "react-native";
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
@@ -362,7 +363,7 @@ export default function CreateScreen() {
                   <Text style={{ ...type.bold, color: webTheme.text, marginBottom: 10 }}>Attachment (Optional)</Text>
                   {selectedImage ? (
                     <View style={{ position: "relative", width: "100%", height: 180, borderRadius: 12, overflow: "hidden" }}>
-                      <Image source={{ uri: selectedImage.uri }} style={{ width: "100%", height: "100%" }} />
+                      <Image source={selectedImage.uri} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
                       <Pressable
                         onPress={() => setSelectedImage(null)}
                         style={{

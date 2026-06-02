@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
@@ -266,12 +267,13 @@ export default function EditProfileScreen() {
               }}
             >
               {localAvatarUri ? (
-                <Image source={{ uri: localAvatarUri }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                <Image source={localAvatarUri} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
               ) : getImageUrl(form.avatar) ? (
                 <Image
-                  source={{ uri: getImageUrl(form.avatar)! }}
+                  source={getImageUrl(form.avatar)!}
                   style={{ width: "100%", height: "100%" }}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  transition={200}
                   onError={() => setLocalAvatarUri(null)}
                 />
               ) : (

@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { ScrollView, Text, TextInput, View, Pressable, Animated, Image, ActivityIndicator } from "react-native";
+import { ScrollView, Text, TextInput, View, Pressable, Animated, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "../../components/ScreenHeader";

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Pressable, Text, View, ScrollView, Image, ActivityIndicator, TextInput, Alert } from "react-native";
+import { Modal, Pressable, Text, View, ScrollView, ActivityIndicator, TextInput, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";

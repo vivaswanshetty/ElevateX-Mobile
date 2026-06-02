@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, Text, View, Modal, Pressable } from "react-native";
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, Text, View, Modal, Pressable } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -542,13 +543,14 @@ export default function UserDetailScreen() {
         >
           {avatarUrl ? (
             <Image
-              source={{ uri: avatarUrl }}
+              source={avatarUrl}
               style={{
                 width: "85%",
                 height: "60%",
                 borderRadius: 20,
-                resizeMode: "contain",
               }}
+              contentFit="contain"
+              transition={200}
             />
           ) : (
             <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 16 }}>No profile photo</Text>

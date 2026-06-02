@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import { router } from "expo-router";
 import { useAuthStore } from "../stores/authStore";
 import { api } from "./api";
 
@@ -72,7 +73,18 @@ export function usePushNotifications(enabled = true) {
       (response) => {
         const data = response.notification.request.content.data;
         console.log("[Push] Tapped:", data);
-        // Future: router.push based on data.screen / data.id
+        if (!data) return;
+
+        setTimeout(() => {
+          if (data.type === "message") {
+            const avatarParam = data.senderAvatar ? `&avatar=${encodeURIComponent(data.senderAvatar)}` : '';
+            router.push(`/chat?userId=${data.senderId}&name=${encodeURIComponent(data.senderName || '')}${avatarParam}`);
+          } else if (data.type === "follow") {
+            router.push({ pathname: "/user/[id]", params: { id: data.senderId } });
+          } else if (data.type === "follow_request" || data.type === "follow_accept") {
+            router.push("/(tabs)/activity");
+          }
+        }, 150);
       }
     );
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Image } from "react-native";
+import { View } from "react-native";
+import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { getImageUrl } from "../lib/media";
 import { webTheme } from "../lib/webTheme";
@@ -46,9 +47,10 @@ export function UserAvatar({ avatar, size = 44, borderWidth = 1, borderColor, st
     >
       {showImage ? (
         <Image
-          source={{ uri: avatarUrl! }}
+          source={avatarUrl!}
           style={{ width: "100%", height: "100%" }}
-          resizeMode="cover"
+          contentFit="cover"
+          transition={200}
           onError={() => setHasError(true)}
         />
       ) : (
