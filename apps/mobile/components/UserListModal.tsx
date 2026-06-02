@@ -45,8 +45,8 @@ export function UserListModal({ visible, title, users, isLoading, onClose, onRem
   };
 
   const blurTint = isDark ? "dark" : "light";
-  const modalBg = isDark ? "rgba(10, 10, 12, 0.95)" : "rgba(255, 255, 255, 0.95)";
-  const modalBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)";
+  const modalBg = isDark ? "rgba(10, 10, 12, 0.55)" : "rgba(255, 255, 255, 0.55)";
+  const modalBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
   const handleBg = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
   const closeBtnBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
   const searchInputBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
@@ -62,7 +62,7 @@ export function UserListModal({ visible, title, users, isLoading, onClose, onRem
       >
         <Pressable style={{ flex: 1 }} onPress={onClose} />
         <BlurView
-          intensity={95}
+          intensity={isDark ? 45 : 65}
           tint={blurTint}
           style={{
             borderTopLeftRadius: 32,

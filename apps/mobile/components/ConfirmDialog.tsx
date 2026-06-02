@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { type } from "../lib/typography";
 import { webTheme } from "../lib/webTheme";
+import { useThemeStore } from "../stores/themeStore";
 import Feather from "@expo/vector-icons/Feather";
 import { useEffect, useRef } from "react";
 
@@ -69,12 +70,12 @@ export function ConfirmDialog({
 
         <Animated.View style={{ transform: [{ scale }], opacity, borderRadius: 32, overflow: "hidden" }}>
           <BlurView
-            intensity={100}
-            tint="dark"
+            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.12)",
-              backgroundColor: "rgba(20, 20, 24, 0.75)",
+              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(20, 20, 24, 0.55)" : "rgba(255, 255, 255, 0.55)",
               shadowColor: "#000",
               shadowOpacity: 0.5,
               shadowRadius: 32,
@@ -85,7 +86,7 @@ export function ConfirmDialog({
             {/* glass highlight */}
             <LinearGradient
               pointerEvents="none"
-              colors={["rgba(255,255,255,0.06)", "transparent"]}
+              colors={useThemeStore.getState().theme === "dark" ? ["rgba(255,255,255,0.06)", "transparent"] : ["rgba(0,0,0,0.02)", "transparent"]}
               start={{ x: 0.3, y: 0 }}
               end={{ x: 0.7, y: 1 }}
               style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
@@ -117,7 +118,7 @@ export function ConfirmDialog({
               <Text style={{ ...type.h2, color: webTheme.text, marginBottom: 12, textAlign: "center", fontStyle: "italic", fontWeight: "300", letterSpacing: 0.5 }}>
                 {title}
               </Text>
-              <Text style={{ ...type.body, color: "rgba(255,255,255,0.6)", lineHeight: 22, textAlign: "center", marginBottom: 32, fontStyle: "italic", fontWeight: "300" }}>
+              <Text style={{ ...type.body, color: webTheme.muted, lineHeight: 22, textAlign: "center", marginBottom: 32, fontStyle: "italic", fontWeight: "300" }}>
                 {detail}
               </Text>
 
@@ -156,7 +157,7 @@ export function ConfirmDialog({
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ ...type.buttonLabel, color: "rgba(255,255,255,0.5)", fontWeight: "600" }}>
+                  <Text style={{ ...type.buttonLabel, color: webTheme.faint, fontWeight: "600" }}>
                     {cancelLabel}
                   </Text>
                 </Pressable>

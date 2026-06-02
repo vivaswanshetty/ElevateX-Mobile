@@ -124,8 +124,8 @@ function ToolCard({
   return (
     <Animated.View style={{ width: "47%", transform: [{ scale: scaleAnim }] }}>
       <Pressable onPress={onPress} disabled={!onPress} style={{ width: "100%" }}>
-        <SurfaceCard>
-          <View style={{ position: "relative" }}>
+        <SurfaceCard style={{ height: 190 }} contentStyle={{ flex: 1, padding: 18, justifyContent: "space-between" }}>
+          <View style={{ position: "relative", alignSelf: "flex-start" }}>
             <View
               style={{
                 width: 40,
@@ -166,12 +166,14 @@ function ToolCard({
               </View>
             )}
           </View>
-          <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 17, marginTop: 14 }}>
-            {label}
-          </Text>
-          <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12, lineHeight: 20, marginTop: 6 }}>
-            {detail}
-          </Text>
+          <View>
+            <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 16, marginTop: 10 }}>
+              {label}
+            </Text>
+            <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12, lineHeight: 18, marginTop: 4 }} numberOfLines={2}>
+              {detail}
+            </Text>
+          </View>
         </SurfaceCard>
       </Pressable>
     </Animated.View>

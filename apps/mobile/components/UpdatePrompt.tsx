@@ -13,6 +13,7 @@ import { useEffect, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { webTheme } from "../lib/webTheme";
 import { type } from "../lib/typography";
+import { useThemeStore } from "../stores/themeStore";
 import type { UpdateInfo } from "../lib/checkUpdates";
 
 interface UpdatePromptProps {
@@ -126,17 +127,19 @@ export function UpdatePrompt({
           />
 
           <BlurView
-            intensity={18}
-            tint="dark"
+            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               borderRadius: 24,
               overflow: "hidden",
               borderWidth: 1,
-              borderColor: webTheme.accentBorder,
+              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
             }}
           >
             <LinearGradient
-              colors={[webTheme.surfaceRaised, webTheme.surface]}
+              colors={useThemeStore.getState().theme === "dark"
+                ? ["rgba(18, 19, 23, 0.55)", "rgba(13, 13, 15, 0.55)"]
+                : ["rgba(255, 255, 255, 0.65)", "rgba(240, 240, 240, 0.65)"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={{ padding: 24, borderRadius: 24 }}

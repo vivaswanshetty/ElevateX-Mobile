@@ -394,32 +394,41 @@ export default function UserDetailScreen() {
                     style={{
                       borderRadius: 16,
                       borderWidth: 1,
-                      borderColor: webTheme.border,
-                      backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
-                      padding: 12,
+                      borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+                      backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(18, 19, 23, 0.45)" : "rgba(255, 255, 255, 0.60)",
+                      overflow: "hidden",
                       minHeight: 76,
-                      justifyContent: "space-between"
                     }}
                   >
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                      <Text
-                        style={{
-                          ...type.bold,
-                          color: webTheme.faint,
-                          fontSize: 9,
-                          letterSpacing: 1.2,
-                          textTransform: "uppercase"
-                        }}
-                      >
-                        {item.label}
-                      </Text>
-                      <Feather name={item.icon as any} size={13} color={item.color} />
-                    </View>
-                    <View style={{ marginTop: 4 }}>
-                      <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
-                        {item.value}
-                      </Text>
-                    </View>
+                    <BlurView
+                      intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+                      tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
+                      style={{
+                        padding: 12,
+                        flex: 1,
+                        justifyContent: "space-between"
+                      }}
+                    >
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text
+                          style={{
+                            ...type.bold,
+                            color: webTheme.faint,
+                            fontSize: 9,
+                            letterSpacing: 1.2,
+                            textTransform: "uppercase"
+                          }}
+                        >
+                          {item.label}
+                        </Text>
+                        <Feather name={item.icon as any} size={13} color={item.color} />
+                      </View>
+                      <View style={{ marginTop: 4 }}>
+                        <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
+                          {item.value}
+                        </Text>
+                      </View>
+                    </BlurView>
                   </View>
                 );
 
@@ -575,14 +584,14 @@ export default function UserDetailScreen() {
         >
           <Pressable style={{ flex: 1 }} onPress={() => setInfoModalVisible(false)} />
           <BlurView
-            intensity={95}
+            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
             tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
               borderWidth: 1,
-              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.95)" : "rgba(255, 255, 255, 0.95)",
+              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.55)" : "rgba(255, 255, 255, 0.55)",
               paddingBottom: 34,
             }}
           >

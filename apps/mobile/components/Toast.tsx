@@ -4,6 +4,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { webTheme } from "../lib/webTheme";
+import { useThemeStore } from "../stores/themeStore";
 import { type as typography } from "../lib/typography";
 
 export type ToastType = "success" | "error" | "info";
@@ -79,17 +80,17 @@ export function Toast({ message, type = "success", onHide }: ToastProps) {
       }}
     >
       <BlurView
-        intensity={100}
-        tint="dark"
+        intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+        tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
         style={{
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: "rgba(12, 12, 12, 0.90)",
+          backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(12, 12, 12, 0.65)" : "rgba(255, 255, 255, 0.65)",
           paddingHorizontal: 20,
           paddingVertical: 18,
           borderRadius: 24,
           borderWidth: 1,
-          borderColor: "rgba(255,255,255,0.12)",
+          borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.10)",
           overflow: "hidden",
         }}
       >

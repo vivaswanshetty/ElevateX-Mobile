@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { HapticPressable } from "../components/HapticPressable";
 import { Watermark } from "../components/Watermark";
 import { api, getErrorMessage } from "../lib/api";
@@ -781,15 +782,18 @@ export default function AIAssistantScreen() {
       >
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" }}>
           <HapticPressable style={{ flex: 1 }} onPress={() => setIsHistoryVisible(false)} />
-          <View
+          <BlurView
+            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               maxHeight: "75%",
-              backgroundColor: webTheme.surface,
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.55)" : "rgba(255, 255, 255, 0.55)",
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
               borderWidth: 1,
-              borderColor: webTheme.border,
+              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
               padding: 20,
+              overflow: "hidden",
             }}
           >
             {/* Modal Drag handle visual */}
@@ -906,7 +910,7 @@ export default function AIAssistantScreen() {
                 })
               )}
             </ScrollView>
-          </View>
+          </BlurView>
         </View>
       </Modal>
     </SafeAreaView>

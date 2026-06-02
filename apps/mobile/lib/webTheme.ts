@@ -127,18 +127,22 @@ export const webTheme = {
 /* ── shared card style ── */
 export const surfaceCardStyle = {
   get backgroundColor() {
-    return webTheme.surfaceRaised;
+    return useThemeStore.getState().theme === "dark"
+      ? "rgba(13, 13, 15, 0.45)"
+      : "rgba(255, 255, 255, 0.45)";
   },
   borderWidth: 1,
   get borderColor() {
-    return webTheme.border;
+    return useThemeStore.getState().theme === "dark"
+      ? "rgba(255, 255, 255, 0.12)"
+      : "rgba(0, 0, 0, 0.08)";
   },
   borderRadius: 28,
   shadowColor: "#000",
-  shadowOpacity: 0.28,
-  shadowRadius: 24,
-  shadowOffset: { width: 0, height: 12 },
-  elevation: 12,
+  shadowOpacity: 0.18,
+  shadowRadius: 20,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 8,
 };
 
 /* ── glass card (translucent) ── */

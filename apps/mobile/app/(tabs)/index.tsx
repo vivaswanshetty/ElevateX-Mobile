@@ -19,6 +19,7 @@ import { webTheme } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { TabTransitionView } from "../../components/TabTransitionView";
 import { useThemeStore } from "../../stores/themeStore";
+import { BlurView } from "expo-blur";
 
 const quickTools = [
   { label: "Wallet", route: "/wallet?from=home", icon: "credit-card", color: webTheme.gold, detail: "Balance & flow" },
@@ -339,46 +340,54 @@ export default function HomeScreen() {
                   <View
                     key={item.label}
                     style={{
-                      alignItems: "center",
-                      justifyContent: "center",
                       borderRadius: 24,
                       borderWidth: 1,
-                      borderColor: webTheme.borderStrong,
-                      backgroundColor: webTheme.cardBg,
-                      paddingVertical: 22,
-                      paddingHorizontal: 8,
+                      borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+                      backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(18, 19, 23, 0.45)" : "rgba(255, 255, 255, 0.60)",
                       alignSelf: "stretch",
+                      overflow: "hidden",
                     }}
                   >
-                    <View
+                    <BlurView
+                      intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+                      tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 999,
-                        backgroundColor: `${item.color}18`,
-                        borderWidth: 1,
-                        borderColor: `${item.color}3A`,
                         alignItems: "center",
                         justifyContent: "center",
-                        marginBottom: 12,
+                        paddingVertical: 22,
+                        paddingHorizontal: 8,
                       }}
                     >
-                      <Feather name={item.icon as any} size={15} color={item.color} />
-                    </View>
-                    <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
-                      {item.value}
-                    </Text>
-                    <Text
-                      style={{
-                        ...type.semibold,
-                        color: webTheme.muted,
-                        fontSize: 10,
-                        marginTop: 6,
-                        textAlign: "center"
-                      }}
-                    >
-                      {item.label}
-                    </Text>
+                      <View
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: 999,
+                          backgroundColor: `${item.color}18`,
+                          borderWidth: 1,
+                          borderColor: `${item.color}3A`,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginBottom: 12,
+                        }}
+                      >
+                        <Feather name={item.icon as any} size={15} color={item.color} />
+                      </View>
+                      <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
+                        {item.value}
+                      </Text>
+                      <Text
+                        style={{
+                          ...type.semibold,
+                          color: webTheme.muted,
+                          fontSize: 10,
+                          marginTop: 6,
+                          textAlign: "center"
+                        }}
+                      >
+                        {item.label}
+                      </Text>
+                    </BlurView>
                   </View>
                 ))}
               </AnimatedList>

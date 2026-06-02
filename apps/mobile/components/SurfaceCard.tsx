@@ -8,6 +8,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { surfaceCardStyle, webTheme } from "../lib/webTheme";
 import { useThemeStore } from "../stores/themeStore";
 
@@ -137,10 +138,23 @@ export function SurfaceCard({
     ? ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.015)", "rgba(255,255,255,0.005)"]
     : ["rgba(0,0,0,0.01)", "rgba(0,0,0,0.005)", "rgba(0,0,0,0.0)"]) as [string, string, string];
 
-  const edgeHighlightColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)";
+  const edgeHighlightColor = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)";
 
   const renderInner = (pressed = false) => (
     <>
+      {/* backing iOS-style blur */}
+      <BlurView
+        intensity={isDark ? 45 : 65}
+        tint={isDark ? "dark" : "light"}
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }}
+      />
+
       {/* top-lit glass gradient */}
       <LinearGradient
         pointerEvents="none"
