@@ -119,8 +119,7 @@ export default function RootLayout() {
   const appReady = !isLoading && Boolean(fontsLoaded || fontError);
   usePushNotifications(appReady);
 
-  const { updateInfo, isApplying: isApplyingUpdate, downloadAndApplyUpdate } = useCheckUpdates();
-  const [updateDismissed, setUpdateDismissed] = useState(false);
+  const { updateInfo, isApplying: isApplyingUpdate, downloadAndApplyUpdate, updateDismissed, setUpdateDismissed } = useCheckUpdates();
   const showUpdatePrompt = Boolean(updateInfo?.isUpdateAvailable) && !updateDismissed;
 
   const theme = useThemeStore((state) => state.theme);

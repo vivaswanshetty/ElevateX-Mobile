@@ -36,12 +36,38 @@ const useSafeUpdates = () => {
   return Updates.useUpdates();
 };
 
+let globalUpdateDismissed = false;
+let globalManualUpdateAvailable = false;
+let globalManualUpdateVersion = "latest";
+const listeners = new Set<() => void>();
+
 export const useCheckUpdates = () => {
   const { currentlyRunning, availableUpdate, isUpdateAvailable, isUpdatePending, checkError } = useSafeUpdates();
   const [isChecking, setIsChecking] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastCheckRef = useRef<number>(Date.now());
+  
+  const [updateDismissed, setUpdateDismissedState] = useState(globalUpdateDismissed);
+  const [manualUpdateAvailable, setManualUpdateAvailable] = useState(globalManualUpdateAvailable);
+  const [manualUpdateVersion, setManualUpdateVersion] = useState(globalManualUpdateVersion);
+
+  useEffect(() => {
+    const listener = () => {
+      setUpdateDismissedState(globalUpdateDismissed);
+      setManualUpdateAvailable(globalManualUpdateAvailable);
+      setManualUpdateVersion(globalManualUpdateVersion);
+    };
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  const setUpdateDismissed = useCallback((val: boolean) => {
+    globalUpdateDismissed = val;
+    listeners.forEach((listener) => listener());
+  }, []);
 
   // Sync checkError to our local error state
   useEffect(() => {
@@ -60,6 +86,12 @@ export const useCheckUpdates = () => {
       setError(null);
       console.log("[Updates] Checking for updates manually...");
       const result = await Updates.checkForUpdateAsync();
+      if (result.isAvailable) {
+        globalUpdateDismissed = false;
+        globalManualUpdateAvailable = true;
+        globalManualUpdateVersion = result.manifest?.extra?.expoClient?.version ?? (result.manifest as any)?.version ?? "latest";
+        listeners.forEach((listener) => listener());
+      }
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Update check failed";
@@ -83,6 +115,8 @@ export const useCheckUpdates = () => {
 
       if (isUpdatePending) {
         console.log("[Updates] Update already pending. Reloading...");
+        globalManualUpdateAvailable = false;
+        listeners.forEach((listener) => listener());
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await Updates.reloadAsync();
         return;
@@ -92,6 +126,8 @@ export const useCheckUpdates = () => {
       await Updates.fetchUpdateAsync();
       
       console.log("[Updates] Update downloaded — reloading app");
+      globalManualUpdateAvailable = false;
+      listeners.forEach((listener) => listener());
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await Updates.reloadAsync();
     } catch (err) {
@@ -106,13 +142,13 @@ export const useCheckUpdates = () => {
 
   // If there's an update available but not pending, fetch it automatically!
   useEffect(() => {
-    if (isUpdateAvailable && !isUpdatePending && !isApplying && !__DEV__ && isUpdatesEnabled && Updates) {
+    if ((isUpdateAvailable || manualUpdateAvailable) && !isUpdatePending && !isApplying && !__DEV__ && isUpdatesEnabled && Updates) {
       console.log("[Updates] Update is available but not pending, downloading in background...");
       Updates.fetchUpdateAsync().catch((err: any) => {
         console.warn("[Updates] Background fetch failed:", err);
       });
     }
-  }, [isUpdateAvailable, isUpdatePending, isApplying]);
+  }, [isUpdateAvailable, manualUpdateAvailable, isUpdatePending, isApplying]);
 
   // Re-check when app returns to foreground (throttled to once per 5 minutes)
   useEffect(() => {
@@ -136,9 +172,9 @@ export const useCheckUpdates = () => {
 
   // Expose reactive update state
   const updateInfo: UpdateInfo = {
-    isUpdateAvailable: Boolean(isUpdateAvailable || isUpdatePending),
+    isUpdateAvailable: Boolean(isUpdateAvailable || isUpdatePending || manualUpdateAvailable),
     currentVersion: versionInfo.version,
-    newVersion: availableUpdate?.manifest?.extra?.expoClient?.version ?? (availableUpdate?.manifest as any)?.version ?? "latest",
+    newVersion: availableUpdate?.manifest?.extra?.expoClient?.version ?? (availableUpdate?.manifest as any)?.version ?? manualUpdateVersion,
     releaseNotes: isUpdatePending 
       ? "A new update is downloaded and ready to apply."
       : "New features and improvements are ready to install.",
@@ -151,5 +187,7 @@ export const useCheckUpdates = () => {
     error,
     checkForUpdates,
     downloadAndApplyUpdate,
+    updateDismissed,
+    setUpdateDismissed,
   };
 };
