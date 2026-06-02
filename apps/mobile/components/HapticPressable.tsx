@@ -13,6 +13,8 @@ export function HapticPressable({ hapticType = "light", onPress, ...rest }: Hapt
 
   return (
     <Pressable
+      accessible={rest.accessible ?? true}
+      accessibilityRole={rest.accessibilityRole ?? "button"}
       {...rest}
       onPress={(e) => {
         trigger(hapticType);

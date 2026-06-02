@@ -185,6 +185,7 @@ export default function LoginScreen() {
                 name={field.name as keyof FormData}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
+                    testID={`${field.name}-input`}
                     style={{
                       ...type.regular,
                       ...inputFieldStyle,
@@ -242,6 +243,7 @@ export default function LoginScreen() {
 
           {/* submit button */}
           <Pressable
+            testID="sign-in-button"
             onPress={handleSubmit(onSubmit)}
             disabled={isSubmitting}
           >

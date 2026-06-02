@@ -1,13 +1,38 @@
-appId: com.elevatex.mobile
+appId: com.vivaswan.shetty.elevatex
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Login"
-# Mock tapping login if needed
-- tapOn: "Login"
-- assertVisible: "Dashboard" # Placeholder for actual layout
-# Deep link from mock push notification
-- openLink: "exp://127.0.0.1:8081/--/chat"
-- assertVisible: "Messages"
-- tapOn: "Find Friends" # Tapping empty state call to action
-- assertVisible: "Search members"
+
+# 1. Authentication Flow
+- assertVisible: "Welcome back"
+- tapOn:
+    id: "email-input"
+- inputText: "test@elevatex.com"
+- tapOn:
+    id: "password-input"
+- inputText: "password123"
+- tapOn:
+    id: "sign-in-button"
+
+# Wait for Login redirection and dashboard home to load
+- assertVisible: "Open Workspace"
+
+# 2. Hub Navigation
+- tapOn: "Open Workspace"
+- assertVisible: "Elev AI Assistant"
+
+# 3. AI Assistant Chat
+- tapOn: "Elev AI Assistant"
+- assertVisible: "Ask something to start..."
+- tapOn: "Ask something to start..."
+- inputText: "What is my next task?"
+- tapOn:
+    id: "send-message-button"
+
+# 4. Connection Details & Deep Linking
+- openLink: "elevatex://user/652f1e2f4f2c8d001f3e7a1b"
+# If the network mock loads user profile, we verify details and info bottom sheet
+- assertVisible: "Message"
+- tapOn:
+    id: "connection-info-button"
+- assertVisible: "About this connection"

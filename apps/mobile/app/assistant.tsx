@@ -754,6 +754,7 @@ export default function AIAssistantScreen() {
               }}
             />
             <HapticPressable
+              testID="send-message-button"
               onPress={handleFormSubmit}
               disabled={loading || !inputText.trim()}
               style={{

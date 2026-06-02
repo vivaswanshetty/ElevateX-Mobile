@@ -325,6 +325,7 @@ export default function UserDetailScreen() {
                       </Text>
                     </HapticPressable>
                     <HapticPressable
+                      testID="connection-info-button"
                       hapticType="light"
                       onPress={() => setInfoModalVisible(true)}
                       style={{
