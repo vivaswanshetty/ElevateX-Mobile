@@ -1,4 +1,5 @@
 import { useThemeStore } from "../stores/themeStore";
+import { Platform } from "react-native";
 
 const darkColors = {
   bg: "#000000",
@@ -127,9 +128,12 @@ export const webTheme = {
 /* ── shared card style ── */
 export const surfaceCardStyle = {
   get backgroundColor() {
-    return useThemeStore.getState().theme === "dark"
-      ? "rgba(13, 13, 15, 0.45)"
-      : "rgba(255, 255, 255, 0.45)";
+    const theme = useThemeStore.getState().theme;
+    if (theme === "dark") {
+      return Platform.OS === "ios" ? "rgba(13, 13, 15, 0.45)" : "#121212";
+    } else {
+      return "#FFFFFF";
+    }
   },
   borderWidth: 1,
   get borderColor() {
@@ -148,9 +152,12 @@ export const surfaceCardStyle = {
 /* ── glass card (translucent) ── */
 export const glassCardStyle = {
   get backgroundColor() {
-    return useThemeStore.getState().theme === "dark"
-      ? "rgba(18,19,23,0.82)"
-      : "rgba(255,255,255,0.82)";
+    const theme = useThemeStore.getState().theme;
+    if (theme === "dark") {
+      return Platform.OS === "ios" ? "rgba(18, 19, 23, 0.82)" : "#181818";
+    } else {
+      return "#FFFFFF";
+    }
   },
   borderWidth: 1,
   get borderColor() {

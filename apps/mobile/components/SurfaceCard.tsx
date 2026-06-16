@@ -3,6 +3,7 @@ import {
   Pressable,
   View,
   StyleSheet,
+  Platform,
   type AccessibilityRole,
   type StyleProp,
   type ViewStyle,
@@ -172,57 +173,63 @@ export function SurfaceCard({
   const renderInner = (pressed = false) => (
     <>
       {/* backing iOS-style blur */}
-      <BlurView
-        intensity={isDark ? 45 : 65}
-        tint={isDark ? "dark" : "light"}
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          borderRadius: cardBorderRadius as number,
-          borderTopLeftRadius: cardBorderTopLeftRadius as number,
-          borderTopRightRadius: cardBorderTopRightRadius as number,
-          borderBottomLeftRadius: cardBorderBottomLeftRadius as number,
-          borderBottomRightRadius: cardBorderBottomRightRadius as number,
-          overflow: "hidden",
-        }}
-      />
+      {Platform.OS === "ios" && isDark ? (
+        <BlurView
+          intensity={45}
+          tint="dark"
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            borderRadius: cardBorderRadius as number,
+            borderTopLeftRadius: cardBorderTopLeftRadius as number,
+            borderTopRightRadius: cardBorderTopRightRadius as number,
+            borderBottomLeftRadius: cardBorderBottomLeftRadius as number,
+            borderBottomRightRadius: cardBorderBottomRightRadius as number,
+            overflow: "hidden",
+          }}
+        />
+      ) : null}
 
       {/* top-lit glass gradient */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={glassColors}
-        start={{ x: 0.15, y: 0 }}
-        end={{ x: 0.85, y: 1 }}
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          borderRadius: cardBorderRadius as number,
-          borderTopLeftRadius: cardBorderTopLeftRadius as number,
-          borderTopRightRadius: cardBorderTopRightRadius as number,
-          borderBottomLeftRadius: cardBorderBottomLeftRadius as number,
-          borderBottomRightRadius: cardBorderBottomRightRadius as number,
-          overflow: "hidden",
-        }}
-      />
+      {isDark ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={glassColors}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 0.85, y: 1 }}
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            borderRadius: cardBorderRadius as number,
+            borderTopLeftRadius: cardBorderTopLeftRadius as number,
+            borderTopRightRadius: cardBorderTopRightRadius as number,
+            borderBottomLeftRadius: cardBorderBottomLeftRadius as number,
+            borderBottomRightRadius: cardBorderBottomRightRadius as number,
+            overflow: "hidden",
+          }}
+        />
+      ) : null}
 
       {/* top edge highlight */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 1,
-          right: 1,
-          height: 1,
-          backgroundColor: edgeHighlightColor,
-        }}
-      />
+      {isDark ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 1,
+            right: 1,
+            height: 1,
+            backgroundColor: edgeHighlightColor,
+          }}
+        />
+      ) : null}
 
       {/* accent wash */}
 
