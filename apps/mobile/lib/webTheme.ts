@@ -137,7 +137,7 @@ export const surfaceCardStyle = {
       ? "rgba(255, 255, 255, 0.12)"
       : "rgba(0, 0, 0, 0.08)";
   },
-  borderRadius: 28,
+  borderRadius: 16,
   shadowColor: "#000",
   shadowOpacity: 0.18,
   shadowRadius: 20,
@@ -158,7 +158,7 @@ export const glassCardStyle = {
       ? "rgba(255,255,255,0.08)"
       : "rgba(0,0,0,0.08)";
   },
-  borderRadius: 28,
+  borderRadius: 16,
   shadowColor: "#000",
   shadowOpacity: 0.32,
   shadowRadius: 20,

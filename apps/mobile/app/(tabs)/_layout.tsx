@@ -12,7 +12,7 @@ export default function TabsLayout() {
     return <FullscreenMessage title="Loading workspace" detail="Syncing your account." loading />;
   }
 
-  if (!isLoading && !user) return <Redirect href="/auth/login" />;
+  if (!isLoading && !user) return <Redirect href="/auth/welcome" />;
 
   return (
     <Tabs

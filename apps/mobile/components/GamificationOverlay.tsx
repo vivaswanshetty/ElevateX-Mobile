@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: SCREEN_WIDTH * 0.82,
-    borderRadius: 28,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 24,
     alignItems: "center",

@@ -201,19 +201,19 @@ export default function ExploreScreen() {
           <FadeSlideIn delay={180} distance={14} style={{ width: "100%" }}>
             <Animated.View style={{ opacity: featuredOpacity }}>
             <HapticPressable hapticType="selection" onPress={() => router.push({ pathname: "/task/[id]", params: { id: featuredTask.id } })}>
-              <View style={{ marginTop: 22, borderRadius: 28, padding: 1, overflow: "hidden" }}>
+              <View style={{ marginTop: 22, borderRadius: 16, padding: 1, overflow: "hidden" }}>
                 <LinearGradient
                   colors={["rgba(229,54,75,0.8)", "rgba(139,92,246,0.6)", "rgba(20,20,25,0)"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
                 />
-                <View style={{ backgroundColor: webTheme.surface, borderRadius: 27, padding: 22, overflow: "hidden" }}>
+                <View style={{ backgroundColor: webTheme.surface, borderRadius: 15, padding: 22, overflow: "hidden" }}>
                   <LinearGradient
                     colors={theme === "dark" ? ["rgba(139,92,246,0.06)", "transparent"] : ["rgba(139,92,246,0.04)", "transparent"]}
                     start={{ x: 1, y: 0 }}
                     end={{ x: 0, y: 1 }}
-                    style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, borderRadius: 27 }}
+                    style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, borderRadius: 15 }}
                   />
                   <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 10 }}>
                     <View style={{ flex: 1 }}>
@@ -418,7 +418,7 @@ export default function ExploreScreen() {
                       hapticType="light"
                       onPress={() => router.push({ pathname: "/user/[id]", params: { id: item._id } })}
                     >
-                      <SurfaceCard style={{ padding: 14 }}>
+                      <SurfaceCard contentStyle={{ padding: 14 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                           <UserAvatar avatar={item.avatar} size={48} />
                           <View style={{ flex: 1 }}>

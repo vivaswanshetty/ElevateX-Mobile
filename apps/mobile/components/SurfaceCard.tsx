@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   Pressable,
   View,
+  StyleSheet,
   type AccessibilityRole,
   type StyleProp,
   type ViewStyle,
@@ -122,6 +123,34 @@ export function SurfaceCard({
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
 
+  // Flatten styles to extract padding and border styles
+  const flatStyle = StyleSheet.flatten(style) || {};
+  const {
+    padding,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    paddingHorizontal,
+    paddingVertical,
+    ...remainingStyle
+  } = flatStyle;
+
+  const forwardedPadding: ViewStyle = {};
+  if (padding !== undefined) forwardedPadding.padding = padding;
+  if (paddingTop !== undefined) forwardedPadding.paddingTop = paddingTop;
+  if (paddingBottom !== undefined) forwardedPadding.paddingBottom = paddingBottom;
+  if (paddingLeft !== undefined) forwardedPadding.paddingLeft = paddingLeft;
+  if (paddingRight !== undefined) forwardedPadding.paddingRight = paddingRight;
+  if (paddingHorizontal !== undefined) forwardedPadding.paddingHorizontal = paddingHorizontal;
+  if (paddingVertical !== undefined) forwardedPadding.paddingVertical = paddingVertical;
+
+  const cardBorderRadius = remainingStyle.borderRadius !== undefined ? remainingStyle.borderRadius : 16;
+  const cardBorderTopLeftRadius = remainingStyle.borderTopLeftRadius !== undefined ? remainingStyle.borderTopLeftRadius : cardBorderRadius;
+  const cardBorderTopRightRadius = remainingStyle.borderTopRightRadius !== undefined ? remainingStyle.borderTopRightRadius : cardBorderRadius;
+  const cardBorderBottomLeftRadius = remainingStyle.borderBottomLeftRadius !== undefined ? remainingStyle.borderBottomLeftRadius : cardBorderRadius;
+  const cardBorderBottomRightRadius = remainingStyle.borderBottomRightRadius !== undefined ? remainingStyle.borderBottomRightRadius : cardBorderRadius;
+
   const baseStyle: StyleProp<ViewStyle> = [
     { ...surfaceCardStyle },
     {
@@ -131,7 +160,7 @@ export function SurfaceCard({
         : webTheme.border,
     },
     disabled && { opacity: 0.55 },
-    style,
+    remainingStyle,
   ];
 
   const glassColors = (isDark
@@ -152,6 +181,12 @@ export function SurfaceCard({
           right: 0,
           bottom: 0,
           left: 0,
+          borderRadius: cardBorderRadius as number,
+          borderTopLeftRadius: cardBorderTopLeftRadius as number,
+          borderTopRightRadius: cardBorderTopRightRadius as number,
+          borderBottomLeftRadius: cardBorderBottomLeftRadius as number,
+          borderBottomRightRadius: cardBorderBottomRightRadius as number,
+          overflow: "hidden",
         }}
       />
 
@@ -167,6 +202,12 @@ export function SurfaceCard({
           right: 0,
           bottom: 0,
           left: 0,
+          borderRadius: cardBorderRadius as number,
+          borderTopLeftRadius: cardBorderTopLeftRadius as number,
+          borderTopRightRadius: cardBorderTopRightRadius as number,
+          borderBottomLeftRadius: cardBorderBottomLeftRadius as number,
+          borderBottomRightRadius: cardBorderBottomRightRadius as number,
+          overflow: "hidden",
         }}
       />
 
@@ -186,7 +227,7 @@ export function SurfaceCard({
       {/* accent wash */}
 
       {/* content */}
-      <View style={[{ padding: 22 }, contentStyle]}>
+      <View style={[{ padding: 22 }, forwardedPadding, contentStyle]}>
         {header ? <View style={{ marginBottom: 18 }}>{header}</View> : null}
         {children}
         {footer ? <View style={{ marginTop: 18 }}>{footer}</View> : null}
