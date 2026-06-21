@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -50,6 +51,8 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterScreen() {
   const { setAuthError, setUser } = useAuthStore();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {
     control,
     handleSubmit,
@@ -166,28 +169,49 @@ export default function RegisterScreen() {
             { name: "displayName", placeholder: "Full name", secure: false },
             { name: "username", placeholder: "Username", secure: false },
             { name: "email", placeholder: "you@example.com", secure: false },
-            { name: "password", placeholder: "Password", secure: true },
-            { name: "confirmPassword", placeholder: "Confirm password", secure: true },
+            { name: "password", placeholder: "Password", secure: true, showVal: showPassword, toggleVal: () => setShowPassword(!showPassword) },
+            { name: "confirmPassword", placeholder: "Confirm password", secure: true, showVal: showConfirmPassword, toggleVal: () => setShowConfirmPassword(!showConfirmPassword) },
           ].map((field) => (
             <View key={field.name}>
               <Controller
                 control={control}
                 name={field.name as keyof FormData}
                 render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    style={{
-                      ...Typography.regular,
-                      ...inputFieldStyle,
-                      marginBottom: 10,
-                    }}
-                    placeholder={field.placeholder}
-                    placeholderTextColor={webTheme.faint}
-                    autoCapitalize={field.name === "username" || field.name === "email" ? "none" : "sentences"}
-                    keyboardType={field.name === "email" ? "email-address" : "default"}
-                    secureTextEntry={field.secure}
-                    value={value}
-                    onChangeText={onChange}
-                  />
+                  <View style={{ position: "relative" }}>
+                    <TextInput
+                      style={{
+                        ...Typography.regular,
+                        ...inputFieldStyle,
+                        paddingRight: field.secure ? 50 : 18,
+                        marginBottom: 10,
+                      }}
+                      placeholder={field.placeholder}
+                      placeholderTextColor={webTheme.faint}
+                      autoCapitalize={field.name === "username" || field.name === "email" ? "none" : "sentences"}
+                      keyboardType={field.name === "email" ? "email-address" : "default"}
+                      secureTextEntry={field.secure && !field.showVal}
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    {field.secure && (
+                      <Pressable
+                        onPress={field.toggleVal}
+                        style={{
+                          position: "absolute",
+                          right: 16,
+                          top: 15,
+                          height: 24,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Feather
+                          name={field.showVal ? "eye" : "eye-off"}
+                          size={18}
+                          color={webTheme.muted}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
                 )}
               />
               {errors[field.name as keyof FormData] ? (

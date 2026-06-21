@@ -32,6 +32,7 @@ export default function LoginScreen() {
   const { setAuthError, setUser } = useAuthStore();
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -184,21 +185,42 @@ export default function LoginScreen() {
                 control={control}
                 name={field.name as keyof FormData}
                 render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    testID={`${field.name}-input`}
-                    style={{
-                      ...type.regular,
-                      ...inputFieldStyle,
-                      marginBottom: 10,
-                    }}
-                    placeholder={field.placeholder}
-                    placeholderTextColor={webTheme.faint}
-                    autoCapitalize="none"
-                    keyboardType={field.name === "email" ? "email-address" : "default"}
-                    secureTextEntry={field.secure}
-                    value={value}
-                    onChangeText={onChange}
-                  />
+                  <View style={{ position: "relative" }}>
+                    <TextInput
+                      testID={`${field.name}-input`}
+                      style={{
+                        ...type.regular,
+                        ...inputFieldStyle,
+                        paddingRight: field.secure ? 50 : 18,
+                        marginBottom: 10,
+                      }}
+                      placeholder={field.placeholder}
+                      placeholderTextColor={webTheme.faint}
+                      autoCapitalize="none"
+                      keyboardType={field.name === "email" ? "email-address" : "default"}
+                      secureTextEntry={field.secure && !showPassword}
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    {field.secure && (
+                      <Pressable
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: "absolute",
+                          right: 16,
+                          top: 15,
+                          height: 24,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Feather
+                          name={showPassword ? "eye" : "eye-off"}
+                          size={18}
+                          color={webTheme.muted}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
                 )}
               />
               {errors[field.name as keyof FormData] ? (
