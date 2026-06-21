@@ -30,6 +30,17 @@ export function formatTimeAgo(date?: string | Date | null) {
   });
 }
 
+export function formatPostTime(date?: string | Date | null) {
+  if (!date) return "";
+  const target = new Date(date);
+  if (Number.isNaN(target.getTime())) return "";
+  return target.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+
 export function formatConversationDate(date?: string | Date | null) {
   if (!date) return "";
 

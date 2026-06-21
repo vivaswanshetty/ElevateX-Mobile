@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Feather } from "@expo/vector-icons";
+import { Feather, AntDesign, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
@@ -21,7 +21,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { ScreenBackdrop } from "../../components/ScreenBackdrop";
 import { SurfaceCard } from "../../components/SurfaceCard";
 import { api, getErrorMessage } from "../../lib/api";
-import { formatTimeAgo, getImageUrl, getInitials } from "../../lib/media";
+import { formatTimeAgo, getImageUrl, getInitials, formatPostTime } from "../../lib/media";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useAuthStore } from "../../stores/authStore";
@@ -454,6 +454,12 @@ export default function FeedScreen() {
                         <Text style={{ ...type.regular, color: "rgba(255,255,255,0.20)", fontSize: 12 }}>
                           ·
                         </Text>
+                        <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 12 }}>
+                          {formatPostTime(post.createdAt)}
+                        </Text>
+                        <Text style={{ ...type.regular, color: "rgba(255,255,255,0.20)", fontSize: 12 }}>
+                          ·
+                        </Text>
                         <Feather name="globe" size={11} color={webTheme.faint} />
                       </View>
                     </View>
@@ -561,11 +567,31 @@ export default function FeedScreen() {
                         justifyContent: "center",
                         flexDirection: "row",
                         gap: 6,
-                        backgroundColor: action.active ? "rgba(214,60,71,0.10)" : "transparent",
+                        backgroundColor: action.active
+                          ? action.key === "save"
+                            ? "rgba(255,255,255,0.10)"
+                            : "rgba(214,60,71,0.10)"
+                          : "transparent",
                       }}
                     >
-                      <Feather name={action.icon as "heart" | "message-circle" | "send" | "bookmark"} size={15} color={action.active ? webTheme.red : webTheme.faint} />
-                      <Text style={{ ...type.semibold, color: action.active ? webTheme.red : webTheme.faint, fontSize: 12 }}>
+                      {action.key === "like" ? (
+                        <AntDesign name={action.active ? "heart" : "hearto"} size={15} color={action.active ? webTheme.red : webTheme.faint} />
+                      ) : action.key === "save" ? (
+                        <FontAwesome name={action.active ? "bookmark" : "bookmark-o"} size={15} color={action.active ? "#ffffff" : webTheme.faint} />
+                      ) : (
+                        <Feather name={action.icon as any} size={15} color={action.active ? webTheme.red : webTheme.faint} />
+                      )}
+                      <Text
+                        style={{
+                          ...type.semibold,
+                          color: action.active
+                            ? action.key === "save"
+                              ? "#ffffff"
+                              : webTheme.red
+                            : webTheme.faint,
+                          fontSize: 12,
+                        }}
+                      >
                         {action.label}
                       </Text>
                     </Pressable>

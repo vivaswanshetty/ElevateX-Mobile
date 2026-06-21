@@ -16,6 +16,8 @@ import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { TabTransitionView } from "../../components/TabTransitionView";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+
 
 const activityAccent = {
   reward: webTheme.green,
@@ -44,6 +46,7 @@ function ActivitySkeleton() {
 export default function ActivityScreen() {
   const tabBarPadding = useTabBarPadding();
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: activities = [], isFetching } = useQuery<any[]>({
@@ -185,7 +188,6 @@ export default function ActivityScreen() {
               showBackButton={true}
               eyebrow="Notifications"
               title="Activity"
-              badge="Movement"
               description="Track rewards, feedback, and new task matches without leaving the app flow."
               accent={webTheme.orange}
             />
@@ -248,7 +250,7 @@ export default function ActivityScreen() {
                   ) : null}
                   <HapticPressable
                     hapticType="light"
-                    onPress={() => clearAllMutation.mutate()}
+                    onPress={() => setShowClearConfirm(true)}
                     disabled={clearAllMutation.isPending}
                     accessibilityLabel="Clear all activities"
                     style={{
@@ -340,6 +342,19 @@ export default function ActivityScreen() {
           </View>
         </ScrollView>
       </TabTransitionView>
+      <ConfirmDialog
+        visible={showClearConfirm}
+        title="Clear Activity"
+        detail="Are you sure you want to clear all activities? This action cannot be undone."
+        confirmLabel="Clear"
+        cancelLabel="Cancel"
+        destructive={true}
+        onConfirm={() => {
+          clearAllMutation.mutate();
+          setShowClearConfirm(false);
+        }}
+        onClose={() => setShowClearConfirm(false)}
+      />
     </SafeAreaView>
   );
 }

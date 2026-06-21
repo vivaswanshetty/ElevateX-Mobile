@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Feather } from "@expo/vector-icons";
+import { Feather, AntDesign } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -18,7 +18,7 @@ import { AppStackHeader } from "../../components/AppStackHeader";
 import { SurfaceCard } from "../../components/SurfaceCard";
 import { HapticPressable } from "../../components/HapticPressable";
 import { api, getErrorMessage } from "../../lib/api";
-import { formatTimeAgo, getImageUrl } from "../../lib/media";
+import { formatTimeAgo, getImageUrl, formatPostTime } from "../../lib/media";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useAuthStore } from "../../stores/authStore";
@@ -217,6 +217,12 @@ export default function PostDetailScreen() {
                     <Text style={{ ...type.regular, color: "rgba(255,255,255,0.20)", fontSize: 12 }}>
                       ·
                     </Text>
+                    <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 12 }}>
+                      {formatPostTime(post.createdAt)}
+                    </Text>
+                    <Text style={{ ...type.regular, color: "rgba(255,255,255,0.20)", fontSize: 12 }}>
+                      ·
+                    </Text>
                     <Feather name="globe" size={11} color={webTheme.faint} />
                   </View>
                 </View>
@@ -329,11 +335,19 @@ export default function PostDetailScreen() {
                       : "transparent",
                   }}
                 >
-                  <Feather
-                    name={action.icon as "heart" | "message-circle" | "send"}
-                    size={16}
-                    color={action.active ? webTheme.red : webTheme.faint}
-                  />
+                  {action.key === "like" ? (
+                    <AntDesign
+                      name={action.active ? "heart" : "hearto"}
+                      size={16}
+                      color={action.active ? webTheme.red : webTheme.faint}
+                    />
+                  ) : (
+                    <Feather
+                      name={action.icon as any}
+                      size={16}
+                      color={action.active ? webTheme.red : webTheme.faint}
+                    />
+                  )}
                   <Text
                     style={{
                       ...type.semibold,
