@@ -22,7 +22,7 @@ import { notify } from "../../stores/toastStore";
 import { Watermark } from "../../components/Watermark";
 
 const schema = z.object({
-  email: z.string().email("Invalid email"),
+  email: z.string().min(3, "Email or username must be at least 3 characters long"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
@@ -177,7 +177,7 @@ export default function LoginScreen() {
 
           {/* form */}
           {[
-            { name: "email", placeholder: "you@example.com", secure: false },
+            { name: "email", placeholder: "Email or username", secure: false },
             { name: "password", placeholder: "Password", secure: true },
           ].map((field) => (
             <View key={field.name}>

@@ -72,6 +72,7 @@ export default function RegisterScreen() {
     try {
       const response = await api.post("/api/auth/register", {
         name: data.displayName,
+        username: data.username,
         email: data.email,
         password: data.password,
         termsAccepted: true,
