@@ -17,6 +17,7 @@ import { webTheme } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { TabTransitionView } from "../../components/TabTransitionView";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { UserAvatar } from "../../components/UserAvatar";
 
 
 const activityAccent = {
@@ -70,6 +71,21 @@ export default function ActivityScreen() {
 
   const clearAllMutation = useMutation({
     mutationFn: () => api.delete("/api/activities/clear-all"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
+  });
+
+  const acceptRequestMutation = useMutation({
+    mutationFn: (requesterId: string) => api.put(`/api/users/${requesterId}/accept-request`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+  });
+
+  const rejectRequestMutation = useMutation({
+    mutationFn: (requesterId: string) => api.put(`/api/users/${requesterId}/reject-request`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
@@ -146,6 +162,14 @@ export default function ActivityScreen() {
     if (filter === "read") return !item.unread;
     return true;
   });
+
+  const followRequests = mappedActivities.filter(
+    (item) => item.originalType === "follow_request"
+  );
+
+  const notifications = filteredItems.filter(
+    (item) => item.originalType !== "follow_request"
+  );
 
   const handlePressActivity = (item: (typeof mappedActivities)[number]) => {
     if (item.unread) {
@@ -281,57 +305,140 @@ export default function ActivityScreen() {
                 <ActivitySkeleton />
                 <ActivitySkeleton />
               </AnimatedList>
-            ) : filteredItems.length > 0 ? (
-              <AnimatedList baseDelay={180} stagger={60} distance={16} itemStyle={{ width: "100%" }}>
-                {filteredItems.map((item: (typeof mappedActivities)[number]) => (
-                  <SurfaceCard
-                    key={item.id}
-                    onPress={() => handlePressActivity(item)}
-                    style={{
-                      borderColor: item.unread ? "rgba(251,146,60,0.18)" : webTheme.border,
-                      backgroundColor: item.unread ? webTheme.surfaceRaised : webTheme.surface,
-                    }}
-                  >
-                    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
-                      <View
-                        style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 16,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: "rgba(255,255,255,0.04)",
-                          borderWidth: 1,
-                          borderColor: webTheme.border,
-                        }}
-                      >
-                        <Feather
-                          name={
-                            item.type === "reward"
-                              ? "award"
-                              : item.type === "comment"
-                                ? "message-circle"
-                                : item.type === "match"
-                                  ? "briefcase"
-                                  : "bell"
-                          }
-                          size={17}
-                          color={activityAccent[item.type as keyof typeof activityAccent]}
-                        />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
-                          <Text style={{ ...type.h3, color: webTheme.text, fontSize: 17 }}>{item.title}</Text>
-                          <Text style={{ ...type.caption, color: webTheme.faint }}>{item.time}</Text>
-                        </View>
-                        <Text style={{ ...type.body, marginTop: 6, color: webTheme.muted, fontSize: 14 }}>
-                          {item.detail}
-                        </Text>
-                      </View>
-                    </View>
-                  </SurfaceCard>
-                ))}
-              </AnimatedList>
+            ) : (followRequests.length > 0 && filter !== "read") || notifications.length > 0 ? (
+              <View style={{ gap: 20 }}>
+                {/* Follow Requests Section */}
+                {filter !== "read" && followRequests.length > 0 ? (
+                  <View style={{ gap: 12 }}>
+                    <Text style={{ ...type.bold, color: webTheme.orange, fontSize: 13, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                      Follow Requests ({followRequests.length})
+                    </Text>
+                    <AnimatedList baseDelay={100} stagger={60} distance={12} itemStyle={{ width: "100%" }}>
+                      {followRequests.map((item) => (
+                        <SurfaceCard
+                          key={item.id}
+                          style={{
+                            borderColor: webTheme.border,
+                            backgroundColor: webTheme.surface,
+                          }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                            <UserAvatar avatar={item.actor?.avatar} size={40} />
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 15 }}>
+                                {item.actor?.name || "Someone"}
+                              </Text>
+                              <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, marginTop: 2 }}>
+                                requested to follow you
+                              </Text>
+                            </View>
+                            <Text style={{ ...type.caption, color: webTheme.faint }}>{item.time}</Text>
+                          </View>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14 }}>
+                            <HapticPressable
+                              onPress={() => acceptRequestMutation.mutate(item.actor?._id)}
+                              disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
+                              style={{
+                                flex: 1,
+                                borderRadius: 10,
+                                backgroundColor: webTheme.orange,
+                                paddingVertical: 8,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                opacity: acceptRequestMutation.isPending ? 0.6 : 1,
+                              }}
+                            >
+                              <Text style={{ ...type.bold, color: "#fff", fontSize: 13 }}>Accept</Text>
+                            </HapticPressable>
+                            <HapticPressable
+                              onPress={() => rejectRequestMutation.mutate(item.actor?._id)}
+                              disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
+                              style={{
+                                flex: 1,
+                                borderRadius: 10,
+                                backgroundColor: "rgba(255,255,255,0.03)",
+                                borderWidth: 1,
+                                borderColor: webTheme.border,
+                                paddingVertical: 8,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                opacity: rejectRequestMutation.isPending ? 0.6 : 1,
+                              }}
+                            >
+                              <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 13 }}>Decline</Text>
+                            </HapticPressable>
+                          </View>
+                        </SurfaceCard>
+                      ))}
+                    </AnimatedList>
+                    
+                    {notifications.length > 0 ? (
+                      <View style={{ height: 1, backgroundColor: webTheme.borderSoft, marginVertical: 8 }} />
+                    ) : null}
+                  </View>
+                ) : null}
+
+                {/* General Notifications Section */}
+                {notifications.length > 0 ? (
+                  <View style={{ gap: 12 }}>
+                    {filter !== "read" && followRequests.length > 0 ? (
+                      <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 13, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                        Recent Activity
+                      </Text>
+                    ) : null}
+                    <AnimatedList baseDelay={180} stagger={60} distance={16} itemStyle={{ width: "100%" }}>
+                      {notifications.map((item: (typeof mappedActivities)[number]) => (
+                        <SurfaceCard
+                          key={item.id}
+                          onPress={() => handlePressActivity(item)}
+                          style={{
+                            borderColor: item.unread ? "rgba(251,146,60,0.18)" : webTheme.border,
+                            backgroundColor: item.unread ? webTheme.surfaceRaised : webTheme.surface,
+                          }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
+                            <View
+                              style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: 16,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(255,255,255,0.04)",
+                                borderWidth: 1,
+                                borderColor: webTheme.border,
+                              }}
+                            >
+                              <Feather
+                                name={
+                                  item.type === "reward"
+                                    ? "award"
+                                    : item.type === "comment"
+                                      ? "message-circle"
+                                      : item.type === "match"
+                                        ? "briefcase"
+                                        : "bell"
+                                }
+                                size={17}
+                                color={activityAccent[item.type as keyof typeof activityAccent]}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+                                <Text style={{ ...type.h3, color: webTheme.text, fontSize: 17 }}>{item.title}</Text>
+                                <Text style={{ ...type.caption, color: webTheme.faint }}>{item.time}</Text>
+                              </View>
+                              <Text style={{ ...type.body, marginTop: 6, color: webTheme.muted, fontSize: 14 }}>
+                                {item.detail}
+                              </Text>
+                            </View>
+                          </View>
+                        </SurfaceCard>
+                      ))}
+                    </AnimatedList>
+                  </View>
+                ) : null}
+              </View>
             ) : (
               <FadeSlideIn delay={150}>
                 <Text style={{ ...type.body, color: webTheme.muted, textAlign: "center", marginTop: 20 }}>
