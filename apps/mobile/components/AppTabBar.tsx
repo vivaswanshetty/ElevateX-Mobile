@@ -1,8 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { ComponentProps, useEffect } from "react";
-import { LinearGradient } from "expo-linear-gradient";
-import { Text, View, Dimensions } from "react-native";
+import { Text, View, Dimensions, Pressable } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { 
@@ -63,22 +62,13 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
     transform: [{ translateX: indicatorX.value }],
   }));
 
-  // Instead of early return, we'll use display:none to keep hooks stable
-
   const tint = isDark ? "dark" : "light";
   const barBg = isDark ? "rgba(10, 10, 15, 0.70)" : "rgba(255, 255, 255, 0.75)";
-  const barBorder = isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.50)";
-  const edgeHighlight = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.60)";
-  const activeRoute = state.routes[state.index];
-  const isCreateActive = activeRoute?.name === "create";
+  const barBorder = isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(0, 0, 0, 0.08)";
+  const edgeHighlight = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.50)";
 
-  const indicatorBg = isCreateActive
-    ? "rgba(229, 54, 75, 0.16)"
-    : (isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)");
-
-  const indicatorBorder = isCreateActive
-    ? "rgba(229, 54, 75, 0.35)"
-    : (isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)");
+  const indicatorBg = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)";
+  const indicatorBorder = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)";
 
   return (
     <View
@@ -95,12 +85,12 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
         intensity={95}
         tint={tint}
         style={{
-          borderRadius: 32,
-          borderWidth: 1,
+          borderRadius: 28,
+          borderWidth: 1.5,
           borderColor: barBorder,
           backgroundColor: barBg,
           paddingHorizontal: 8,
-          paddingVertical: 8,
+          paddingVertical: 6,
           shadowColor: "#000",
           shadowOpacity: isDark ? 0.35 : 0.08,
           shadowRadius: 24,
@@ -121,12 +111,12 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
           }} 
         />
 
-        {/* Dynamic Indicator */}
+        {/* Dynamic Indicator capsule */}
         <Animated.View
           style={[
             {
               position: "absolute",
-              top: 8,
+              top: 6,
               left: 8,
               width: TAB_WIDTH,
               height: 48,
@@ -140,15 +130,10 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
             style={{
               width: "85%",
               height: "100%",
-              borderRadius: 20,
+              borderRadius: 18,
               backgroundColor: indicatorBg,
               borderWidth: 1,
               borderColor: indicatorBorder,
-              shadowColor: isCreateActive ? webTheme.accent : "transparent",
-              shadowOpacity: isCreateActive ? 0.35 : 0,
-              shadowRadius: isCreateActive ? 12 : 0,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: isCreateActive ? 4 : 0,
             }}
           />
         </Animated.View>
@@ -185,6 +170,17 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               });
             };
 
+            if (route.name === "create") {
+              return (
+                <CreateTabItem
+                  key={route.key}
+                  focused={focused}
+                  onPress={onPress}
+                  onLongPress={onLongPress}
+                />
+              );
+            }
+
             return (
               <TabItem
                 key={route.key}
@@ -202,6 +198,49 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   );
 }
 
+function CreateTabItem({ 
+  focused, 
+  onPress, 
+  onLongPress 
+}: { 
+  focused: boolean; 
+  onPress: () => void; 
+  onLongPress: () => void; 
+}) {
+  const scale = useSharedValue(1);
+
+  return (
+    <HapticPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={{ width: TAB_WIDTH, height: 48, alignItems: "center", justifyContent: "center" }}
+      onPressIn={() => { scale.value = withSpring(0.85); }}
+      onPressOut={() => { scale.value = withSpring(1); }}
+    >
+      <Animated.View
+        style={{
+          transform: [{ scale: scale.value }],
+          width: 38,
+          height: 38,
+          borderRadius: 19,
+          backgroundColor: webTheme.accent,
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.15)",
+          shadowColor: webTheme.accent,
+          shadowOpacity: focused ? 0.35 : 0.15,
+          shadowRadius: focused ? 8 : 4,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 4,
+        }}
+      >
+        <Feather name="plus" size={20} color="#FFF" />
+      </Animated.View>
+    </HapticPressable>
+  );
+}
+
 function TabItem({ 
   focused, 
   meta, 
@@ -216,19 +255,24 @@ function TabItem({
   isDark: boolean;
 }) {
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(focused ? 1 : 0.4);
+  const iconTranslateY = useSharedValue(focused ? -2 : 6);
+  const textOpacity = useSharedValue(focused ? 1 : 0);
+  const textScale = useSharedValue(focused ? 1 : 0.85);
 
   useEffect(() => {
-    opacity.value = withTiming(focused ? 1 : 0.4, { duration: 250 });
+    iconTranslateY.value = withSpring(focused ? -2 : 6, { damping: 15, stiffness: 120 });
+    textOpacity.value = withTiming(focused ? 1 : 0, { duration: 200 });
+    textScale.value = withTiming(focused ? 1 : 0.85, { duration: 200 });
   }, [focused]);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
+    transform: [{ translateY: iconTranslateY.value }, { scale: scale.value }],
+    opacity: withTiming(focused ? 1 : 0.45, { duration: 200 }),
   }));
 
   const animatedTextStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: textOpacity.value,
+    transform: [{ scale: textScale.value }],
   }));
 
   const activeColor = webTheme.accent;
@@ -266,4 +310,3 @@ function TabItem({
     </HapticPressable>
   );
 }
-

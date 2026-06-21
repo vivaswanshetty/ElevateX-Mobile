@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, Text, View } from "react-native";
 import { type } from "../lib/typography";
@@ -9,25 +9,15 @@ interface AppStackHeaderProps {
   title: string;
   detail?: string;
   hideWorkspaceButton?: boolean;
+  rightElement?: React.ReactNode;
 }
 
-export function AppStackHeader({ title, detail, hideWorkspaceButton }: AppStackHeaderProps) {
-  const params = useLocalSearchParams();
-  const from = params.from;
-
+export function AppStackHeader({ title, detail, hideWorkspaceButton, rightElement }: AppStackHeaderProps) {
   const handleBack = () => {
-    if (from === "workspace_home") {
-      router.navigate("/hub?from=home");
-    } else if (from === "workspace_profile") {
-      router.navigate("/hub?from=profile");
-    } else if (from === "workspace") {
-      router.navigate("/hub");
-    } else if (from === "home") {
-      router.navigate("/(tabs)");
-    } else if (from === "profile") {
-      router.navigate("/(tabs)/profile");
-    } else {
+    if (router.canGoBack()) {
       router.back();
+    } else {
+      router.navigate("/(tabs)");
     }
   };
 
@@ -82,31 +72,7 @@ export function AppStackHeader({ title, detail, hideWorkspaceButton }: AppStackH
           </Text>
         ) : null}
       </View>
-      {!hideWorkspaceButton && (
-        <Pressable
-          onPress={() => router.push("/hub")}
-          style={({ pressed }) => ({
-            width: 44,
-            height: 44,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: webTheme.borderStrong,
-            backgroundColor: "rgba(255,255,255,0.04)",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            opacity: pressed ? 0.8 : 1,
-          })}
-        >
-          <LinearGradient
-            colors={["rgba(255,255,255,0.05)", "transparent"]}
-            start={{ x: 0.3, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
-          />
-          <Feather name="layers" size={18} color={webTheme.text} />
-        </Pressable>
-      )}
+      {rightElement ? rightElement : null}
     </View>
   );
 }

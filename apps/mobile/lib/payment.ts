@@ -84,19 +84,33 @@ async function verifyPayment(options: VerifyPaymentOptions) {
 
 // ─── Public API ─────────────────────────────────────────────────
 
+let _lastPaymentTime = 0;
+const COOLDOWN_MS = 3000;
+
 export async function purchaseSubscription(
   plan: SubscriptionPlan,
   billingCycle: BillingCycle,
   amount: number,
   user: { displayName?: string | null; email?: string | null }
 ) {
+  const now = Date.now();
+  if (now - _lastPaymentTime < COOLDOWN_MS) {
+    console.log("[Payment] purchaseSubscription ignored: click cooldown active.");
+    throw { code: 0, description: "Click rate-limited" };
+  }
+
   // If a payment is already in flight, return the SAME promise (dedup)
   if (_pendingPayment) return _pendingPayment;
 
+  _lastPaymentTime = now;
   _pendingPayment = (async () => {
-    const order = await createRazorpayOrder({ amount, type: "subscription", plan, billingCycle });
-    const pd = await openSheet(order, user);
-    return verifyPayment({ ...pd, type: "subscription", plan, billingCycle });
+    try {
+      const order = await createRazorpayOrder({ amount, type: "subscription", plan, billingCycle });
+      const pd = await openSheet(order, user);
+      return await verifyPayment({ ...pd, type: "subscription", plan, billingCycle });
+    } finally {
+      _lastPaymentTime = Date.now();
+    }
   })();
 
   try {
@@ -110,12 +124,23 @@ export async function depositCoins(
   amount: number,
   user: { displayName?: string | null; email?: string | null }
 ) {
+  const now = Date.now();
+  if (now - _lastPaymentTime < COOLDOWN_MS) {
+    console.log("[Payment] depositCoins ignored: click cooldown active.");
+    throw { code: 0, description: "Click rate-limited" };
+  }
+
   if (_pendingPayment) return _pendingPayment;
 
+  _lastPaymentTime = now;
   _pendingPayment = (async () => {
-    const order = await createRazorpayOrder({ amount, type: "deposit" });
-    const pd = await openSheet(order, user);
-    return verifyPayment({ ...pd, amount, type: "deposit" });
+    try {
+      const order = await createRazorpayOrder({ amount, type: "deposit" });
+      const pd = await openSheet(order, user);
+      return await verifyPayment({ ...pd, amount, type: "deposit" });
+    } finally {
+      _lastPaymentTime = Date.now();
+    }
   })();
 
   try {

@@ -315,7 +315,7 @@ export default function EditProfileScreen() {
 
         <SurfaceCard>
           <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
-            Basic information
+            Basic Information
           </Text>
           <View style={{ marginTop: 16, gap: 12 }}>
             {[
@@ -380,7 +380,7 @@ export default function EditProfileScreen() {
         <SurfaceCard style={{ marginTop: 14 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
-              Work experience
+              Work Experience
             </Text>
             <Pressable
               onPress={addWorkItem}

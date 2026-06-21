@@ -6,12 +6,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-} from "@expo-google-fonts/plus-jakarta-sans";
+  Arimo_400Regular,
+  Arimo_500Medium,
+  Arimo_600SemiBold,
+  Arimo_700Bold,
+} from "@expo-google-fonts/arimo";
 import { useFonts } from "expo-font";
 import { FullscreenMessage } from "../components/FullscreenMessage";
 import { GlobalToast } from "../components/GlobalToast";
@@ -34,11 +33,10 @@ export default function RootLayout() {
   const { isLoading, authError, setUser, setLoading, setAuthError } =
     useAuthStore();
   const [fontsLoaded, fontError] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-    PlusJakartaSans_800ExtraBold,
+    Arimo_400Regular,
+    Arimo_500Medium,
+    Arimo_600SemiBold,
+    Arimo_700Bold,
   });
 
   useEffect(() => {

@@ -70,12 +70,12 @@ export function ConfirmDialog({
 
         <Animated.View style={{ transform: [{ scale }], opacity, borderRadius: 32, overflow: "hidden" }}>
           <BlurView
-            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            intensity={95}
             tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               borderWidth: 1,
               borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(20, 20, 24, 0.55)" : "rgba(255, 255, 255, 0.55)",
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(20, 20, 24, 0.94)" : "rgba(255, 255, 255, 0.95)",
               shadowColor: "#000",
               shadowOpacity: 0.5,
               shadowRadius: 32,
@@ -115,10 +115,10 @@ export function ConfirmDialog({
                 </View>
               )}
 
-              <Text style={{ ...type.h2, color: webTheme.text, marginBottom: 12, textAlign: "center", fontStyle: "italic", fontWeight: "300", letterSpacing: 0.5 }}>
+              <Text style={{ ...type.h3, color: webTheme.text, marginBottom: 12, textAlign: "center" }}>
                 {title}
               </Text>
-              <Text style={{ ...type.body, color: webTheme.muted, lineHeight: 22, textAlign: "center", marginBottom: 32, fontStyle: "italic", fontWeight: "300" }}>
+              <Text style={{ ...type.body, color: webTheme.muted, lineHeight: 22, textAlign: "center", marginBottom: 32 }}>
                 {detail}
               </Text>
 
@@ -157,7 +157,7 @@ export function ConfirmDialog({
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ ...type.buttonLabel, color: webTheme.faint, fontWeight: "600" }}>
+                  <Text style={{ ...type.buttonLabel, color: webTheme.faint }}>
                     {cancelLabel}
                   </Text>
                 </Pressable>

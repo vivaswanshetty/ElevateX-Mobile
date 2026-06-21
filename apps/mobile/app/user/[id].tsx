@@ -584,14 +584,14 @@ export default function UserDetailScreen() {
         >
           <Pressable style={{ flex: 1 }} onPress={() => setInfoModalVisible(false)} />
           <BlurView
-            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            intensity={95}
             tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
               borderWidth: 1,
-              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.55)" : "rgba(255, 255, 255, 0.55)",
+              borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.08)",
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.94)" : "rgba(255, 255, 255, 0.95)",
               paddingBottom: 34,
             }}
           >
@@ -610,7 +610,7 @@ export default function UserDetailScreen() {
             {/* Title and Close */}
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 24, marginBottom: 20 }}>
               <Text style={{ ...type.h2, color: webTheme.text, fontSize: 22 }}>
-                About this connection
+                About This Connection
               </Text>
               <Pressable onPress={() => setInfoModalVisible(false)}>
                 <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", alignItems: "center", justifyContent: "center" }}>

@@ -132,7 +132,7 @@ export default function LoginScreen() {
               <Feather name="zap" size={30} color={webTheme.accent} />
             </View>
             <Text style={{ ...type.h1, color: webTheme.text, fontSize: 28 }}>
-              Welcome back
+              Welcome Back
             </Text>
             <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8, textAlign: "center" }}>
               Sign in to continue where you left off
@@ -271,7 +271,7 @@ export default function LoginScreen() {
           </Text>
         </SurfaceCard>
         </FadeSlideIn>
-        <Watermark />
+
       </ScrollView>
     </SafeAreaView>
   );

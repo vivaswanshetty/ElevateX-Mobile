@@ -27,13 +27,13 @@ export function SignOutModal({ visible, onConfirm, onCancel }: SignOutModalProps
         <Pressable style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} onPress={onCancel} />
 
         <BlurView
-          intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+          intensity={95}
           tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
           style={{
             borderRadius: 32,
             borderWidth: 1,
             borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-            backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(20, 20, 24, 0.55)" : "rgba(255, 255, 255, 0.55)",
+            backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(20, 20, 24, 0.94)" : "rgba(255, 255, 255, 0.95)",
             overflow: "hidden",
             width: "100%",
             maxWidth: 320,
@@ -66,13 +66,10 @@ export function SignOutModal({ visible, onConfirm, onCancel }: SignOutModalProps
 
             <Text
               style={{
-                ...type.h2,
+                ...type.h3,
                 color: webTheme.text,
                 marginBottom: 12,
                 textAlign: "center",
-                fontStyle: "italic",
-                fontWeight: "300",
-                letterSpacing: 0.5,
               }}
             >
               Sign Out
@@ -85,8 +82,6 @@ export function SignOutModal({ visible, onConfirm, onCancel }: SignOutModalProps
                 lineHeight: 22,
                 textAlign: "center",
                 marginBottom: 28,
-                fontStyle: "italic",
-                fontWeight: "300",
               }}
             >
               Are you sure you want to sign out? You'll need to sign back in next time.
@@ -127,7 +122,6 @@ export function SignOutModal({ visible, onConfirm, onCancel }: SignOutModalProps
                   style={{
                     ...type.buttonLabel,
                     color: webTheme.faint,
-                    fontWeight: "600",
                   }}
                 >
                   Cancel

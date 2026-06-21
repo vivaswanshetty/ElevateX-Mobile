@@ -470,7 +470,7 @@ export default function WelcomeScreen() {
               <FadeSlideIn delay={100} distance={16}>
                 <SurfaceCard>
                   <Text style={{ ...type.h3, color: webTheme.text }}>
-                    No live tasks yet
+                    No Live Tasks Yet
                   </Text>
                   <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8 }}>
                     Start by posting the first task or refresh once the backend has seeded tasks.

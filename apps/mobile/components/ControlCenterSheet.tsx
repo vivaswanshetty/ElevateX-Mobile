@@ -229,11 +229,11 @@ export function ControlCenterSheet() {
             />
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <View>
-                <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>
                   ElevateX System
                 </Text>
-                <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 20, marginTop: 2 }}>
-                  Lobby
+                <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 20, marginTop: 2, letterSpacing: 0.5 }}>
+                  LOBBY
                 </Text>
               </View>
               <Pressable

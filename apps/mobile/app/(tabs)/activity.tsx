@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { ScrollView, Text, View } from "react-native";
@@ -71,6 +71,13 @@ export default function ActivityScreen() {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
   });
+
+  useEffect(() => {
+    const hasUnread = activities.some((a: any) => !a.read);
+    if (hasUnread) {
+      markAllReadMutation.mutate();
+    }
+  }, [activities]);
 
   const mappedActivities = activities.map((item) => ({
     id: item._id,
@@ -175,6 +182,7 @@ export default function ActivityScreen() {
         <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: tabBarPadding }}>
           <FadeSlideIn delay={50} distance={10}>
             <ScreenHeader
+              showBackButton={true}
               eyebrow="Activity"
               title="Recent"
               badge="Movement"

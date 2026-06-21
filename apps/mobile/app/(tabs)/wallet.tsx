@@ -474,7 +474,7 @@ export default function WalletScreen() {
         <View style={{ marginTop: 20 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
             <Text style={{ ...type.black, color: webTheme.text, fontSize: 28 }}>
-              Transactions
+              Transaction History
             </Text>
             <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 12 }}>
               {filteredTransactions.length} entries
@@ -533,13 +533,19 @@ export default function WalletScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 15 }}>
-                        {TX_LABELS[item.type] || item.description || item.task?.title || item.type}
+                        {item.task?.title || 
+                         (item.description && item.description !== "Deposit" && item.description !== "Withdraw" ? item.description : null) || 
+                         (item.type === "withdraw" && item.amount === 100 ? "Streak Freeze Purchase" : null) ||
+                         (item.type === "deposit" && item.amount === 10 ? "Daily Check-in" : null) ||
+                         TX_LABELS[item.type] || 
+                         item.description || 
+                         item.type}
                       </Text>
                       <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12, marginTop: 4 }}>
                         {formatDate(item.createdAt)}
                       </Text>
                     </View>
-                    <Text style={{ ...type.black, color: credit ? webTheme.green : webTheme.text, fontSize: 18 }}>
+                    <Text style={{ ...type.black, color: credit ? webTheme.green : webTheme.red, fontSize: 18 }}>
                       {credit ? "+" : "-"}
                       {Number(item.amount || 0).toLocaleString()}
                     </Text>

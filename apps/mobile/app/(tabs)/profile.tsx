@@ -259,515 +259,617 @@ export default function ProfileScreen() {
       <TabTransitionView index={4}>
         <ScreenBackdrop />
         <ScrollView
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isFetching || followersQuery.isFetching || followingQuery.isFetching}
-            onRefresh={() => {
-              refetch();
-              followersQuery.refetch();
-              followingQuery.refetch();
-            }}
-            tintColor={webTheme.accent}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ── header backdrop ── */}
-        <View style={{ height: 150, overflow: "hidden", backgroundColor: webTheme.bg }}>
-          <LinearGradient
-            colors={
-              theme === "dark"
-                ? ["#1A0C0E", "#0A0506", "#000000"]
-                : ["#FFEBEF", "#F5E2E5", webTheme.bg]
-            }
-            start={{ x: 0.15, y: 0 }}
-            end={{ x: 0.85, y: 1 }}
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-          />
-          <LinearGradient
-            colors={["transparent", webTheme.bg]}
-            start={{ x: 0.5, y: 0.55 }}
-            end={{ x: 0.5, y: 1 }}
-            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 80 }}
-          />
+          contentContainerStyle={{ paddingBottom: tabBarPadding }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching || followersQuery.isFetching || followingQuery.isFetching}
+              onRefresh={() => {
+                refetch();
+                followersQuery.refetch();
+                followingQuery.refetch();
+              }}
+              tintColor={webTheme.accent}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ── header backdrop (technical blueprint grid) ── */}
+          <View style={{ height: 150, overflow: "hidden", backgroundColor: webTheme.bg }}>
+            <LinearGradient
+              colors={
+                theme === "dark"
+                  ? ["#120809", "#080404", "#000000"]
+                  : ["#FFEBEF", "#F8E6E8", webTheme.bg]
+              }
+              start={{ x: 0.15, y: 0 }}
+              end={{ x: 0.85, y: 1 }}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            />
+            <LinearGradient
+              colors={["transparent", webTheme.bg]}
+              start={{ x: 0.5, y: 0.55 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 80 }}
+            />
 
-          {/* Subtle Classy Background Graphic */}
-          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", opacity: 0.8 }}>
-            <View
-              style={{
-                position: "absolute",
-                right: -70,
-                top: -50,
-                width: 240,
-                height: 240,
-                borderRadius: 120,
-                borderWidth: 1,
-                borderColor: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-                borderStyle: "dashed",
-              }}
-            />
-            <View
-              style={{
-                position: "absolute",
-                right: -30,
-                top: -10,
-                width: 160,
-                height: 160,
-                borderRadius: 80,
-                borderWidth: 1,
-                borderColor: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-              }}
-            />
-            <View
-              style={{
-                position: "absolute",
-                left: -40,
-                bottom: 30,
-                width: "120%",
-                height: 1,
-                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-                transform: [{ rotate: "-15deg" }],
-              }}
-            />
-            <View
-              style={{
-                position: "absolute",
-                left: -40,
-                bottom: 55,
-                width: "120%",
-                height: 1,
-                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
-                transform: [{ rotate: "-10deg" }],
-              }}
-            />
-          </View>
+            {/* Technical Blueprint Grid Graphic */}
+            <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", opacity: 0.55 }}>
+              {/* Horizontal Grid Lines */}
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View
+                  key={`h-grid-${i}`}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: i * 30,
+                    height: 1,
+                    backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                  }}
+                />
+              ))}
+              {/* Vertical Grid Lines */}
+              {Array.from({ length: 15 }).map((_, i) => (
+                <View
+                  key={`v-grid-${i}`}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: i * 30,
+                    width: 1,
+                    backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                  }}
+                />
+              ))}
+              {/* Technical Layout Dots / Crosshairs */}
+              <Text
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: 75,
+                  color: theme === "dark" ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.18)",
+                  fontSize: 8,
+                  fontFamily: "monospace",
+                }}
+              >
+                [SYS.ALIGN_00]
+              </Text>
+              <Text
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: 75,
+                  color: theme === "dark" ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.18)",
+                  fontSize: 8,
+                  fontFamily: "monospace",
+                  textAlign: "right",
+                }}
+              >
+                [SYS.LOC_PRFL]
+              </Text>
+              {/* Diagonal Tech Accents */}
+              <View
+                style={{
+                  position: "absolute",
+                  right: 60,
+                  top: -20,
+                  width: 120,
+                  height: 120,
+                  borderWidth: 1,
+                  borderColor: theme === "dark" ? "rgba(229,54,75,0.16)" : "rgba(229,54,75,0.08)",
+                  transform: [{ rotate: "45deg" }],
+                }}
+              />
+              <View
+                style={{
+                  position: "absolute",
+                  right: 90,
+                  top: 10,
+                  width: 60,
+                  height: 60,
+                  borderWidth: 1,
+                  borderColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                  transform: [{ rotate: "45deg" }],
+                }}
+              />
+            </View>
 
-          {/* Floating settings gear and header title overlay */}
-          <View
-            style={{
-              position: "absolute",
-              top: 15,
-              left: 22,
-              right: 22,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              zIndex: 10,
-            }}
-          >
-            <Text style={{ ...type.h2, color: theme === "dark" ? "#ffffff" : webTheme.text, fontSize: 22 }}>My Profile</Text>
-            <HapticPressable
-              onPress={() => router.push("/manage-account")}
-              hapticType="light"
+            {/* Floating settings gear and header title overlay */}
+            <View
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.05)",
+                position: "absolute",
+                top: 15,
+                left: 22,
+                right: 22,
+                flexDirection: "row",
+                justifyContent: "space-between",
                 alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.18)" : "rgba(0, 0, 0, 0.08)",
+                zIndex: 10,
               }}
             >
-              <Feather name="settings" size={20} color={theme === "dark" ? "#ffffff" : webTheme.text} />
-            </HapticPressable>
+              <Text style={{ ...type.h2, color: theme === "dark" ? "#ffffff" : webTheme.text, fontSize: 22 }}>My Profile</Text>
+              <HapticPressable
+                onPress={() => router.push("/manage-account")}
+                hapticType="light"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.05)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.18)" : "rgba(0, 0, 0, 0.08)",
+                }}
+              >
+                <Feather name="settings" size={20} color={theme === "dark" ? "#ffffff" : webTheme.text} />
+              </HapticPressable>
+            </View>
           </View>
-        </View>
 
-        {/* Breathable horizontal gutter wrapper for all body sections */}
-        <View style={{ paddingHorizontal: 22, width: "100%", marginTop: -32 }}>
-          {/* ── profile card ── */}
-          <FadeSlideIn delay={100} distance={20} style={{ width: "100%" }}>
-            <View>
-              <View style={{ alignItems: "center" }}>
-              {/* avatar */}
-              <Pressable onPress={() => setShowEnlargedAvatar(true)} style={{ zIndex: 10 }}>
-                <UserAvatar
-                  avatar={displayProfile.avatar}
-                  size={116}
-                  borderWidth={4}
-                  borderColor={showAvatar ? webTheme.bg : webTheme.accentBorder}
-                />
-              </Pressable>
-
-              {/* info card */}
-              <SurfaceCard style={{ width: "100%", marginTop: -22 }} contentStyle={{ paddingTop: 44 }}>
-              <View style={{ alignItems: "center" }}>
-                <Text style={{ ...type.h1, color: webTheme.text, fontSize: 28 }}>
-                  {displayProfile.name}
-                </Text>
-                <Text style={{ ...type.body, color: webTheme.muted, fontSize: 14, marginTop: 6 }}>
-                  @{handle}
-                </Text>
-
-                {/* level badge */}
-                <View
-                  style={{
-                    marginTop: 14,
-                    borderRadius: 999,
-                    borderWidth: 1,
-                    borderColor: webTheme.accentBorder,
-                    backgroundColor: webTheme.accentSoft,
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 7,
-                  }}
-                >
-                  <Feather name="award" size={13} color={webTheme.accent} />
-                  <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 12 }}>
-                    Level {level} • {levelTitle} • {planLabel}
-                  </Text>
-                </View>
-
-                {/* bio */}
-                <Text
-                  style={{
-                    ...type.body,
-                    color: hasBio ? webTheme.muted : webTheme.faint,
-                    textAlign: "center",
-                    marginTop: 14,
-                    fontSize: 14,
-                  }}
-                >
-                  {displayProfile.bio || "Add a short bio so your profile feels deliberate, not empty."}
-                </Text>
-
-                {/* Followers, Following, Posts counts */}
-                <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%", marginTop: 18, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: webTheme.border }}>
-                  <Pressable onPress={() => { setUserListTitle("Followers"); setUserListModalVisible(true); }} style={{ alignItems: "center", flex: 1 }}>
-                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{followersQuery.data?.length || 0}</Text>
-                    <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Followers</Text>
-                  </Pressable>
-                  <View style={{ width: 1, backgroundColor: webTheme.border }} />
-                  <Pressable onPress={() => { setUserListTitle("Following"); setUserListModalVisible(true); }} style={{ alignItems: "center", flex: 1 }}>
-                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{followingQuery.data?.length || 0}</Text>
-                    <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Following</Text>
-                  </Pressable>
-                  <View style={{ width: 1, backgroundColor: webTheme.border }} />
-                  <Pressable onPress={() => setActiveTab("posts")} style={{ alignItems: "center", flex: 1 }}>
-                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{ownPosts.length}</Text>
-                    <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Posts</Text>
-                  </Pressable>
-                </View>
-
-                {/* XP progress */}
-                <View style={{ marginTop: 20, width: "100%" }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <Text style={{ ...type.label, color: webTheme.faint, fontSize: 10 }}>
-                      XP Progress
-                    </Text>
-                    <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 12 }}>
-                      {xpInLevel}/500 XP
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      marginTop: 8,
-                      height: 6,
-                      borderRadius: 999,
-                      backgroundColor: "rgba(255,255,255,0.06)",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <LinearGradient
-                      colors={["#E5364B", "#F43F5E"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={{
-                        width: `${xpProgress}%`,
-                        height: "100%",
-                        borderRadius: 999,
-                      }}
+          {/* Breathable horizontal gutter wrapper for all body sections */}
+          <View style={{ paddingHorizontal: 22, width: "100%", marginTop: -32 }}>
+            {/* ── profile card ── */}
+            <FadeSlideIn delay={100} distance={20} style={{ width: "100%" }}>
+              <View>
+                <View style={{ alignItems: "center" }}>
+                  {/* avatar */}
+                  <Pressable onPress={() => setShowEnlargedAvatar(true)} style={{ zIndex: 10 }}>
+                    <UserAvatar
+                      avatar={displayProfile.avatar}
+                      size={116}
+                      borderWidth={4}
+                      borderColor={showAvatar ? webTheme.bg : webTheme.accentBorder}
                     />
-                  </View>
-                </View>
+                  </Pressable>
 
-                {/* action buttons */}
-                <View style={{ marginTop: 20, width: "100%" }}>
-                  <HapticPressable 
-                    onPress={() => router.push("/edit-profile")}
-                    hapticType="light"
-                    style={{ width: "100%" }}
-                  >
-                    <View style={{ borderRadius: 999, backgroundColor: webTheme.accent, paddingVertical: 14, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", minHeight: 52 }}>
-                      <Text style={{ ...type.buttonLabel, color: "#fff" }}>Edit Profile</Text>
+                  {/* info card */}
+                  <SurfaceCard style={{ width: "100%", marginTop: -22 }} contentStyle={{ paddingTop: 44 }}>
+                    <Text style={{ position: "absolute", right: 12, top: 12, fontFamily: "monospace", fontSize: 8, color: webTheme.faint }}>
+                      [ID_CARD.E-X]
+                    </Text>
+                    <View style={{ alignItems: "center" }}>
+                      <Text style={{ ...type.h1, color: webTheme.text, fontSize: 28 }}>
+                        {displayProfile.name}
+                      </Text>
+                      <Text style={{ ...type.body, color: webTheme.muted, fontSize: 14, marginTop: 6 }}>
+                        @{handle}
+                      </Text>
+
+                      {/* level badge */}
+                      <View
+                        style={{
+                          marginTop: 14,
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: webTheme.accentBorder,
+                          backgroundColor: webTheme.accentSoft,
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 7,
+                        }}
+                      >
+                        <Feather name="award" size={13} color={webTheme.accent} />
+                        <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 12 }}>
+                          Level {level} • {levelTitle} • {planLabel}
+                        </Text>
+                      </View>
+
+                      {/* bio */}
+                      <Text
+                        style={{
+                          ...type.body,
+                          color: hasBio ? webTheme.muted : webTheme.faint,
+                          textAlign: "center",
+                          marginTop: 14,
+                          fontSize: 14,
+                        }}
+                      >
+                        {displayProfile.bio || "Add a short bio so your profile feels deliberate, not empty."}
+                      </Text>
+
+                      {/* Followers, Following, Posts counts */}
+                      <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%", marginTop: 18, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: webTheme.border }}>
+                        <Pressable onPress={() => { setUserListTitle("Followers"); setUserListModalVisible(true); }} style={{ alignItems: "center", flex: 1 }}>
+                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{followersQuery.data?.length || 0}</Text>
+                          <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Followers</Text>
+                        </Pressable>
+                        <View style={{ width: 1, backgroundColor: webTheme.border }} />
+                        <Pressable onPress={() => { setUserListTitle("Following"); setUserListModalVisible(true); }} style={{ alignItems: "center", flex: 1 }}>
+                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{followingQuery.data?.length || 0}</Text>
+                          <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Following</Text>
+                        </Pressable>
+                        <View style={{ width: 1, backgroundColor: webTheme.border }} />
+                        <Pressable onPress={() => setActiveTab("posts")} style={{ alignItems: "center", flex: 1 }}>
+                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18 }}>{ownPosts.length}</Text>
+                          <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 12, marginTop: 2 }}>Posts</Text>
+                        </Pressable>
+                      </View>
+
+                      {/* Segmented XP progress */}
+                      <View style={{ marginTop: 20, width: "100%" }}>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <Text style={{ ...type.label, color: webTheme.faint, fontSize: 9, fontFamily: "monospace" }}>
+                            SYS.LVL_PROGRESS // {Math.round(xpProgress)}%
+                          </Text>
+                          <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 11, fontFamily: "monospace" }}>
+                            {xpInLevel} / 500 XP
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            gap: 4,
+                            marginTop: 8,
+                            height: 8,
+                            width: "100%",
+                          }}
+                        >
+                          {Array.from({ length: 10 }).map((_, idx) => {
+                            const isActive = xpProgress >= (idx + 1) * 10;
+                            return (
+                              <View
+                                key={`xp-seg-${idx}`}
+                                style={{
+                                  flex: 1,
+                                  height: "100%",
+                                  borderRadius: 1,
+                                  backgroundColor: isActive
+                                    ? webTheme.accent
+                                    : theme === "dark"
+                                      ? "rgba(255,255,255,0.06)"
+                                      : "rgba(0,0,0,0.06)",
+                                }}
+                              />
+                            );
+                          })}
+                        </View>
+                      </View>
+
+                      {/* action buttons */}
+                      <View style={{ marginTop: 20, width: "100%" }}>
+                        <HapticPressable 
+                          onPress={() => router.push("/edit-profile")}
+                          hapticType="light"
+                          style={{ width: "100%" }}
+                        >
+                          <View style={{ borderRadius: 12, backgroundColor: webTheme.accent, paddingVertical: 14, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", minHeight: 52 }}>
+                            <Text style={{ ...type.buttonLabel, color: "#fff" }}>Edit Profile</Text>
+                          </View>
+                        </HapticPressable>
+                      </View>
                     </View>
-                  </HapticPressable>
+                  </SurfaceCard>
                 </View>
               </View>
-            </SurfaceCard>
-          </View>
-          </View>
-        </FadeSlideIn>
+            </FadeSlideIn>
 
-          {/* ── stat cards ── */}
-          <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
-            <AnimatedList baseDelay={220} stagger={60} distance={10} itemStyle={{ width: "48%", marginBottom: 12 }}>
-              {statCards.map((stat) => {
-                return (
-                  <View key={stat.label}>
-                    <HapticPressable
-                      hapticType="light"
+            {/* ── stat cards (metallic shimmer) ── */}
+            <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
+              <AnimatedList baseDelay={220} stagger={60} distance={10} itemStyle={{ width: "48%", marginBottom: 12 }}>
+                {statCards.map((stat) => {
+                  return (
+                    <SurfaceCard
+                      key={stat.label}
+                      shimmer={true}
                       onPress={() => {
                         if (stat.action) stat.action();
                         else if (stat.route) router.navigate(stat.route as any);
                       }}
-                    >
-                      <View
-                        style={{
-                          borderRadius: 16,
-                          borderWidth: 1,
-                          borderColor: webTheme.border,
-                          backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
-                          padding: 12,
-                          minHeight: 76,
-                          justifyContent: "space-between"
-                        }}
-                      >
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                          <Text
-                            style={{
-                              ...type.bold,
-                              color: webTheme.faint,
-                              fontSize: 9,
-                              letterSpacing: 1.2,
-                              textTransform: "uppercase"
-                            }}
-                          >
-                            {stat.label}
-                          </Text>
-                          <Feather name={stat.icon as any} size={13} color={stat.accent} />
-                        </View>
-                        <View style={{ marginTop: 4 }}>
-                          <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
-                            {stat.value}
-                          </Text>
-                          {stat.sub ? (
-                            <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 9, marginTop: 1 }} numberOfLines={1}>
-                              {stat.sub}
-                            </Text>
-                          ) : null}
-                        </View>
-                      </View>
-                    </HapticPressable>
-                  </View>
-                );
-              })}
-            </AnimatedList>
-          </View>
-
-          {/* ── tab switcher ── */}
-          <FadeSlideIn delay={220} distance={14}>
-            <View style={{ marginTop: 18, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-              {[
-                { id: "overview", label: "Overview" },
-                { id: "tasks", label: "Tasks" },
-                { id: "posts", label: "Posts" },
-                { id: "activity", label: "Activity" },
-              ].map((tab) => {
-                const active = activeTab === tab.id;
-                return (
-                  <HapticPressable
-                    key={tab.id}
-                    hapticType="selection"
-                    onPress={() => setActiveTab(tab.id as typeof activeTab)}
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: active ? webTheme.accentBorder : webTheme.border,
-                      backgroundColor: active ? webTheme.accentSoft : "rgba(255,255,255,0.03)",
-                      paddingHorizontal: 16,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ ...type.bold, color: active ? webTheme.accent : webTheme.muted, fontSize: 12 }}>
-                      {tab.label}
-                    </Text>
-                  </HapticPressable>
-                );
-              })}
-            </View>
-          </FadeSlideIn>
-
-          {/* ── active tab content ── */}
-          <FadeSlideIn delay={300} distance={16} key={activeTab}>
-
-          {/* ── overview tab ── */}
-          {activeTab === "overview" ? (
-            <View style={{ marginTop: 18, gap: 14 }}>
-              {/* social links */}
-              <SurfaceCard>
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Social links
-                </Text>
-                <View style={{ marginTop: 16, gap: 10 }}>
-                  {socials.map((social) => (
-                    <View
-                      key={social.key}
                       style={{
-                        borderRadius: 18,
-                        borderWidth: 1,
-                        borderColor: webTheme.border,
-                        backgroundColor: "rgba(255,255,255,0.03)",
-                        paddingHorizontal: 16,
-                        paddingVertical: 14,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 12,
+                        width: "100%",
+                        borderRadius: 16,
+                      }}
+                      contentStyle={{
+                        padding: 12,
+                        minHeight: 76,
+                        justifyContent: "space-between",
                       }}
                     >
-                      <Feather name={social.icon as "twitter" | "linkedin" | "github" | "globe"} size={16} color={webTheme.accent} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
-                          {social.label}
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text
+                          style={{
+                            ...type.bold,
+                            color: webTheme.faint,
+                            fontSize: 9,
+                            letterSpacing: 1.2,
+                            textTransform: "uppercase"
+                          }}
+                        >
+                          {stat.label}
                         </Text>
-                        <Text style={{ ...type.caption, color: webTheme.muted, marginTop: 4 }}>
-                          {social.value || "Not set"}
-                        </Text>
+                        <Feather name={stat.icon as any} size={13} color={stat.accent} />
                       </View>
-                    </View>
-                  ))}
-                </View>
-              </SurfaceCard>
-
-              {/* work experience */}
-              <SurfaceCard>
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Work experience
-                </Text>
-                <View style={{ marginTop: 16, gap: 12 }}>
-                  {workItems.length > 0 ? (
-                    workItems.map((item) => (
-                      <View
-                        key={item.id}
-                        style={{
-                          borderRadius: 20,
-                          borderWidth: 1,
-                          borderColor: webTheme.border,
-                          backgroundColor: "rgba(255,255,255,0.03)",
-                          padding: 16,
-                        }}
-                      >
-                        <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
-                          {item.role || "Untitled role"}
+                      <View style={{ marginTop: 4 }}>
+                        <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 18 }}>
+                          {stat.value}
                         </Text>
-                        <Text style={{ ...type.semibold, color: webTheme.accent, fontSize: 13, marginTop: 6 }}>
-                          {item.company || "Company not set"}
-                        </Text>
-                        <Text style={{ ...type.caption, color: webTheme.faint, marginTop: 6 }}>
-                          {item.duration || "Duration not set"}
-                        </Text>
-                        {item.desc ? (
-                          <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13, marginTop: 8 }}>
-                            {item.desc}
+                        {stat.sub ? (
+                          <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 9, marginTop: 1 }} numberOfLines={1}>
+                            {stat.sub}
                           </Text>
                         ) : null}
                       </View>
-                    ))
-                  ) : (
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderStyle: "dashed",
-                        borderColor: webTheme.border,
-                        padding: 18,
-                      }}
-                    >
-                      <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 14 }}>
-                        No work experience added yet.
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </SurfaceCard>
-
-              {/* education */}
-              <SurfaceCard>
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Education
-                </Text>
-                <View style={{ marginTop: 16, gap: 12 }}>
-                  {educationItems.length > 0 ? (
-                    educationItems.map((item) => (
-                      <View
-                        key={item.id}
-                        style={{
-                          borderRadius: 20,
-                          borderWidth: 1,
-                          borderColor: webTheme.border,
-                          backgroundColor: "rgba(255,255,255,0.03)",
-                          padding: 16,
-                        }}
-                      >
-                        <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
-                          {item.degree || "Untitled degree"}
-                        </Text>
-                        <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 13, marginTop: 6 }}>
-                          {item.school || "School not set"}
-                        </Text>
-                        <Text style={{ ...type.caption, color: webTheme.faint, marginTop: 6 }}>
-                          {item.year || "Year not set"}
-                        </Text>
-                      </View>
-                    ))
-                  ) : (
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderStyle: "dashed",
-                        borderColor: webTheme.border,
-                        padding: 18,
-                      }}
-                    >
-                      <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 14 }}>
-                        No education details added yet.
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </SurfaceCard>
-
-              {/* season momentum */}
-              <SurfaceCard>
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Season momentum
-                </Text>
-                <View style={{ marginTop: 16, flexDirection: "row", gap: 10 }}>
-                  {[
-                    { label: "Season XP", value: `${displayProfile.seasonXP || 0}` },
-                    { label: "Season Coins", value: `${displayProfile.seasonCoins || 0}` },
-                    { label: "Tasks Done", value: `${displayProfile.seasonTasksCompleted || 0}` },
-                  ].map((item) => (
-                    <View key={item.label} style={{ flex: 1 }}>
-                      <View
-                        style={{
-                          borderRadius: 20,
-                          borderWidth: 1,
-                          borderColor: webTheme.border,
-                          backgroundColor: "rgba(255,255,255,0.03)",
-                          padding: 14,
-                        }}
-                      >
-                        <Text style={{ ...type.label, color: webTheme.faint, fontSize: 9 }}>
-                          {item.label}
-                        </Text>
-                        <Text style={{ ...type.black, color: webTheme.text, fontSize: 22, marginTop: 6 }}>
-                          {item.value}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </SurfaceCard>
-
+                    </SurfaceCard>
+                  );
+                })}
+              </AnimatedList>
             </View>
-          ) : null}
+
+            {/* ── tab switcher (unified segmented control console) ── */}
+            <FadeSlideIn delay={220} distance={14}>
+              <View
+                style={{
+                  marginTop: 18,
+                  flexDirection: "row",
+                  borderWidth: 1,
+                  borderColor: webTheme.border,
+                  borderRadius: 12,
+                  backgroundColor: "rgba(255,255,255,0.02)",
+                  padding: 4,
+                  width: "100%",
+                  justifyContent: "space-between",
+                }}
+              >
+                {[
+                  { id: "overview", label: "Overview" },
+                  { id: "tasks", label: "Tasks" },
+                  { id: "posts", label: "Posts" },
+                  { id: "activity", label: "Activity" },
+                ].map((tab) => {
+                  const active = activeTab === tab.id;
+                  return (
+                    <HapticPressable
+                      key={tab.id}
+                      hapticType="selection"
+                      onPress={() => setActiveTab(tab.id as typeof activeTab)}
+                      style={{
+                        flex: 1,
+                        borderRadius: 8,
+                        backgroundColor: active ? "rgba(255,255,255,0.05)" : "transparent",
+                        borderWidth: 1,
+                        borderColor: active ? webTheme.border : "transparent",
+                        paddingVertical: 8,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text style={{ ...type.bold, color: active ? webTheme.text : webTheme.muted, fontSize: 12 }}>
+                        {tab.label}
+                      </Text>
+                    </HapticPressable>
+                  );
+                })}
+              </View>
+            </FadeSlideIn>
+
+            {/* ── active tab content ── */}
+            <FadeSlideIn delay={300} distance={16} key={activeTab}>
+
+              {/* ── overview tab ── */}
+              {activeTab === "overview" ? (
+                <View style={{ marginTop: 18, gap: 14 }}>
+                  {/* social links */}
+                  <SurfaceCard shimmer={true}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <Text style={{ ...type.h2, color: webTheme.text }}>
+                        Social Links
+                      </Text>
+                      <Text style={{ fontFamily: "monospace", fontSize: 9, color: webTheme.faint }}>
+                        [REG.SOCIAL_LINKS]
+                      </Text>
+                    </View>
+                    <View style={{ gap: 10 }}>
+                      {socials.map((social) => (
+                        <View
+                          key={social.key}
+                          style={{
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: webTheme.border,
+                            backgroundColor: "rgba(255,255,255,0.015)",
+                            paddingHorizontal: 16,
+                            paddingVertical: 12,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 12,
+                          }}
+                        >
+                          <Feather name={social.icon as "twitter" | "linkedin" | "github" | "globe"} size={15} color={webTheme.accent} />
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
+                                {social.label}
+                              </Text>
+                              <Text style={{ fontFamily: "monospace", fontSize: 8, color: webTheme.faint }}>
+                                {social.key.toUpperCase()}
+                              </Text>
+                            </View>
+                            <Text style={{ ...type.caption, color: social.value ? webTheme.textSecondary : webTheme.faint, fontSize: 12, marginTop: 4 }}>
+                              {social.value || "NOT_CONFIGURED"}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </SurfaceCard>
+
+                  {/* work experience */}
+                  <SurfaceCard>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <Text style={{ ...type.h2, color: webTheme.text }}>
+                        Work Experience
+                      </Text>
+                    </View>
+                    <View style={{ marginTop: 4, gap: 12 }}>
+                      {workItems.length > 0 ? (
+                        workItems.map((item) => (
+                          <View
+                            key={item.id}
+                            style={{
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: webTheme.border,
+                              backgroundColor: "rgba(255,255,255,0.015)",
+                              padding: 16,
+                            }}
+                          >
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 15 }}>
+                                  {item.role || "Untitled role"}
+                                </Text>
+                                <Text style={{ ...type.semibold, color: webTheme.accent, fontSize: 13, marginTop: 4 }}>
+                                  {item.company || "Company not set"}
+                                </Text>
+                              </View>
+                              <View
+                                style={{
+                                  borderRadius: 4,
+                                  borderWidth: 1,
+                                  borderColor: "rgba(52,211,153,0.3)",
+                                  backgroundColor: "rgba(52,211,153,0.08)",
+                                  paddingHorizontal: 6,
+                                  paddingVertical: 3,
+                                }}
+                              >
+                                <Text style={{ fontFamily: "monospace", fontSize: 8, color: webTheme.green }}>
+                                  RECORDED
+                                </Text>
+                              </View>
+                            </View>
+                            <Text style={{ ...type.caption, color: webTheme.faint, marginTop: 8, fontSize: 11 }}>
+                              PERIOD // {item.duration || "N/A"}
+                            </Text>
+                            {item.desc ? (
+                              <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13, marginTop: 8 }}>
+                                {item.desc}
+                              </Text>
+                            ) : null}
+                          </View>
+                        ))
+                      ) : (
+                        <View
+                          style={{
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderStyle: "dashed",
+                            borderColor: webTheme.border,
+                            padding: 18,
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 14 }}>
+                            NO_WORK_RECORDS_FOUND
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </SurfaceCard>
+
+                  {/* education */}
+                  <SurfaceCard>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <Text style={{ ...type.h2, color: webTheme.text }}>
+                        Education
+                      </Text>
+                    </View>
+                    <View style={{ marginTop: 4, gap: 12 }}>
+                      {educationItems.length > 0 ? (
+                        educationItems.map((item) => (
+                          <View
+                            key={item.id}
+                            style={{
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: webTheme.border,
+                              backgroundColor: "rgba(255,255,255,0.015)",
+                              padding: 16,
+                            }}
+                          >
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 15 }}>
+                                  {item.degree || "Untitled degree"}
+                                </Text>
+                                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 13, marginTop: 4 }}>
+                                  {item.school || "School not set"}
+                                </Text>
+                              </View>
+                            </View>
+                            <Text style={{ ...type.caption, color: webTheme.faint, marginTop: 8, fontSize: 11 }}>
+                              GRADUATION // {item.year || "N/A"}
+                            </Text>
+                          </View>
+                        ))
+                      ) : (
+                        <View
+                          style={{
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderStyle: "dashed",
+                            borderColor: webTheme.border,
+                            padding: 18,
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 14 }}>
+                            NO_EDU_RECORDS_FOUND
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </SurfaceCard>
+
+                  {/* season momentum */}
+                  <SurfaceCard>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <Text style={{ ...type.h2, color: webTheme.text }}>
+                        Season Momentum
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      {[
+                        { label: "XP", value: `${displayProfile.seasonXP || 0}`, code: "XP_VAL" },
+                        { label: "Coins", value: `${displayProfile.seasonCoins || 0}`, code: "CNS_VAL" },
+                        { label: "Tasks", value: `${displayProfile.seasonTasksCompleted || 0}`, code: "TSK_COMP" },
+                      ].map((item) => (
+                        <View key={item.label} style={{ flex: 1 }}>
+                          <View
+                            style={{
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: webTheme.border,
+                              backgroundColor: "rgba(255,255,255,0.015)",
+                              padding: 12,
+                              minHeight: 74,
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                              <Text style={{ ...type.label, color: webTheme.faint, fontSize: 8 }}>
+                                {item.label}
+                              </Text>
+                            </View>
+                            <View style={{ marginTop: 6 }}>
+                              <Text style={{ ...type.black, color: webTheme.text, fontSize: 20 }}>
+                                {item.value}
+                              </Text>
+                              <Text style={{ fontFamily: "monospace", fontSize: 7, color: webTheme.faint, marginTop: 2 }}>
+                                {item.code}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </SurfaceCard>
+
+                </View>
+              ) : null}
 
           {/* ── tasks tab ── */}
           {activeTab === "tasks" ? (
@@ -790,7 +892,7 @@ export default function ProfileScreen() {
               ) : (
                 <SurfaceCard>
                   <Text style={{ ...type.h3, color: webTheme.text }}>
-                    No tasks posted yet
+                    No Tasks Posted Yet
                   </Text>
                   <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8 }}>
                     Your posted opportunities will appear here once you create them from the app or web.
@@ -831,7 +933,7 @@ export default function ProfileScreen() {
               ) : (
                 <SurfaceCard>
                   <Text style={{ ...type.h3, color: webTheme.text }}>
-                    No posts yet
+                    No Posts Yet
                   </Text>
                   <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8 }}>
                     Share progress in the feed and your posts will show up here just like the web profile.
@@ -851,7 +953,7 @@ export default function ProfileScreen() {
             <View style={{ marginTop: 18, gap: 14 }}>
               <SurfaceCard>
                 <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Quick access
+                  Quick Access
                 </Text>
                 <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
                   {[
@@ -889,7 +991,7 @@ export default function ProfileScreen() {
 
               <SurfaceCard>
                 <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Account visibility
+                  Account Visibility
                 </Text>
                 <Text style={{ ...type.body, color: webTheme.muted, fontSize: 14, marginTop: 10 }}>
                   Your profile is currently {displayProfile.isPrivate ? "private" : "public"}. Manage privacy from the account section whenever you want to control who sees your details.

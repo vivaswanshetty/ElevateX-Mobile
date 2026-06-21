@@ -443,7 +443,7 @@ export default function ManageAccountScreen() {
             </SurfaceCard>
           </View>
         </View>
-        <Watermark />
+
       </ScrollView>
     </SafeAreaView>
   );

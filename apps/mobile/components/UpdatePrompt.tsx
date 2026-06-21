@@ -127,7 +127,7 @@ export function UpdatePrompt({
           />
 
           <BlurView
-            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            intensity={95}
             tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               borderRadius: 24,
@@ -138,8 +138,8 @@ export function UpdatePrompt({
           >
             <LinearGradient
               colors={useThemeStore.getState().theme === "dark"
-                ? ["rgba(18, 19, 23, 0.55)", "rgba(13, 13, 15, 0.55)"]
-                : ["rgba(255, 255, 255, 0.65)", "rgba(240, 240, 240, 0.65)"]}
+                ? ["rgba(18, 19, 23, 0.94)", "rgba(13, 13, 15, 0.94)"]
+                : ["rgba(255, 255, 255, 0.95)", "rgba(240, 240, 240, 0.95)"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={{ padding: 24, borderRadius: 24 }}

@@ -9,6 +9,7 @@ import { AppStackHeader } from "../../components/AppStackHeader";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { notify } from "../../stores/toastStore";
 import { HapticPressable } from "../../components/HapticPressable";
+import { useMuteStore } from "../../stores/muteStore";
 import { SurfaceCard } from "../../components/SurfaceCard";
 import { api, getErrorMessage } from "../../lib/api";
 import { formatTimeAgo, getImageUrl, getInitials } from "../../lib/media";
@@ -70,6 +71,7 @@ export default function TaskDetailScreen() {
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showOptionsSheet, setShowOptionsSheet] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/api/tasks/${id}`),
@@ -108,6 +110,8 @@ export default function TaskDetailScreen() {
   });
 
   const task = taskQuery.data;
+  const mutedCreatorIds = useMuteStore((s) => s.mutedCreatorIds);
+  const isCreatorMuted = task?.createdBy?._id ? Boolean(mutedCreatorIds[task.createdBy._id]) : false;
   const statusAccent = getStatusAccent(task?.status);
   const isOwner = task?.createdBy?._id === currentUser?.id;
   const hasApplied = Boolean(task?.applicants?.some((item) => item.user?._id === currentUser?.id));
@@ -121,7 +125,7 @@ export default function TaskDetailScreen() {
         message: `Check out this ElevateX Task: "${task.title}" - Category: ${task.category}. Reward: ${task.coins} coins / ${taskXp} XP. Deadline: ${new Date(task.deadline).toLocaleDateString()}!`,
       });
     } catch (error) {
-      Alert.alert("Error", "Failed to share task details.");
+      notify.error("Failed to share task details.");
     }
   };
 
@@ -142,33 +146,27 @@ export default function TaskDetailScreen() {
         await Linking.openURL(calendarUrl);
         notify.success("Opening Google Calendar...");
       } else {
-        Alert.alert("Error", "Could not open calendar application.");
+        notify.error("Could not open calendar application.");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to add event to calendar.");
+      notify.error("Failed to add event to calendar.");
     }
   };
 
   const handleMuteCreator = () => {
-    if (!task?.createdBy?.name) return;
-    notify.success(`All future tasks from ${task.createdBy.name} have been muted.`);
+    if (!task?.createdBy?._id || !task?.createdBy?.name) return;
+    const creatorId = task.createdBy._id;
+    if (isCreatorMuted) {
+      useMuteStore.getState().unmuteCreator(creatorId);
+      notify.success(`All future tasks from ${task.createdBy.name} have been unmuted.`);
+    } else {
+      useMuteStore.getState().muteCreator(creatorId);
+      notify.success(`All future tasks from ${task.createdBy.name} have been muted.`);
+    }
   };
 
   const handleReportTask = () => {
-    Alert.alert(
-      "Report Task",
-      "Are you sure you want to report this task for inappropriate content or spam?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Report",
-          style: "destructive",
-          onPress: () => {
-            notify.success("Thank you. This task has been reported and sent to moderators for review.");
-          }
-        }
-      ]
-    );
+    setShowReportConfirm(true);
   };
 
   const handleShowOptions = () => {
@@ -210,7 +208,7 @@ export default function TaskDetailScreen() {
             ElevateX
           </Text>
           <Text style={{ ...type.h3, color: webTheme.text, fontSize: 18, marginTop: 2 }}>
-            Task view
+            Task View
           </Text>
         </View>
 
@@ -247,6 +245,18 @@ export default function TaskDetailScreen() {
         confirmLabel="Delete"
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => deleteMutation.mutate()}
+      />
+      <ConfirmDialog
+        visible={showReportConfirm}
+        title="Report Task?"
+        detail="Are you sure you want to report this task for inappropriate content or spam?"
+        confirmLabel="Report"
+        destructive
+        onClose={() => setShowReportConfirm(false)}
+        onConfirm={() => {
+          setShowReportConfirm(false);
+          notify.success("Thank you. This task has been reported and sent to moderators for review.");
+        }}
       />
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
@@ -728,8 +738,8 @@ export default function TaskDetailScreen() {
                   },
                 },
                 {
-                  label: "Mute Creator",
-                  icon: "bell-off",
+                  label: isCreatorMuted ? "Unmute Creator" : "Mute Creator",
+                  icon: isCreatorMuted ? "bell" : "bell-off",
                   color: webTheme.text,
                   bg: "rgba(255,255,255,0.05)",
                   onPress: () => {

@@ -138,8 +138,8 @@ export const surfaceCardStyle = {
   borderWidth: 1,
   get borderColor() {
     return useThemeStore.getState().theme === "dark"
-      ? "rgba(255, 255, 255, 0.15)"
-      : "rgba(0, 0, 0, 0.08)";
+      ? "rgba(255, 255, 255, 0.22)"
+      : "rgba(0, 0, 0, 0.15)";
   },
   borderRadius: 16,
 };

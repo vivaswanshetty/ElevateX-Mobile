@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
   Pressable,
@@ -9,6 +10,13 @@ import {
   type ViewStyle,
   type LayoutChangeEvent,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { surfaceCardStyle, webTheme } from "../lib/webTheme";
@@ -31,6 +39,7 @@ interface SurfaceCardProps {
   accessibilityLabel?: string;
   accessibilityHint?: string;
   testID?: string;
+  shimmer?: boolean;
 }
 
 const toneAccentMap: Record<Exclude<SurfaceCardTone, "default">, string> = {
@@ -117,12 +126,50 @@ export function SurfaceCard({
   accessibilityLabel,
   accessibilityHint,
   testID,
+  shimmer = false,
 }: SurfaceCardProps) {
   const accentColor = getAccentColor(tone, accent);
   const isInteractive = typeof onPress === "function";
 
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
+
+  // Card width tracking for shimmer translation range
+  const [cardWidth, setCardWidth] = useState(300);
+  const shimmerTranslate = useSharedValue(-1);
+
+  useEffect(() => {
+    if (shimmer) {
+      shimmerTranslate.value = -1;
+      shimmerTranslate.value = withRepeat(
+        withTiming(1.8, {
+          duration: 3200,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        }),
+        -1,
+        false
+      );
+    } else {
+      shimmerTranslate.value = -1;
+    }
+  }, [shimmer]);
+
+  const shimmerAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: shimmerTranslate.value * (cardWidth + 120),
+        },
+      ],
+    };
+  });
+
+  const handleLayout = (e: LayoutChangeEvent) => {
+    setCardWidth(e.nativeEvent.layout.width);
+    if (onLayout) {
+      onLayout(e);
+    }
+  };
 
   // Flatten styles to extract padding and border styles
   const flatStyle = StyleSheet.flatten(style) || {};
@@ -158,7 +205,13 @@ export function SurfaceCard({
       overflow: "hidden",
       borderColor: accentColor
         ? colorToRgba(accentColor, 0.18)
-        : webTheme.border,
+        : shimmer
+          ? isDark
+            ? "rgba(255, 255, 255, 0.22)" // crisp metallic border
+            : "rgba(0, 0, 0, 0.16)"
+          : isDark
+            ? "rgba(255, 255, 255, 0.22)" // subtle white border style (matching stats card)
+            : "rgba(0, 0, 0, 0.15)",
     },
     disabled && { opacity: 0.55 },
     remainingStyle,
@@ -231,7 +284,38 @@ export function SurfaceCard({
         />
       ) : null}
 
-      {/* accent wash */}
+      {/* metallic shimmer linear gradient overlay */}
+      {shimmer ? (
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFillObject,
+            shimmerAnimatedStyle,
+            {
+              width: "100%",
+              height: "100%",
+              opacity: isDark ? 0.7 : 0.45,
+            }
+          ]}
+          pointerEvents="none"
+        >
+          <LinearGradient
+            colors={[
+              "rgba(255, 255, 255, 0)",
+              "rgba(255, 255, 255, 0.02)",
+              "rgba(255, 255, 255, 0.12)",
+              "rgba(255, 255, 255, 0.22)",
+              "rgba(255, 255, 255, 0.12)",
+              "rgba(255, 255, 255, 0.02)",
+              "rgba(255, 255, 255, 0)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              flex: 1,
+            }}
+          />
+        </Animated.View>
+      ) : null}
 
       {/* content */}
       <View style={[{ padding: 22 }, forwardedPadding, contentStyle]}>
@@ -243,7 +327,7 @@ export function SurfaceCard({
   );
 
   if (!isInteractive) {
-    return <View style={baseStyle} onLayout={onLayout}>{renderInner()}</View>;
+    return <View style={baseStyle} onLayout={handleLayout}>{renderInner()}</View>;
   }
 
   return (
@@ -251,6 +335,7 @@ export function SurfaceCard({
       testID={testID}
       onPress={onPress}
       disabled={disabled}
+      onLayout={handleLayout}
       accessibilityRole={accessibilityRole ?? "button"}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}

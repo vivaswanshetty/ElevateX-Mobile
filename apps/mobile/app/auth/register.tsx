@@ -227,7 +227,7 @@ export default function RegisterScreen() {
           </Text>
         </SurfaceCard>
         </FadeSlideIn>
-        <Watermark />
+
       </ScrollView>
     </SafeAreaView>
   );

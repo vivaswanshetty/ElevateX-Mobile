@@ -2,8 +2,8 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState, useMemo } from "react";
-import { Pressable, ScrollView, Text, TextInput, View, RefreshControl } from "react-native";
+import { useMemo, useEffect, useState } from "react";
+import { Pressable, ScrollView, Text, View, RefreshControl, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenBackdrop } from "../../components/ScreenBackdrop";
 import { SurfaceCard } from "../../components/SurfaceCard";
@@ -23,6 +23,7 @@ import { TabTransitionView } from "../../components/TabTransitionView";
 import { useAuthStore } from "../../stores/authStore";
 import { notify } from "../../stores/toastStore";
 import { useControlCenterStore } from "../../stores/controlCenterStore";
+import { useStreakStore } from "../../stores/streakStore";
 
 const taskCategories = [
   "All",
@@ -52,19 +53,47 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const tabBarPadding = useTabBarPadding();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<(typeof taskCategories)[number]>("All");
-  const [isFocused, setIsFocused] = useState(false);
-  
+
   // Apply flows state
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
   const [applyingTaskId, setApplyingTaskId] = useState<string | null>(null);
   const [applyingTaskTitle, setApplyingTaskTitle] = useState("");
 
+  const streakCount = useStreakStore((s) => s.streakCount);
+  const initializeDefaultStreak = useStreakStore((s) => s.initializeDefaultStreak);
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
+  const todayStr = useMemo(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  useEffect(() => {
+    initializeDefaultStreak(todayStr);
+  }, [initializeDefaultStreak, todayStr]);
+
   const { data: tasks = [], isFetching, refetch } = useQuery<DashboardTask[]>({
     queryKey: ["tasks"],
     queryFn: () => api.get("/api/tasks"),
   });
+
+  const { data: activities = [] } = useQuery<any[]>({
+    queryKey: ["activities"],
+    queryFn: () => api.get("/api/activities"),
+  });
+
+  const unreadCount = useMemo(() => {
+    return activities.filter((a: any) => !a.read).length;
+  }, [activities]);
 
   const applyMutation = useMutation({
     mutationFn: (taskId: string) => api.put(`/api/tasks/${taskId}/apply`),
@@ -89,22 +118,9 @@ export default function HomeScreen() {
     setShowApplyConfirm(true);
   };
 
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      // Find matches for category
-      const matchesCategory = selectedCategory === "All" || task.category === selectedCategory;
-      // Find matches for search query
-      const needle = searchQuery.trim().toLowerCase();
-      const subcategoryOrCategory = task.subcategory || task.category;
-      const matchesQuery =
-        needle.length === 0 ||
-        task.title.toLowerCase().includes(needle) ||
-        subcategoryOrCategory.toLowerCase().includes(needle) ||
-        task.description.toLowerCase().includes(needle);
-
-      return matchesCategory && matchesQuery;
-    });
-  }, [tasks, searchQuery, selectedCategory]);
+  const trendingTasks = useMemo(() => {
+    return tasks.slice(0, 4);
+  }, [tasks]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
@@ -124,53 +140,39 @@ export default function HomeScreen() {
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <HapticPressable onPress={() => router.navigate("/profile")} hapticType="light">
-              <UserAvatar avatar={user?.avatarUrl} size={42} borderWidth={2} borderColor={webTheme.accentBorder} />
+              <UserAvatar avatar={user?.avatarUrl} size={44} borderWidth={2} borderColor={webTheme.accentBorder} />
             </HapticPressable>
             <View>
-              <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13 }}>
-                Hello,
+              <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 12 }}>
+                {greeting},
               </Text>
-              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16, marginTop: 2 }}>
-                {(user?.displayName || user?.username || "ElevateX Member").toUpperCase()}
+              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 18, marginTop: 1 }}>
+                {user?.displayName || user?.username || "Member"}
               </Text>
             </View>
           </View>
 
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            {/* Create Task Button */}
-            <HapticPressable
-              onPress={() => router.push("/create" as any)}
-              hapticType="medium"
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
-                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                borderWidth: 1,
-                borderColor: webTheme.border,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Feather name="plus" size={17} color={webTheme.text} />
-            </HapticPressable>
-
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             {/* AI Assistant Button */}
             <HapticPressable
               onPress={() => router.push("/assistant?from=home" as any)}
               hapticType="medium"
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
+                width: 40,
+                height: 40,
+                borderRadius: 20,
                 backgroundColor: "rgba(229, 54, 75, 0.08)",
-                borderWidth: 1,
-                borderColor: "rgba(229, 54, 75, 0.2)",
+                borderWidth: 1.5,
+                borderColor: "rgba(229, 54, 75, 0.22)",
                 alignItems: "center",
                 justifyContent: "center",
+                shadowColor: webTheme.accent,
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
               }}
             >
-              <MaterialCommunityIcons name="robot" size={17} color={webTheme.accent} />
+              <MaterialCommunityIcons name="robot" size={18} color={webTheme.accent} />
             </HapticPressable>
 
             {/* Notification Bell Button */}
@@ -178,17 +180,47 @@ export default function HomeScreen() {
               onPress={() => router.navigate("/activity")}
               hapticType="light"
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
+                width: 40,
+                height: 40,
+                borderRadius: 20,
                 backgroundColor: "rgba(255, 255, 255, 0.04)",
-                borderWidth: 1,
+                borderWidth: 1.5,
                 borderColor: webTheme.border,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Feather name="bell" size={16} color={webTheme.text} />
+              <Feather name="bell" size={17} color={webTheme.text} />
+              {unreadCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -4,
+                    minWidth: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    backgroundColor: webTheme.accent,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingHorizontal: 4,
+                    borderWidth: 1.5,
+                    borderColor: webTheme.bg,
+                  }}
+                >
+                  <Text
+                    style={{
+                      ...type.bold,
+                      color: "#FFF",
+                      fontSize: 9,
+                      textAlign: "center",
+                      lineHeight: 11,
+                    }}
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
+                </View>
+              )}
             </HapticPressable>
 
             {/* Control Center Grid Button */}
@@ -196,17 +228,21 @@ export default function HomeScreen() {
               onPress={() => useControlCenterStore.getState().open()}
               hapticType="medium"
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
+                width: 40,
+                height: 40,
+                borderRadius: 20,
                 backgroundColor: "rgba(255, 255, 255, 0.04)",
-                borderWidth: 1,
+                borderWidth: 1.5,
                 borderColor: webTheme.border,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Feather name="grid" size={17} color={webTheme.text} />
+              <Image
+                source={require("../../assets/lobby-icon.png")}
+                style={{ width: 18, height: 18, tintColor: webTheme.text }}
+                resizeMode="contain"
+              />
             </HapticPressable>
           </View>
         </View>
@@ -224,16 +260,29 @@ export default function HomeScreen() {
         >
           {/* Stats Strip */}
           <FadeSlideIn delay={80} distance={10} style={{ paddingHorizontal: 22 }}>
-            <SurfaceCard
-              style={{ marginTop: 8 }}
-              contentStyle={{
-                flexDirection: "row",
-                paddingVertical: 14,
-                paddingHorizontal: 8,
-                justifyContent: "space-between",
-                alignItems: "center",
+            <View
+              style={{
+                marginTop: 8,
+                borderRadius: 16,
+                backgroundColor: "rgba(229, 54, 75, 0.14)", // ambient red background glow
+                shadowColor: "#E5364B",
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 1.0,
+                shadowRadius: 22,
+                elevation: 12,
               }}
             >
+              <SurfaceCard
+                shimmer={true}
+                style={{ borderColor: "rgba(229, 54, 75, 0.45)", borderWidth: 1.5 }}
+                contentStyle={{
+                  flexDirection: "row",
+                  paddingVertical: 16,
+                  paddingHorizontal: 8,
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
               {/* Wallet/Coins */}
               <HapticPressable
                 hapticType="light"
@@ -242,55 +291,59 @@ export default function HomeScreen() {
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: "rgba(251, 191, 36, 0.08)",
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "rgba(251, 191, 36, 0.07)",
                     alignItems: "center",
                     justifyContent: "center",
                     borderWidth: 1,
-                    borderColor: "rgba(251, 191, 36, 0.18)",
-                    marginBottom: 6,
+                    borderColor: "rgba(251, 191, 36, 0.22)",
+                    marginBottom: 8,
                   }}
                 >
-                  <MaterialCommunityIcons name="star-four-points" size={14} color={webTheme.gold} />
+                  <MaterialCommunityIcons name="star-four-points" size={15} color={webTheme.gold} />
                 </View>
-                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 15 }}>
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
                   {user?.tokenBalance ?? 0}
                 </Text>
-                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8, marginTop: 2 }}>
+                <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.2, marginTop: 4 }}>
                   Coins
                 </Text>
               </HapticPressable>
 
-              <View style={{ width: 1, height: 32, backgroundColor: webTheme.borderSoft }} />
+              <View style={{ width: 1, height: 32, backgroundColor: webTheme.borderStrong }} />
 
               {/* Streak */}
-              <View style={{ flex: 1, alignItems: "center" }}>
+              <HapticPressable
+                hapticType="light"
+                onPress={() => router.push("/streak" as any)}
+                style={{ flex: 1, alignItems: "center" }}
+              >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: "rgba(251, 146, 60, 0.08)",
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "rgba(251, 146, 60, 0.07)",
                     alignItems: "center",
                     justifyContent: "center",
                     borderWidth: 1,
-                    borderColor: "rgba(251, 146, 60, 0.18)",
-                    marginBottom: 6,
+                    borderColor: "rgba(251, 146, 60, 0.22)",
+                    marginBottom: 8,
                   }}
                 >
-                  <MaterialCommunityIcons name="fire" size={16} color={webTheme.orange} />
+                  <MaterialCommunityIcons name="fire" size={17} color={webTheme.orange} />
                 </View>
-                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 15 }}>
-                  7 Days
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
+                  {streakCount} {streakCount === 1 ? "Day" : "Days"}
                 </Text>
-                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8, marginTop: 2 }}>
+                <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.2, marginTop: 4 }}>
                   Streak
                 </Text>
-              </View>
+              </HapticPressable>
 
-              <View style={{ width: 1, height: 32, backgroundColor: webTheme.borderSoft }} />
+              <View style={{ width: 1, height: 32, backgroundColor: webTheme.borderStrong }} />
 
               {/* XP / Level */}
               <HapticPressable
@@ -300,36 +353,39 @@ export default function HomeScreen() {
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: "rgba(139, 92, 246, 0.08)",
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "rgba(139, 92, 246, 0.07)",
                     alignItems: "center",
                     justifyContent: "center",
                     borderWidth: 1,
-                    borderColor: "rgba(139, 92, 246, 0.18)",
-                    marginBottom: 6,
+                    borderColor: "rgba(139, 92, 246, 0.22)",
+                    marginBottom: 8,
                   }}
                 >
-                  <Feather name="award" size={14} color={webTheme.violet} />
+                  <Feather name="award" size={15} color={webTheme.violet} />
                 </View>
-                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 15 }}>
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
                   Lvl {user?.level ?? 1}
                 </Text>
-                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8, marginTop: 2 }}>
+                <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.2, marginTop: 4 }}>
                   {user?.xp ?? 0} XP
                 </Text>
               </HapticPressable>
             </SurfaceCard>
+            </View>
           </FadeSlideIn>
 
-          {/* Search Bar */}
+          {/* Search Bar Redirect */}
           <FadeSlideIn delay={140} distance={12} style={{ paddingHorizontal: 22, marginTop: 18 }}>
-            <View
+            <HapticPressable
+              hapticType="light"
+              onPress={() => router.push({ pathname: "/explore", params: { focus: "true" } })}
               style={{
                 borderRadius: 16,
                 borderWidth: 1,
-                borderColor: isFocused ? webTheme.accent : webTheme.border,
+                borderColor: webTheme.border,
                 backgroundColor: webTheme.inputBg,
                 paddingHorizontal: 16,
                 height: 52,
@@ -338,25 +394,14 @@ export default function HomeScreen() {
                 gap: 12,
               }}
             >
-              <Feather name="search" size={18} color={isFocused ? webTheme.accent : webTheme.muted} />
-              <TextInput
-                style={{ ...type.regular, flex: 1, color: webTheme.text, fontSize: 15, backgroundColor: "transparent", padding: 0 }}
-                placeholder="Search active opportunities..."
-                placeholderTextColor={webTheme.faint}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-              />
-              {searchQuery.length > 0 && (
-                <Pressable onPress={() => setSearchQuery("")}>
-                  <Feather name="x-circle" size={18} color={webTheme.muted} />
-                </Pressable>
-              )}
-            </View>
+              <Feather name="search" size={18} color={webTheme.muted} />
+              <Text style={{ ...type.regular, flex: 1, color: webTheme.faint, fontSize: 15 }}>
+                Search active opportunities...
+              </Text>
+            </HapticPressable>
           </FadeSlideIn>
 
-          {/* Category Chips */}
+          {/* Category Chips Redirect */}
           <FadeSlideIn delay={200} distance={10}>
             <ScrollView
               horizontal
@@ -365,22 +410,27 @@ export default function HomeScreen() {
               contentContainerStyle={{ gap: 10, paddingHorizontal: 22 }}
             >
               {taskCategories.map((category) => {
-                const active = category === selectedCategory;
                 return (
                   <HapticPressable
                     key={category}
                     hapticType="selection"
-                    onPress={() => setSelectedCategory(category)}
+                    onPress={() => {
+                      if (category === "All") {
+                        router.push("/explore");
+                      } else {
+                        router.push({ pathname: "/explore", params: { category } });
+                      }
+                    }}
                     style={{
                       borderRadius: 999,
                       borderWidth: 1,
-                      borderColor: active ? webTheme.accentBorder : webTheme.border,
-                      backgroundColor: active ? webTheme.accentSoft : "rgba(255,255,255,0.03)",
+                      borderColor: webTheme.border,
+                      backgroundColor: "rgba(255,255,255,0.03)",
                       paddingHorizontal: 16,
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ ...type.bold, color: active ? webTheme.accent : webTheme.muted, fontSize: 13 }}>
+                    <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 13 }}>
                       {category}
                     </Text>
                   </HapticPressable>
@@ -389,152 +439,188 @@ export default function HomeScreen() {
             </ScrollView>
           </FadeSlideIn>
 
-          {/* Task Feed */}
-          <View style={{ paddingHorizontal: 22, marginTop: 20 }}>
+          {/* Opportunities Section Header */}
+          <FadeSlideIn delay={230} distance={10}>
+            <View style={{ paddingHorizontal: 22, marginTop: 26, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <Text style={{ ...type.h2, color: webTheme.text, fontSize: 18 }}>Trending Opportunities</Text>
+              <HapticPressable onPress={() => router.push("/explore")} hapticType="light">
+                <Text style={{ ...type.semibold, color: webTheme.accent, fontSize: 13 }}>View All</Text>
+              </HapticPressable>
+            </View>
+          </FadeSlideIn>
+
+          {/* Curated Task Feed */}
+          <View style={{ paddingHorizontal: 22, marginTop: 16, gap: 14 }}>
             {isFetching && tasks.length === 0 ? (
               <AnimatedList itemStyle={{ width: "100%" }}>
                 <TaskCardSkeleton />
                 <TaskCardSkeleton />
                 <TaskCardSkeleton />
               </AnimatedList>
-            ) : filteredTasks.length > 0 ? (
-              <AnimatedList baseDelay={250} stagger={80} distance={16} itemStyle={{ width: "100%", marginBottom: 16 }}>
-                {filteredTasks.map((taskSource) => {
-                  const task = mapTaskToCard(taskSource);
-                  const creatorId = typeof taskSource.createdBy === "string" ? taskSource.createdBy : taskSource.createdBy?._id;
-                  const isOwner = creatorId === user?.id;
+            ) : trendingTasks.length > 0 ? (
+              <>
+                <AnimatedList baseDelay={250} stagger={80} distance={16} itemStyle={{ width: "100%", marginBottom: 14 }}>
+                  {trendingTasks.map((taskSource) => {
+                    const task = mapTaskToCard(taskSource);
+                    const creatorId = typeof taskSource.createdBy === "string" ? taskSource.createdBy : taskSource.createdBy?._id;
+                    const isOwner = creatorId === user?.id;
 
-                  // Safely check hasApplied
-                  const hasApplied = Boolean(
-                    taskSource.applicants?.some((applicant: any) => {
-                      const applicantId = typeof applicant === 'string'
-                        ? applicant
-                        : (typeof applicant.user === 'string' ? applicant.user : applicant.user?._id);
-                      return applicantId === user?.id;
-                    })
-                  );
+                    // Safely check hasApplied
+                    const hasApplied = Boolean(
+                      taskSource.applicants?.some((applicant: any) => {
+                        const applicantId = typeof applicant === 'string'
+                          ? applicant
+                          : (typeof applicant.user === 'string' ? applicant.user : applicant.user?._id);
+                        return applicantId === user?.id;
+                      })
+                    );
 
-                  // Safely format posted time
-                  const postedTime = taskSource.createdAt ? formatTimeAgo(taskSource.createdAt) : "";
+                    // Safely format posted time
+                    const postedTime = taskSource.createdAt ? formatTimeAgo(taskSource.createdAt) : "";
 
-                  // Safely get applicant count
-                  const applicantsList = taskSource.applicants;
-                  const applicantCount = Array.isArray(applicantsList)
-                    ? applicantsList.length
-                    : typeof applicantsList === "number"
-                      ? applicantsList
-                      : 0;
+                    // Safely get applicant count
+                    const applicantsList = taskSource.applicants;
+                    const applicantCount = Array.isArray(applicantsList)
+                      ? applicantsList.length
+                      : typeof applicantsList === "number"
+                        ? applicantsList
+                        : 0;
 
-                  return (
-                    <SurfaceCard
-                      key={task.id}
-                      onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
-                    >
-                      <View style={{ gap: 12 }}>
-                        {/* Title & Category Row */}
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ ...type.bold, color: webTheme.textSecondary, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                              {task.category}
-                            </Text>
-                            <Text style={{ ...type.h3, color: webTheme.text, marginTop: 4 }}>
-                              {task.title}
-                            </Text>
-                          </View>
-
-                          <View
-                            style={{
-                              borderRadius: 12,
-                              borderWidth: 1,
-                              borderColor: webTheme.border,
-                              backgroundColor: "rgba(255,255,255,0.03)",
-                              paddingHorizontal: 10,
-                              paddingVertical: 6,
-                            }}
-                          >
-                            <Text style={{ ...type.bold, color: webTheme.text, fontSize: 11 }}>
-                              {task.difficulty}
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* Description */}
-                        <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13 }} numberOfLines={2}>
-                          {task.description}
-                        </Text>
-
-                        {/* Metadata Row */}
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderColor: "rgba(255,255,255,0.05)", paddingTop: 12 }}>
-                          <View style={{ gap: 3 }}>
-                            <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                              {postedTime ? `Posted ${postedTime}` : "Active"}
-                            </Text>
-                            <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 12 }}>
-                              {applicantCount} {applicantCount === 1 ? "applicant" : "applicants"}
-                            </Text>
-                          </View>
-
-                          <View style={{ gap: 3, alignItems: "flex-end" }}>
-                            <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                              Reward
-                            </Text>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                              <MaterialCommunityIcons name="star-four-points" size={12} color={webTheme.gold} />
-                              <Text style={{ ...type.bold, color: webTheme.gold, fontSize: 13 }}>
-                                {task.rewardCoins}
+                    return (
+                      <SurfaceCard
+                        key={task.id}
+                        onPress={() => router.push({ pathname: "/task/[id]", params: { id: task.id } })}
+                      >
+                        <View style={{ gap: 12 }}>
+                          {/* Title & Category Row */}
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ ...type.bold, color: webTheme.textSecondary, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                                {task.category}
                               </Text>
-                              <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 11 }}>
-                                / +{task.rewardXp} XP
+                              <Text style={{ ...type.h3, color: webTheme.text, marginTop: 4 }}>
+                                {task.title}
+                              </Text>
+                            </View>
+
+                            <View
+                              style={{
+                                borderRadius: 12,
+                                borderWidth: 1,
+                                borderColor: webTheme.border,
+                                backgroundColor: "rgba(255,255,255,0.03)",
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
+                              }}
+                            >
+                              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 11 }}>
+                                {task.difficulty}
                               </Text>
                             </View>
                           </View>
-                        </View>
 
-                        {/* Apply Action Button */}
-                        <HapticPressable
-                          hapticType="medium"
-                          disabled={isOwner || hasApplied}
-                          onPress={() => handleApplyPress(task.id, task.title)}
-                          style={{
-                            borderRadius: 16,
-                            backgroundColor: isOwner || hasApplied ? "rgba(255,255,255,0.05)" : webTheme.accentSoft,
-                            borderWidth: 1,
-                            borderColor: isOwner || hasApplied ? webTheme.border : webTheme.accentBorder,
-                            paddingVertical: 12,
-                            alignItems: "center",
-                            marginTop: 4,
-                          }}
-                        >
-                          <Text
+                          {/* Description */}
+                          <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13 }} numberOfLines={2}>
+                            {task.description}
+                          </Text>
+
+                          {/* Metadata Row */}
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderColor: "rgba(255,255,255,0.05)", paddingTop: 12 }}>
+                            <View style={{ gap: 3 }}>
+                              <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                                {postedTime ? `Posted ${postedTime}` : "Active"}
+                              </Text>
+                              <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 12 }}>
+                                {applicantCount} {applicantCount === 1 ? "applicant" : "applicants"}
+                              </Text>
+                            </View>
+
+                            <View style={{ gap: 3, alignItems: "flex-end" }}>
+                              <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                                Reward
+                              </Text>
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                <MaterialCommunityIcons name="star-four-points" size={12} color={webTheme.gold} />
+                                <Text style={{ ...type.bold, color: webTheme.gold, fontSize: 13 }}>
+                                  {task.rewardCoins}
+                                </Text>
+                                <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 11 }}>
+                                  / +{task.rewardXp} XP
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+
+                          {/* Apply Action Button */}
+                          <HapticPressable
+                            hapticType="medium"
+                            disabled={isOwner || hasApplied}
+                            onPress={() => handleApplyPress(task.id, task.title)}
                             style={{
-                              ...type.bold,
-                              color: isOwner || hasApplied ? webTheme.muted : webTheme.accent,
-                              fontSize: 13,
+                              borderRadius: 16,
+                              backgroundColor: isOwner || hasApplied ? "rgba(255,255,255,0.05)" : webTheme.accentSoft,
+                              borderWidth: 1,
+                              borderColor: isOwner || hasApplied ? webTheme.border : webTheme.accentBorder,
+                              paddingVertical: 12,
+                              alignItems: "center",
+                              marginTop: 4,
                             }}
                           >
-                            {isOwner ? "Your Task" : hasApplied ? "Application Sent" : "Apply Now"}
-                          </Text>
-                        </HapticPressable>
-                      </View>
-                    </SurfaceCard>
-                  );
-                })}
-              </AnimatedList>
+                            <Text
+                              style={{
+                                ...type.bold,
+                                color: isOwner || hasApplied ? webTheme.muted : webTheme.accent,
+                                fontSize: 13,
+                              }}
+                            >
+                              {isOwner ? "Your Task" : hasApplied ? "Application Sent" : "Apply Now"}
+                            </Text>
+                          </HapticPressable>
+                        </View>
+                      </SurfaceCard>
+                    );
+                  })}
+                </AnimatedList>
+
+                {/* Explore All opportunities CTA button */}
+                <FadeSlideIn delay={300} distance={10}>
+                  <HapticPressable
+                    hapticType="medium"
+                    onPress={() => router.push("/explore")}
+                    style={{
+                      borderRadius: 16,
+                      backgroundColor: "rgba(255,255,255,0.03)",
+                      borderWidth: 1,
+                      borderColor: webTheme.border,
+                      paddingVertical: 14,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "row",
+                      gap: 8,
+                      marginTop: 4,
+                    }}
+                  >
+                    <Text style={{ ...type.bold, color: webTheme.textSecondary, fontSize: 14 }}>
+                      Explore All Opportunities
+                    </Text>
+                    <Feather name="arrow-right" size={16} color={webTheme.textSecondary} />
+                  </HapticPressable>
+                </FadeSlideIn>
+              </>
             ) : (
               <FadeSlideIn delay={150}>
                 <SurfaceCard style={{ borderStyle: "dashed" }}>
                   <Text style={{ ...type.h3, color: webTheme.text }}>
-                    No opportunities found
+                    No Opportunities Found
                   </Text>
                   <Text style={{ ...type.body, marginTop: 8, color: webTheme.muted }}>
-                    Try widening your search terms or selecting a different category filter.
+                    Try checking back later or exploring other sections.
                   </Text>
                 </SurfaceCard>
               </FadeSlideIn>
             )}
           </View>
         </ScrollView>
-
 
         {/* Apply Confirmation Dialog */}
         <ConfirmDialog
@@ -549,7 +635,6 @@ export default function HomeScreen() {
             }
           }}
         />
-
       </TabTransitionView>
     </SafeAreaView>
   );

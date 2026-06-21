@@ -54,6 +54,7 @@ export default function AIAssistantScreen() {
   const [fetchingChats, setFetchingChats] = useState(false);
   const [fetchingMessages, setFetchingMessages] = useState(false);
   const [quotedMessage, setQuotedMessage] = useState<{ content: string; type: string } | null>(null);
+  const [chatMode, setChatMode] = useState<'normal' | 'deepthink'>('normal');
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -180,6 +181,10 @@ export default function AIAssistantScreen() {
     if (quotedMessage) {
       contentToSend = `Regarding your statement: "${quotedMessage.content}"\n\nQuestion: ${text}`;
       setQuotedMessage(null);
+    }
+
+    if (chatMode === "deepthink") {
+      contentToSend = `[DeepThink] ${contentToSend}`;
     }
 
     // Optimistically add user message
@@ -509,7 +514,7 @@ export default function AIAssistantScreen() {
         </View>
 
         <HapticPressable onPress={() => setIsHistoryVisible(true)} style={{ padding: 6 }}>
-          <Feather name="folder" size={18} color={webTheme.text} />
+          <Feather name="clock" size={18} color={webTheme.text} />
         </HapticPressable>
       </View>
 
@@ -700,18 +705,51 @@ export default function AIAssistantScreen() {
               )}
             </View>
           )}
-          <Watermark />
+
         </ScrollView>
 
         {/* Input Dock */}
         <View
           style={{
-            borderTopWidth: 1,
-            borderTopColor: webTheme.border,
-            padding: 12,
+            padding: 16,
+            paddingBottom: Platform.OS === 'ios' ? 24 : 16,
             backgroundColor: webTheme.bg,
           }}
         >
+          {/* Ambient Glows behind the input box */}
+          <View
+            style={{
+              position: "absolute",
+              left: 20,
+              bottom: 20,
+              width: 140,
+              height: 70,
+              borderRadius: 35,
+              backgroundColor: "rgba(229, 54, 75, 0.12)", // Red/Orange glow
+              shadowColor: "#E5364B",
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.9,
+              shadowRadius: 25,
+              zIndex: -1,
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              right: 20,
+              bottom: 20,
+              width: 140,
+              height: 70,
+              borderRadius: 35,
+              backgroundColor: "rgba(99, 102, 241, 0.12)", // Blue glow
+              shadowColor: "#6366F1",
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.9,
+              shadowRadius: 25,
+              zIndex: -1,
+            }}
+          />
+
           {quotedMessage && (
             <View
               style={{
@@ -738,38 +776,163 @@ export default function AIAssistantScreen() {
             </View>
           )}
 
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-            <TextInput
-              value={inputText}
-              onChangeText={setInputText}
-              editable={!loading}
-              placeholder={activeId ? "Message Elev AI..." : "Ask something to start..."}
-              placeholderTextColor={webTheme.faint}
+          {/* Premium Gradient Border Input Wrapper */}
+          <LinearGradient
+            colors={
+              chatMode === "deepthink"
+                ? ["#E5364B", "#6366F1"] // Red-Blue active theme gradient
+                : ["#E5364B", "rgba(255, 255, 255, 0.25)"] // Red-Grey gradient for normal mode
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{
+              borderRadius: 20,
+              padding: 1.5, // Consistent premium 1.5px border thickness
+            }}
+          >
+            <View
               style={{
-                ...type.regular,
-                ...inputFieldStyle,
-                flex: 1,
-                paddingVertical: 12,
-                paddingHorizontal: 14,
-                borderRadius: 14,
-              }}
-            />
-            <HapticPressable
-              testID="send-message-button"
-              onPress={handleFormSubmit}
-              disabled={loading || !inputText.trim()}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                backgroundColor: loading || !inputText.trim() ? webTheme.border : webTheme.accent,
-                alignItems: "center",
-                justifyContent: "center",
+                backgroundColor: "#0A0A0F",
+                borderRadius: 19,
+                padding: 12,
               }}
             >
-              <Feather name="send" size={16} color="#FFF" />
-            </HapticPressable>
-          </View>
+              {/* TextInput */}
+              <TextInput
+                value={inputText}
+                onChangeText={setInputText}
+                editable={!loading}
+                placeholder={
+                  chatMode === "deepthink"
+                    ? "Ask AI to think deeply..."
+                    : "Ask anything..."
+                }
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+                style={{
+                  ...type.regular,
+                  color: "#FFF",
+                  fontSize: 14,
+                  minHeight: 50,
+                  maxHeight: 140,
+                  textAlignVertical: "top",
+                  paddingBottom: 8,
+                }}
+              />
+
+              {/* Bottom Actions Row */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                {/* Left Controls */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  {/* Plus button */}
+                  <HapticPressable
+                    onPress={() => notify.info("Attachments coming soon!")}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 14,
+                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Feather name="plus" size={14} color="#FFF" />
+                  </HapticPressable>
+
+                  {/* Normal pill */}
+                  <HapticPressable
+                    onPress={() => setChatMode("normal")}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: chatMode === "normal" ? "rgba(229, 54, 75, 0.4)" : "rgba(255, 255, 255, 0.08)",
+                      backgroundColor: chatMode === "normal" ? "rgba(229, 54, 75, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    <Feather name="feather" size={10} color={chatMode === "normal" ? "#E5364B" : "rgba(255,255,255,0.7)"} />
+                    <Text style={{ ...type.bold, fontSize: 10, color: chatMode === "normal" ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                      Normal
+                    </Text>
+                    <Feather name="chevron-down" size={9} color="rgba(255,255,255,0.4)" />
+                  </HapticPressable>
+
+                  {/* DeepThink pill */}
+                  <HapticPressable
+                    onPress={() => setChatMode("deepthink")}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: chatMode === "deepthink" ? "rgba(99, 102, 241, 0.5)" : "rgba(255, 255, 255, 0.08)",
+                      backgroundColor: chatMode === "deepthink" ? "rgba(99, 102, 241, 0.18)" : "rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    <MaterialCommunityIcons name="brain" size={11} color={chatMode === "deepthink" ? "#6366F1" : "rgba(255,255,255,0.7)"} />
+                    <Text style={{ ...type.bold, fontSize: 10, color: chatMode === "deepthink" ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                      DeepThink
+                    </Text>
+                    <Feather name="chevron-down" size={9} color="rgba(255,255,255,0.4)" />
+                  </HapticPressable>
+                </View>
+
+                {/* Right Controls */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  {/* Voice button */}
+                  <HapticPressable
+                    onPress={() => notify.info("Voice input coming soon!")}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: "rgba(255, 255, 255, 0.08)",
+                      backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    <MaterialCommunityIcons name="waveform" size={11} color="rgba(255,255,255,0.7)" />
+                    <Text style={{ ...type.bold, fontSize: 10, color: "rgba(255,255,255,0.7)" }}>
+                      Voice
+                    </Text>
+                  </HapticPressable>
+
+                  {/* Send button (Red-Blue Gradient circle) */}
+                  <HapticPressable
+                    testID="send-message-button"
+                    onPress={handleFormSubmit}
+                    disabled={loading || !inputText.trim()}
+                    style={{ opacity: loading || !inputText.trim() ? 0.5 : 1 }}
+                  >
+                    <LinearGradient
+                      colors={["#E5364B", "#6366F1"]} // Red-Blue gradient send button
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Feather name="send" size={12} color="#FFF" style={{ marginLeft: 1 }} />
+                    </LinearGradient>
+                  </HapticPressable>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
       </KeyboardAvoidingView>
 
@@ -783,11 +946,11 @@ export default function AIAssistantScreen() {
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" }}>
           <HapticPressable style={{ flex: 1 }} onPress={() => setIsHistoryVisible(false)} />
           <BlurView
-            intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
+            intensity={95}
             tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
             style={{
               maxHeight: "75%",
-              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.55)" : "rgba(255, 255, 255, 0.55)",
+              backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(10, 10, 12, 0.94)" : "rgba(255, 255, 255, 0.95)",
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
               borderWidth: 1,

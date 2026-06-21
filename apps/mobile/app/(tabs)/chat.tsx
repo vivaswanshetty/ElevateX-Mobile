@@ -1109,14 +1109,14 @@ export default function ChatScreen() {
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
           <Pressable style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} onPress={() => setActionModalVisible(false)} />
           <BlurView
-            intensity={theme === "dark" ? 45 : 65}
+            intensity={95}
             tint={theme === "dark" ? "dark" : "light"}
             style={{
               borderTopLeftRadius: 28,
               borderTopRightRadius: 28,
               borderWidth: 1,
               borderColor: theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-              backgroundColor: theme === "dark" ? "rgba(20, 20, 24, 0.55)" : "rgba(255, 255, 255, 0.55)",
+              backgroundColor: theme === "dark" ? "rgba(20, 20, 24, 0.94)" : "rgba(255, 255, 255, 0.95)",
               paddingBottom: 40,
               paddingTop: 12,
               paddingHorizontal: 20,

@@ -16,6 +16,8 @@ interface ToastProps {
 }
 
 export function Toast({ message, type = "success", onHide }: ToastProps) {
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
   const translateY = useRef(new Animated.Value(-150)).current;
 
   useEffect(() => {
@@ -46,17 +48,17 @@ export function Toast({ message, type = "success", onHide }: ToastProps) {
       case "error": return { 
         name: "x-octagon", 
         color: "#FF4444",
-        gradient: ["rgba(255, 68, 68, 0.15)", "rgba(255,68,68,0)"]
+        gradient: ["rgba(255, 68, 68, 0.08)", "rgba(255, 68, 68, 0)"]
       };
       case "info": return { 
         name: "info", 
         color: "#60A5FA",
-        gradient: ["rgba(96, 165, 250, 0.15)", "rgba(96, 165, 250, 0)"]
+        gradient: ["rgba(96, 165, 250, 0.08)", "rgba(96, 165, 250, 0)"]
       };
       case "success": default: return { 
         name: "check-circle", 
         color: webTheme.accent,
-        gradient: ["rgba(235, 255, 0, 0.12)", "rgba(235, 255, 0, 0)"]
+        gradient: ["rgba(229, 54, 75, 0.08)", "rgba(229, 54, 75, 0)"]
       };
     }
   };
@@ -72,25 +74,25 @@ export function Toast({ message, type = "success", onHide }: ToastProps) {
         right: 20,
         zIndex: 9999,
         transform: [{ translateY }],
-        shadowColor: config.color,
-        shadowOffset: { width: 0, height: 16 },
-        shadowOpacity: 0.25,
-        shadowRadius: 24,
-        elevation: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: isDark ? 0.40 : 0.08,
+        shadowRadius: 16,
+        elevation: 8,
       }}
     >
       <BlurView
-        intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
-        tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
+        intensity={95}
+        tint={isDark ? "dark" : "light"}
         style={{
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(12, 12, 12, 0.65)" : "rgba(255, 255, 255, 0.65)",
+          backgroundColor: isDark ? "rgba(10, 10, 12, 0.97)" : "rgba(255, 255, 255, 0.96)",
           paddingHorizontal: 20,
           paddingVertical: 18,
           borderRadius: 24,
           borderWidth: 1,
-          borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.10)",
+          borderColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
           overflow: "hidden",
         }}
       >

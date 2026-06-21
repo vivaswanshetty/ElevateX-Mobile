@@ -113,6 +113,12 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="streak"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
     <ControlCenterSheet />
     </>
