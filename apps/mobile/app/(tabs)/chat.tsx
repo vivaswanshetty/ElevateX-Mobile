@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
@@ -464,12 +464,28 @@ export default function ChatScreen() {
     },
   });
 
-  const followingIds = followingQuery.data?.following || [];
-  const searchedUsers = (userSearch.data || []).filter(
-    (item) => 
-      String(item._id) !== String(currentUser?.id) && 
-      followingIds.some((fid: string) => String(fid) === String(item._id))
-  );
+  const activeConversations = conversations.data || [];
+
+  const filteredConversations = useMemo(() => {
+    if (!search.trim()) return activeConversations;
+    return activeConversations.filter((item) =>
+      (item.user?.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (item.lastMessage || "").toLowerCase().includes(search.toLowerCase())
+    );
+  }, [search, activeConversations]);
+
+  const searchedUsers = useMemo(() => {
+    const followingIds = followingQuery.data?.following || [];
+    const searchData = userSearch.data || [];
+    return searchData.filter((item) => {
+      const isSelf = String(item._id) === String(currentUser?.id);
+      const isFollowing = followingIds.some((fid: string) => String(fid) === String(item._id));
+      const hasActiveConversation = activeConversations.some(
+        (c) => String(c.user?._id) === String(item._id)
+      );
+      return !isSelf && isFollowing && !hasActiveConversation;
+    });
+  }, [userSearch.data, followingQuery.data, currentUser?.id, activeConversations]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -608,105 +624,174 @@ export default function ChatScreen() {
               )}
             </View>
 
-            {search.trim().length >= 2 ? (
-              searchedUsers.length > 0 ? (
-                <>
-                  <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12 }}>Following</Text>
-                  <ScrollView contentContainerStyle={{ gap: 10, paddingBottom: tabBarPadding }}>
-                    {searchedUsers.map((item) => {
-                      return (
-                        <Pressable
-                          key={item._id}
-                          onPress={() => setSelectedChat(item)}
-                          style={{
-                            borderRadius: 18,
-                            borderWidth: 1,
-                            borderColor: webTheme.border,
-                            backgroundColor: webTheme.surface,
-                            paddingHorizontal: 14,
-                            paddingVertical: 12,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 12,
-                          }}
-                        >
-                          <UserAvatar avatar={item.avatar} size={48} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
-                              {item.name}
-                            </Text>
-                            <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 12 }}>
-                              Tap to start chat
-                            </Text>
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                </>
-              ) : (
-                <View style={{ paddingVertical: 20, paddingHorizontal: 10 }}>
-                  <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 14, textAlign: "center" }}>
-                    No one in your following list matches "{search}"
-                  </Text>
-                  <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 12, textAlign: "center", marginTop: 8 }}>
-                    You can only message people you follow
-                  </Text>
-                </View>
-              )
-            ) : null}
+              {/* Header: Conversations or Search Results */}
+              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16, marginTop: 8 }}>
+                {search.trim().length > 0 ? "Search Results" : "Conversations"}
+              </Text>
 
-            <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>Conversations</Text>
-            <ScrollView
-              refreshControl={
-                <RefreshControl
-                  refreshing={conversations.isFetching}
-                  onRefresh={conversations.refetch}
-                  tintColor={webTheme.red}
-                />
-              }
-              contentContainerStyle={{ gap: 10, paddingBottom: tabBarPadding }}
-            >
-              {(conversations.data || []).length === 0 ? (
-                <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 14, textAlign: "center", marginTop: 20 }}>
-                  No conversations yet. Search to start chatting!
-                </Text>
-              ) : (
-                (conversations.data || []).map((item) => {
-                  return (
-                    <Pressable
-                      key={item._id}
-                      onPress={() => setSelectedChat(item.user)}
-                      style={{
-                        borderRadius: 18,
-                        borderWidth: 1,
-                        borderColor: webTheme.border,
-                        backgroundColor: webTheme.surface,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 12,
-                      }}
-                    >
-                      <UserAvatar avatar={item.user.avatar} size={48} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
-                          {item.user.name}
+              <ScrollView
+                refreshControl={
+                  <RefreshControl
+                    refreshing={conversations.isFetching}
+                    onRefresh={conversations.refetch}
+                    tintColor={webTheme.red}
+                  />
+                }
+                contentContainerStyle={{ gap: 12, paddingBottom: tabBarPadding }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {search.trim().length > 0 ? (
+                  <>
+                    {/* Matching Active Conversations */}
+                    {filteredConversations.length > 0 && (
+                      <View style={{ gap: 10, marginBottom: 8 }}>
+                        <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                          Active Chats
                         </Text>
-                        <Text numberOfLines={1} style={{ ...type.regular, color: webTheme.muted, fontSize: 12, marginTop: 4 }}>
-                          {item.lastMessage}
+                        {filteredConversations.map((item: Conversation) => (
+                          <Pressable
+                            key={item._id}
+                            onPress={() => setSelectedChat(item.user)}
+                            style={({ pressed }) => ({
+                              borderRadius: 18,
+                              borderWidth: 1,
+                              borderColor: pressed ? webTheme.accentBorder : webTheme.border,
+                              backgroundColor: pressed ? "rgba(255, 255, 255, 0.04)" : webTheme.surface,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 12,
+                              transform: [{ scale: pressed ? 0.98 : 1 }],
+                            })}
+                          >
+                            <UserAvatar avatar={item.user.avatar} size={48} />
+                            <View style={{ flex: 1 }}>
+                              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
+                                  {item.user.name}
+                                </Text>
+                                <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 10 }}>
+                                  {formatConversationDate(item.timestamp)}
+                                </Text>
+                              </View>
+                              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                                <Text numberOfLines={1} style={{ ...type.regular, color: item.isUnread ? webTheme.text : webTheme.muted, fontSize: 12, flex: 1, fontWeight: item.isUnread ? "600" : "400" }}>
+                                  {item.lastMessage}
+                                </Text>
+                                {item.isUnread && (
+                                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: webTheme.accent, marginLeft: 8 }} />
+                                )}
+                              </View>
+                            </View>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Matching Other Followed Members */}
+                    {search.trim().length >= 2 && searchedUsers.length > 0 && (
+                      <View style={{ gap: 10 }}>
+                        <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                          Start a New Chat
                         </Text>
-                        <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 10, marginTop: 2 }}>
-                          {formatConversationDate(item.timestamp)}
+                        {searchedUsers.map((item: ChatUser) => (
+                          <Pressable
+                            key={item._id}
+                            onPress={() => setSelectedChat(item)}
+                            style={({ pressed }) => ({
+                              borderRadius: 18,
+                              borderWidth: 1,
+                              borderColor: pressed ? webTheme.accentBorder : webTheme.border,
+                              backgroundColor: pressed ? "rgba(255, 255, 255, 0.04)" : webTheme.surface,
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 12,
+                              transform: [{ scale: pressed ? 0.98 : 1 }],
+                            })}
+                          >
+                            <UserAvatar avatar={item.avatar} size={48} />
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
+                                {item.name}
+                              </Text>
+                              <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 12, marginTop: 4 }}>
+                                Tap to start chat
+                              </Text>
+                            </View>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Empty Search States */}
+                    {filteredConversations.length === 0 && (search.trim().length < 2 || searchedUsers.length === 0) && (
+                      <View style={{ paddingVertical: 40, alignItems: "center" }}>
+                        <Feather name="search" size={28} color={webTheme.faint} style={{ marginBottom: 12 }} />
+                        <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 14, textAlign: "center" }}>
+                          No results found for "{search}"
+                        </Text>
+                        <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 11, textAlign: "center", marginTop: 6, paddingHorizontal: 20 }}>
+                          Make sure you are following the user you are trying to search.
                         </Text>
                       </View>
-                    </Pressable>
-                  );
-                })
-              )}
-            </ScrollView>
-          </View>
+                    )}
+                  </>
+                ) : (
+                  /* Default List: Active Conversations */
+                  activeConversations.length === 0 ? (
+                    <View style={{ paddingVertical: 60, alignItems: "center" }}>
+                      <Feather name="message-square" size={40} color={webTheme.faint} style={{ marginBottom: 16 }} />
+                      <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>No messages yet</Text>
+                      <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, textAlign: "center", marginTop: 8, paddingHorizontal: 40 }}>
+                        You can only chat with members you follow. Search their name above to start a conversation!
+                      </Text>
+                    </View>
+                  ) : (
+                    activeConversations.map((item) => (
+                      <Pressable
+                        key={item._id}
+                        onPress={() => setSelectedChat(item.user)}
+                        style={({ pressed }) => ({
+                          borderRadius: 18,
+                          borderWidth: 1,
+                          borderColor: pressed ? webTheme.accentBorder : webTheme.border,
+                          backgroundColor: pressed ? "rgba(255, 255, 255, 0.04)" : webTheme.surface,
+                          paddingHorizontal: 16,
+                          paddingVertical: 14,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 12,
+                          transform: [{ scale: pressed ? 0.98 : 1 }],
+                        })}
+                      >
+                        <UserAvatar avatar={item.user.avatar} size={48} />
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                            <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
+                              {item.user.name}
+                            </Text>
+                            <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 10 }}>
+                              {formatConversationDate(item.timestamp)}
+                            </Text>
+                          </View>
+                          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                            <Text numberOfLines={1} style={{ ...type.regular, color: item.isUnread ? webTheme.text : webTheme.muted, fontSize: 12, flex: 1, fontWeight: item.isUnread ? "600" : "400" }}>
+                              {item.lastMessage}
+                            </Text>
+                            {item.isUnread && (
+                              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: webTheme.accent, marginLeft: 8 }} />
+                            )}
+                          </View>
+                        </View>
+                      </Pressable>
+                    ))
+                  )
+                )}
+              </ScrollView>
+            </View>
           </>
         ) : (
           <>

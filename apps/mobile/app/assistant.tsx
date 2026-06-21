@@ -816,44 +816,28 @@ export default function AIAssistantScreen() {
               />
 
               {/* Bottom Actions Row */}
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                {/* Left Controls */}
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  {/* Plus button */}
-                  <HapticPressable
-                    onPress={() => notify.info("Attachments coming soon!")}
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 14,
-                      backgroundColor: "rgba(255, 255, 255, 0.08)",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Feather name="plus" size={14} color="#FFF" />
-                  </HapticPressable>
-
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+                {/* Left Controls (Toggle Pills) */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   {/* Normal pill */}
                   <HapticPressable
                     onPress={() => setChatMode("normal")}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 4,
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
+                      gap: 5,
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
                       borderRadius: 14,
                       borderWidth: 1,
                       borderColor: chatMode === "normal" ? "rgba(229, 54, 75, 0.4)" : "rgba(255, 255, 255, 0.08)",
                       backgroundColor: chatMode === "normal" ? "rgba(229, 54, 75, 0.15)" : "rgba(255, 255, 255, 0.05)",
                     }}
                   >
-                    <Feather name="feather" size={10} color={chatMode === "normal" ? "#E5364B" : "rgba(255,255,255,0.7)"} />
-                    <Text style={{ ...type.bold, fontSize: 10, color: chatMode === "normal" ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                    <Feather name="feather" size={11} color={chatMode === "normal" ? "#E5364B" : "rgba(255,255,255,0.7)"} />
+                    <Text style={{ ...type.bold, fontSize: 11, color: chatMode === "normal" ? "#FFF" : "rgba(255,255,255,0.7)" }}>
                       Normal
                     </Text>
-                    <Feather name="chevron-down" size={9} color="rgba(255,255,255,0.4)" />
                   </HapticPressable>
 
                   {/* DeepThink pill */}
@@ -862,9 +846,9 @@ export default function AIAssistantScreen() {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 4,
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
+                      gap: 5,
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
                       borderRadius: 14,
                       borderWidth: 1,
                       borderColor: chatMode === "deepthink" ? "rgba(99, 102, 241, 0.5)" : "rgba(255, 255, 255, 0.08)",
@@ -872,59 +856,34 @@ export default function AIAssistantScreen() {
                     }}
                   >
                     <MaterialCommunityIcons name="brain" size={11} color={chatMode === "deepthink" ? "#6366F1" : "rgba(255,255,255,0.7)"} />
-                    <Text style={{ ...type.bold, fontSize: 10, color: chatMode === "deepthink" ? "#FFF" : "rgba(255,255,255,0.7)" }}>
+                    <Text style={{ ...type.bold, fontSize: 11, color: chatMode === "deepthink" ? "#FFF" : "rgba(255,255,255,0.7)" }}>
                       DeepThink
                     </Text>
-                    <Feather name="chevron-down" size={9} color="rgba(255,255,255,0.4)" />
                   </HapticPressable>
                 </View>
 
-                {/* Right Controls */}
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  {/* Voice button */}
-                  <HapticPressable
-                    onPress={() => notify.info("Voice input coming soon!")}
+                {/* Right Controls (Send Button) */}
+                <HapticPressable
+                  testID="send-message-button"
+                  onPress={handleFormSubmit}
+                  disabled={loading || !inputText.trim()}
+                  style={{ opacity: loading || !inputText.trim() ? 0.5 : 1 }}
+                >
+                  <LinearGradient
+                    colors={["#E5364B", "#6366F1"]} // Red-Blue gradient send button
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={{
-                      flexDirection: "row",
+                      width: 34,
+                      height: 34,
+                      borderRadius: 17,
                       alignItems: "center",
-                      gap: 4,
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 14,
-                      borderWidth: 1,
-                      borderColor: "rgba(255, 255, 255, 0.08)",
-                      backgroundColor: "rgba(255, 255, 255, 0.05)",
+                      justifyContent: "center",
                     }}
                   >
-                    <MaterialCommunityIcons name="waveform" size={11} color="rgba(255,255,255,0.7)" />
-                    <Text style={{ ...type.bold, fontSize: 10, color: "rgba(255,255,255,0.7)" }}>
-                      Voice
-                    </Text>
-                  </HapticPressable>
-
-                  {/* Send button (Red-Blue Gradient circle) */}
-                  <HapticPressable
-                    testID="send-message-button"
-                    onPress={handleFormSubmit}
-                    disabled={loading || !inputText.trim()}
-                    style={{ opacity: loading || !inputText.trim() ? 0.5 : 1 }}
-                  >
-                    <LinearGradient
-                      colors={["#E5364B", "#6366F1"]} // Red-Blue gradient send button
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 16,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Feather name="send" size={12} color="#FFF" style={{ marginLeft: 1 }} />
-                    </LinearGradient>
-                  </HapticPressable>
-                </View>
+                    <Feather name="send" size={12} color="#FFF" style={{ marginLeft: 1 }} />
+                  </LinearGradient>
+                </HapticPressable>
               </View>
             </View>
           </LinearGradient>

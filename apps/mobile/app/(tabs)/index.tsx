@@ -439,10 +439,51 @@ export default function HomeScreen() {
             </ScrollView>
           </FadeSlideIn>
 
-          {/* Opportunities Section Header */}
           <FadeSlideIn delay={230} distance={10}>
             <View style={{ paddingHorizontal: 22, marginTop: 26, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={{ ...type.h2, color: webTheme.text, fontSize: 18 }}>Trending Opportunities</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Text style={{ ...type.h2, color: webTheme.text, fontSize: 18 }}>Trending Opportunities</Text>
+                
+                {/* Classic green '.live' button/indicator */}
+                <HapticPressable 
+                  onPress={() => {
+                    refetch();
+                    notify.success("Refreshing live opportunities...");
+                  }}
+                  hapticType="selection"
+                  style={{ 
+                    flexDirection: "row", 
+                    alignItems: "center", 
+                    backgroundColor: "rgba(52, 199, 89, 0.15)", // iOS SystemGreen transparent
+                    borderWidth: 1,
+                    borderColor: "rgba(52, 199, 89, 0.3)",
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 20,
+                    gap: 5
+                  }}
+                >
+                  <View 
+                    style={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: 3, 
+                      backgroundColor: "#34C759" // iOS SystemGreen solid
+                    }} 
+                  />
+                  <Text 
+                    style={{ 
+                      ...type.bold,
+                      fontSize: 10, 
+                      color: "#34C759", 
+                      textTransform: "uppercase", 
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    .live
+                  </Text>
+                </HapticPressable>
+              </View>
               <HapticPressable onPress={() => router.push("/explore")} hapticType="light">
                 <Text style={{ ...type.semibold, color: webTheme.accent, fontSize: 13 }}>View All</Text>
               </HapticPressable>
