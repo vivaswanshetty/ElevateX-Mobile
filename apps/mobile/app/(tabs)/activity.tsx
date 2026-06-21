@@ -183,8 +183,8 @@ export default function ActivityScreen() {
           <FadeSlideIn delay={50} distance={10}>
             <ScreenHeader
               showBackButton={true}
-              eyebrow="Activity"
-              title="Recent"
+              eyebrow="Notifications"
+              title="Activity"
               badge="Movement"
               description="Track rewards, feedback, and new task matches without leaving the app flow."
               accent={webTheme.orange}
