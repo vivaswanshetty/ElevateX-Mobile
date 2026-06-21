@@ -44,6 +44,12 @@ interface TaskDetail {
     status?: string;
     appliedAt?: string;
   }>;
+  assignedTo?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    email?: string;
+  };
   attachments?: Array<{
     name?: string;
     type?: string;
@@ -72,6 +78,10 @@ export default function TaskDetailScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showOptionsSheet, setShowOptionsSheet] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
+  const [showAssignConfirm, setShowAssignConfirm] = useState(false);
+  const [assignTargetId, setAssignTargetId] = useState("");
+  const [assignTargetName, setAssignTargetName] = useState("");
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/api/tasks/${id}`),
@@ -109,12 +119,46 @@ export default function TaskDetailScreen() {
     },
   });
 
+  const assignMutation = useMutation({
+    mutationFn: (applicantId: string) => api.put(`/api/tasks/${id}/assign`, { applicantId }),
+    onSuccess: async () => {
+      await Promise.all([
+        taskQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["activity"] }),
+      ]);
+      notify.success("Helper assigned successfully.");
+    },
+    onError: (error) => {
+      notify.error(getErrorMessage(error));
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: () => api.put(`/api/tasks/${id}/complete`),
+    onSuccess: async () => {
+      await Promise.all([
+        taskQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["activity"] }),
+        queryClient.invalidateQueries({ queryKey: ["wallet"] }),
+      ]);
+      notify.success("Task completed! Reward coins and XP have been credited.");
+    },
+    onError: (error) => {
+      notify.error(getErrorMessage(error));
+    },
+  });
+
   const task = taskQuery.data;
   const mutedCreatorIds = useMuteStore((s) => s.mutedCreatorIds);
   const isCreatorMuted = task?.createdBy?._id ? Boolean(mutedCreatorIds[task.createdBy._id]) : false;
   const statusAccent = getStatusAccent(task?.status);
   const isOwner = task?.createdBy?._id === currentUser?.id;
+  const isAssigned = task?.assignedTo?._id === currentUser?.id;
   const hasApplied = Boolean(task?.applicants?.some((item) => item.user?._id === currentUser?.id));
+  const partner = isOwner ? task?.assignedTo : isAssigned ? task?.createdBy : null;
+  const partnerRole = isOwner ? "Assigned Helper" : "Task Creator";
 
   const taskXp = Math.floor(10 + (task?.coins || 0) / 10);
 
@@ -256,6 +300,28 @@ export default function TaskDetailScreen() {
         onConfirm={() => {
           setShowReportConfirm(false);
           notify.success("Thank you. This task has been reported and sent to moderators for review.");
+        }}
+      />
+      <ConfirmDialog
+        visible={showAssignConfirm}
+        title="Assign Helper?"
+        detail={`Are you sure you want to assign ${assignTargetName} to this task?`}
+        confirmLabel="Assign"
+        onClose={() => setShowAssignConfirm(false)}
+        onConfirm={() => {
+          setShowAssignConfirm(false);
+          assignMutation.mutate(assignTargetId);
+        }}
+      />
+      <ConfirmDialog
+        visible={showCompleteConfirm}
+        title="Complete Task?"
+        detail="Are you sure you want to mark this task as completed? This will release the escrowed reward coins to the helper."
+        confirmLabel="Complete"
+        onClose={() => setShowCompleteConfirm(false)}
+        onConfirm={() => {
+          setShowCompleteConfirm(false);
+          completeMutation.mutate();
         }}
       />
 
@@ -448,29 +514,56 @@ export default function TaskDetailScreen() {
                         </Text>
                       </View>
                       
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <View
+                      {isOwner && task.status === "Open" ? (
+                        <HapticPressable
+                          hapticType="medium"
+                          onPress={() => {
+                            const applicantId = item.user?._id;
+                            const applicantName = item.user?.name;
+                            if (!applicantId || !applicantName) return;
+                            setAssignTargetId(applicantId);
+                            setAssignTargetName(applicantName);
+                            setShowAssignConfirm(true);
+                          }}
+                          disabled={assignMutation.isPending}
                           style={{
-                            borderRadius: 999,
-                            backgroundColor: item.status === "Accepted" ? "rgba(52,211,153,0.1)" : item.status === "Rejected" ? "rgba(239,68,68,0.1)" : "rgba(251,191,36,0.1)",
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
+                            borderRadius: 12,
+                            backgroundColor: webTheme.accentSoft,
+                            borderWidth: 1,
+                            borderColor: webTheme.accentBorder,
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
                           }}
                         >
-                          <Text
+                          <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 11 }}>
+                            {assignMutation.isPending ? "Assigning..." : "Assign"}
+                          </Text>
+                        </HapticPressable>
+                      ) : (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                          <View
                             style={{
-                              ...type.bold,
-                              color: item.status === "Accepted" ? webTheme.green : item.status === "Rejected" ? webTheme.red : webTheme.gold,
-                              fontSize: 10,
+                              borderRadius: 999,
+                              backgroundColor: item.status === "Accepted" ? "rgba(52,211,153,0.1)" : item.status === "Rejected" ? "rgba(239,68,68,0.1)" : "rgba(251,191,36,0.1)",
+                              paddingHorizontal: 8,
+                              paddingVertical: 4,
                             }}
                           >
-                            {item.status || "Pending"}
+                            <Text
+                              style={{
+                                ...type.bold,
+                                color: item.status === "Accepted" ? webTheme.green : item.status === "Rejected" ? webTheme.red : webTheme.gold,
+                                fontSize: 10,
+                              }}
+                            >
+                              {item.status || "Pending"}
+                            </Text>
+                          </View>
+                          <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12 }}>
+                            {item.appliedAt ? formatTimeAgo(item.appliedAt) : "Recently"}
                           </Text>
                         </View>
-                        <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 12 }}>
-                          {item.appliedAt ? formatTimeAgo(item.appliedAt) : "Recently"}
-                        </Text>
-                      </View>
+                      )}
                     </View>
                   ))
                 ) : (
@@ -518,25 +611,101 @@ export default function TaskDetailScreen() {
               </SurfaceCard>
             ) : null}
 
-            {/* Chat Helper Box */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                backgroundColor: "rgba(255,255,255,0.02)",
-                borderWidth: 1,
-                borderColor: "rgba(255,255,255,0.05)",
-                borderRadius: 16,
-                padding: 14,
-                marginTop: 14,
-              }}
-            >
-              <Feather name="message-square" size={16} color={webTheme.faint} />
-              <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, flex: 1, lineHeight: 18 }}>
-                Task chat opens once the creator accepts your application
-              </Text>
-            </View>
+            {/* Contact Reveal / Matching Info Card */}
+            {partner ? (
+              <SurfaceCard accent={webTheme.accent} style={{ marginTop: 14 }} contentStyle={{ padding: 16 }}>
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16, marginBottom: 12 }}>
+                  Match Contact Information
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <UserAvatar
+                    avatar={partner.avatar}
+                    size={48}
+                    borderWidth={1}
+                    borderColor="rgba(255,255,255,0.08)"
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
+                      {partner.name}
+                    </Text>
+                    <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 10, textTransform: "uppercase", marginTop: 2 }}>
+                      {partnerRole}
+                    </Text>
+                    <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, marginTop: 4 }}>
+                      {partner.email || "No email address listed"}
+                    </Text>
+                  </View>
+                </View>
+
+                {partner.email ? (
+                  <HapticPressable
+                    hapticType="light"
+                    onPress={() => {
+                      Linking.openURL(`mailto:${partner.email}?subject=${encodeURIComponent(`ElevateX Task: ${task?.title}`)}`);
+                    }}
+                    style={{
+                      marginTop: 16,
+                      borderRadius: 16,
+                      backgroundColor: webTheme.accentSoft,
+                      borderWidth: 1,
+                      borderColor: webTheme.accentBorder,
+                      paddingVertical: 12,
+                      alignItems: "center",
+                      flexDirection: "row",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Feather name="mail" size={14} color={webTheme.accent} />
+                    <Text style={{ ...type.bold, color: webTheme.accent, fontSize: 13 }}>
+                      Send Email
+                    </Text>
+                  </HapticPressable>
+                ) : null}
+              </SurfaceCard>
+            ) : task?.status === "In Progress" || task?.status === "Completed" ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  backgroundColor: "rgba(255,255,255,0.02)",
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.05)",
+                  borderRadius: 16,
+                  padding: 14,
+                  marginTop: 14,
+                }}
+              >
+                <Feather name="lock" size={16} color={webTheme.faint} />
+                <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, flex: 1, lineHeight: 18 }}>
+                  This task is currently being fulfilled by another member.
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  backgroundColor: "rgba(255,255,255,0.02)",
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.05)",
+                  borderRadius: 16,
+                  padding: 14,
+                  marginTop: 14,
+                }}
+              >
+                <Feather name="info" size={16} color={webTheme.faint} />
+                <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 13, flex: 1, lineHeight: 18 }}>
+                  {isOwner
+                    ? "Review applicants below and assign one to begin collaboration."
+                    : hasApplied
+                    ? "Application sent. Once the creator accepts, their email will be revealed here."
+                    : "Apply for this task below to start collaborating."}
+                </Text>
+              </View>
+            )}
 
             {/* Owner Action Buttons: Edit/Delete */}
             {isOwner && task.status === "Open" ? (
@@ -603,48 +772,81 @@ export default function TaskDetailScreen() {
             alignItems: "center",
           }}
         >
-          <HapticPressable
-            hapticType="medium"
-            onPress={() => {
-              if (isOwner) {
-                notify.error("You cannot apply to your own task.");
-                return;
-              }
-              if (hasApplied) {
-                notify.info("You have already applied to this task.");
-                return;
-              }
-              setShowApplyConfirm(true);
-            }}
-            disabled={applyMutation.isPending || task.status !== "Open" || isOwner || hasApplied}
-            style={{
-              flex: 1,
-              height: 50,
-              borderRadius: 16,
-              backgroundColor: task.status !== "Open" ? "rgba(214,60,71,0.15)" : isOwner || hasApplied ? "rgba(255,255,255,0.04)" : webTheme.accentSoft,
-              borderWidth: 1,
-              borderColor: task.status !== "Open" ? "rgba(214,60,71,0.2)" : isOwner || hasApplied ? "rgba(255,255,255,0.08)" : webTheme.accentBorder,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            {applyMutation.isPending ? (
-              <ActivityIndicator size="small" color={webTheme.accent} />
-            ) : hasApplied ? (
-              <>
-                <Feather name="check" size={16} color={webTheme.green} />
-                <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 14 }}>
-                  Application sent
+          {task.status === "In Progress" && (isOwner || isAssigned) ? (
+            <HapticPressable
+              hapticType="medium"
+              onPress={() => {
+                setShowCompleteConfirm(true);
+              }}
+              disabled={completeMutation.isPending}
+              style={{
+                flex: 1,
+                height: 50,
+                borderRadius: 16,
+                backgroundColor: webTheme.greenSoft,
+                borderWidth: 1,
+                borderColor: "rgba(52,211,153,0.25)",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {completeMutation.isPending ? (
+                <ActivityIndicator size="small" color={webTheme.green} />
+              ) : (
+                <>
+                  <Feather name="check-circle" size={16} color={webTheme.green} />
+                  <Text style={{ ...type.bold, color: webTheme.green, fontSize: 14 }}>
+                    Complete Task
+                  </Text>
+                </>
+              )}
+            </HapticPressable>
+          ) : (
+            <HapticPressable
+              hapticType="medium"
+              onPress={() => {
+                if (isOwner) {
+                  notify.error("You cannot apply to your own task.");
+                  return;
+                }
+                if (hasApplied) {
+                  notify.info("You have already applied to this task.");
+                  return;
+                }
+                setShowApplyConfirm(true);
+              }}
+              disabled={applyMutation.isPending || task.status !== "Open" || isOwner || hasApplied}
+              style={{
+                flex: 1,
+                height: 50,
+                borderRadius: 16,
+                backgroundColor: task.status !== "Open" ? "rgba(214,60,71,0.15)" : isOwner || hasApplied ? "rgba(255,255,255,0.04)" : webTheme.accentSoft,
+                borderWidth: 1,
+                borderColor: task.status !== "Open" ? "rgba(214,60,71,0.2)" : isOwner || hasApplied ? "rgba(255,255,255,0.08)" : webTheme.accentBorder,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {applyMutation.isPending ? (
+                <ActivityIndicator size="small" color={webTheme.accent} />
+              ) : hasApplied ? (
+                <>
+                  <Feather name="check" size={16} color={webTheme.green} />
+                  <Text style={{ ...type.bold, color: webTheme.muted, fontSize: 14 }}>
+                    Application sent
+                  </Text>
+                </>
+              ) : (
+                <Text style={{ ...type.bold, color: task.status !== "Open" ? webTheme.red : webTheme.accent, fontSize: 14 }}>
+                  {isOwner ? "Your task" : task.status === "Open" ? "Apply for task" : `Task ${task.status.toLowerCase()}`}
                 </Text>
-              </>
-            ) : (
-              <Text style={{ ...type.bold, color: task.status !== "Open" ? webTheme.red : webTheme.accent, fontSize: 14 }}>
-                {isOwner ? "Your task" : task.status === "Open" ? "Apply for task" : `Task ${task.status.toLowerCase()}`}
-              </Text>
-            )}
-          </HapticPressable>
+              )}
+            </HapticPressable>
+          )}
 
           <HapticPressable
             hapticType="light"

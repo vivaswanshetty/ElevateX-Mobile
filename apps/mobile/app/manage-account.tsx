@@ -20,6 +20,8 @@ import { useThemeStore } from "../stores/themeStore";
 import { getImageUrl, getInitials } from "../lib/media";
 import { UserAvatar } from "../components/UserAvatar";
 import { useCheckUpdates } from "../lib/checkUpdates";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { SignOutModal } from "../components/SignOutModal";
 import versionInfo from "../version.json";
 
 interface ProfileResponse {
@@ -35,6 +37,10 @@ export default function ManageAccountScreen() {
   const { user, setUser, signOut } = useAuthStore();
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState("");
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showPrivacyConfirm, setShowPrivacyConfirm] = useState(false);
+  const [privacyNextValue, setPrivacyNextValue] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -59,23 +65,7 @@ export default function ManageAccountScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out? You'll need to sign back in next time.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Sign Out",
-          style: "destructive",
-          onPress: () => {
-            queryClient.clear();
-            signOut().finally(() => {
-              router.replace("/auth/login");
-            });
-          },
-        },
-      ]
-    );
+    setShowSignOutConfirm(true);
   };
 
   const { data: profile, isFetching, refetch } = useQuery<ProfileResponse>({
@@ -162,19 +152,8 @@ export default function ManageAccountScreen() {
   };
 
   const handlePrivacyToggle = (nextValue: boolean) => {
-    Alert.alert(
-      nextValue ? "Make account private?" : "Make account public?",
-      nextValue
-        ? "Only approved followers will be able to see your profile details."
-        : "Anyone will be able to view your profile details.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: nextValue ? "Make private" : "Make public",
-          onPress: () => updateAccount.mutate({ isPrivate: nextValue }),
-        },
-      ]
-    );
+    setPrivacyNextValue(nextValue);
+    setShowPrivacyConfirm(true);
   };
 
   const handlePasswordSubmit = () => {
@@ -194,18 +173,7 @@ export default function ManageAccountScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete account?",
-      "This permanently deletes your account and data. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete account",
-          style: "destructive",
-          onPress: () => deleteAccount.mutate(),
-        },
-      ]
-    );
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -445,6 +413,47 @@ export default function ManageAccountScreen() {
         </View>
 
       </ScrollView>
+
+      <SignOutModal
+        visible={showSignOutConfirm}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          queryClient.clear();
+          signOut().finally(() => {
+            router.replace("/auth/login");
+          });
+        }}
+        onCancel={() => setShowSignOutConfirm(false)}
+      />
+
+      <ConfirmDialog
+        visible={showPrivacyConfirm}
+        title={privacyNextValue ? "Make account private?" : "Make account public?"}
+        detail={
+          privacyNextValue
+            ? "Only approved followers will be able to see your profile details."
+            : "Anyone will be able to view your profile details."
+        }
+        confirmLabel={privacyNextValue ? "Make private" : "Make public"}
+        onClose={() => setShowPrivacyConfirm(false)}
+        onConfirm={() => {
+          setShowPrivacyConfirm(false);
+          updateAccount.mutate({ isPrivate: privacyNextValue });
+        }}
+      />
+
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        title="Delete Account?"
+        detail="This permanently deletes your account and data. This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          deleteAccount.mutate();
+        }}
+      />
     </SafeAreaView>
   );
 }

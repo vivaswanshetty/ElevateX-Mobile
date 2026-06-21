@@ -36,6 +36,7 @@ import { TabTransitionView } from "../../components/TabTransitionView";
 import { UserListModal } from "../../components/UserListModal";
 import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
+import { SignOutModal } from "../../components/SignOutModal";
 
 interface WorkItem {
   id: number;
@@ -118,6 +119,7 @@ export default function ProfileScreen() {
   const [showEnlargedAvatar, setShowEnlargedAvatar] = useState(false);
   const [userListModalVisible, setUserListModalVisible] = useState(false);
   const [userListTitle, setUserListTitle] = useState<"Followers" | "Following">("Followers");
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const {
     data: profile,
@@ -235,23 +237,7 @@ export default function ProfileScreen() {
 
 
   const handleSignOut = () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out? You'll need to sign back in next time.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Sign Out",
-          style: "destructive",
-          onPress: () => {
-            queryClient.clear();
-            signOut().finally(() => {
-              router.replace("/auth/login");
-            });
-          },
-        },
-      ]
-    );
+    setShowSignOutConfirm(true);
   };
 
   return (
@@ -1045,6 +1031,18 @@ export default function ProfileScreen() {
         isLoading={userListTitle === "Followers" ? followersQuery.isFetching : followingQuery.isFetching}
         onClose={() => setUserListModalVisible(false)}
         onRemoveUser={userListTitle === "Followers" ? handleRemoveFollower : undefined}
+      />
+
+      <SignOutModal
+        visible={showSignOutConfirm}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          queryClient.clear();
+          signOut().finally(() => {
+            router.replace("/auth/login");
+          });
+        }}
+        onCancel={() => setShowSignOutConfirm(false)}
       />
     </SafeAreaView>
   );

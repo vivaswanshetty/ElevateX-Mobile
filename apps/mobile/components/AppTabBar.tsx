@@ -90,7 +90,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
           borderColor: barBorder,
           backgroundColor: barBg,
           paddingHorizontal: 8,
-          paddingVertical: 6,
+          paddingVertical: 8,
           shadowColor: "#000",
           shadowOpacity: isDark ? 0.35 : 0.08,
           shadowRadius: 24,
@@ -116,10 +116,10 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
           style={[
             {
               position: "absolute",
-              top: 6,
+              top: 8,
               left: 8,
               width: TAB_WIDTH,
-              height: 48,
+              height: 52,
               alignItems: "center",
               justifyContent: "center",
             },
@@ -128,9 +128,9 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
         >
           <View
             style={{
-              width: "85%",
+              width: "92%",
               height: "100%",
-              borderRadius: 18,
+              borderRadius: 20,
               backgroundColor: indicatorBg,
               borderWidth: 1,
               borderColor: indicatorBorder,
@@ -213,7 +213,7 @@ function CreateTabItem({
     <HapticPressable
       onPress={onPress}
       onLongPress={onLongPress}
-      style={{ width: TAB_WIDTH, height: 48, alignItems: "center", justifyContent: "center" }}
+      style={{ width: TAB_WIDTH, height: 52, alignItems: "center", justifyContent: "center" }}
       onPressIn={() => { scale.value = withSpring(0.85); }}
       onPressOut={() => { scale.value = withSpring(1); }}
     >
@@ -255,12 +255,12 @@ function TabItem({
   isDark: boolean;
 }) {
   const scale = useSharedValue(1);
-  const iconTranslateY = useSharedValue(focused ? -2 : 6);
+  const iconTranslateY = useSharedValue(focused ? 0 : 6);
   const textOpacity = useSharedValue(focused ? 1 : 0);
   const textScale = useSharedValue(focused ? 1 : 0.85);
 
   useEffect(() => {
-    iconTranslateY.value = withSpring(focused ? -2 : 6, { damping: 15, stiffness: 120 });
+    iconTranslateY.value = withSpring(focused ? 0 : 6, { damping: 15, stiffness: 120 });
     textOpacity.value = withTiming(focused ? 1 : 0, { duration: 200 });
     textScale.value = withTiming(focused ? 1 : 0.85, { duration: 200 });
   }, [focused]);
@@ -282,7 +282,7 @@ function TabItem({
     <HapticPressable
       onPress={onPress}
       onLongPress={onLongPress}
-      style={{ width: TAB_WIDTH, height: 48, alignItems: "center", justifyContent: "center" }}
+      style={{ width: TAB_WIDTH, height: 52, alignItems: "center", justifyContent: "center" }}
       onPressIn={() => { scale.value = withSpring(0.85); }}
       onPressOut={() => { scale.value = withSpring(1); }}
     >

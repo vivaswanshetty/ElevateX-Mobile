@@ -18,6 +18,7 @@ import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { HapticPressable } from "../components/HapticPressable";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Watermark } from "../components/Watermark";
 import { api, getErrorMessage } from "../lib/api";
 import { notify } from "../stores/toastStore";
@@ -55,6 +56,7 @@ export default function AIAssistantScreen() {
   const [fetchingMessages, setFetchingMessages] = useState(false);
   const [quotedMessage, setQuotedMessage] = useState<{ content: string; type: string } | null>(null);
   const [chatMode, setChatMode] = useState<'normal' | 'deepthink'>('normal');
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -138,36 +140,29 @@ export default function AIAssistantScreen() {
     }
   };
 
-  const handleDeleteChat = async (id: string) => {
-    Alert.alert(
-      "Delete Conversation",
-      "Are you sure you want to delete this chat session?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await api.delete(`/api/assistant/conversations/${id}`);
-              setConversations((prev) => prev.filter((c) => c._id !== id));
-              if (activeId === id) {
-                const remaining = conversations.filter((c) => c._id !== id);
-                if (remaining.length > 0) {
-                  setActiveId(remaining[0]._id);
-                } else {
-                  setActiveId(null);
-                }
-              }
-              notify.success("Chat deleted successfully.");
-            } catch (err) {
-              console.warn("Delete chat error:", err);
-              notify.error("Failed to delete chat.");
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteChat = (id: string) => {
+    setDeleteTargetId(id);
+  };
+
+  const performDeleteChat = async (id: string) => {
+    try {
+      await api.delete(`/api/assistant/conversations/${id}`);
+      setConversations((prev) => prev.filter((c) => c._id !== id));
+      if (activeId === id) {
+        const remaining = conversations.filter((c) => c._id !== id);
+        if (remaining.length > 0) {
+          setActiveId(remaining[0]._id);
+        } else {
+          setActiveId(null);
+        }
+      }
+      notify.success("Chat deleted successfully.");
+    } catch (err) {
+      console.warn("Delete chat error:", err);
+      notify.error("Failed to delete chat.");
+    } finally {
+      setDeleteTargetId(null);
+    }
   };
 
   const sendMessage = async (chatId: string, textToSend: string) => {
@@ -1076,6 +1071,20 @@ export default function AIAssistantScreen() {
           </BlurView>
         </View>
       </Modal>
+
+      <ConfirmDialog
+        visible={deleteTargetId !== null}
+        title="Delete Conversation"
+        detail="Are you sure you want to delete this chat session?"
+        confirmLabel="Delete"
+        destructive
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={() => {
+          if (deleteTargetId) {
+            performDeleteChat(deleteTargetId);
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }

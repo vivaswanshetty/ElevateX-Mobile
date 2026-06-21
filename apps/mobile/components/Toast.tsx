@@ -75,9 +75,9 @@ export function Toast({ message, type = "success", onHide }: ToastProps) {
         zIndex: 9999,
         transform: [{ translateY }],
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: isDark ? 0.40 : 0.08,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: isDark ? 0.35 : 0.08,
+        shadowRadius: 18,
         elevation: 8,
       }}
     >
@@ -87,12 +87,12 @@ export function Toast({ message, type = "success", onHide }: ToastProps) {
         style={{
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: isDark ? "rgba(10, 10, 12, 0.97)" : "rgba(255, 255, 255, 0.96)",
-          paddingHorizontal: 20,
-          paddingVertical: 18,
-          borderRadius: 24,
+          backgroundColor: isDark ? "rgba(24, 24, 28, 0.72)" : "rgba(255, 255, 255, 0.82)",
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          borderRadius: 20,
           borderWidth: 1,
-          borderColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
+          borderColor: isDark ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.65)",
           overflow: "hidden",
         }}
       >
@@ -102,25 +102,34 @@ export function Toast({ message, type = "success", onHide }: ToastProps) {
           end={{ x: 1, y: 0.5 }}
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
         />
+
+        {/* Specular sheen highlight */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={isDark ? ["rgba(255,255,255,0.06)", "transparent"] : ["rgba(255,255,255,0.50)", "transparent"]}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.8, y: 1 }}
+          style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
+        />
         
         <View style={{
           backgroundColor: `${config.color}20`,
-          borderRadius: 14,
-          padding: 8,
-          marginRight: 14,
+          borderRadius: 10,
+          padding: 7,
+          marginRight: 12,
           borderWidth: 1,
           borderColor: `${config.color}30`
         }}>
-          <Feather name={config.name as any} size={20} color={config.color} />
+          <Feather name={config.name as any} size={18} color={config.color} />
         </View>
         
         <Text 
           style={{ 
             ...typography.semibold, 
             color: webTheme.text, 
-            fontSize: 15,
+            fontSize: 14,
             flex: 1,
-            letterSpacing: 0.2
+            letterSpacing: -0.2
           }}
           numberOfLines={2}
         >
