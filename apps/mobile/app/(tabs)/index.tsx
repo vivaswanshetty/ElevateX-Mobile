@@ -131,7 +131,7 @@ export default function HomeScreen() {
                 Hello,
               </Text>
               <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16, marginTop: 2 }}>
-                {user?.displayName || user?.username || "ElevateX Member"}
+                {(user?.displayName || user?.username || "ElevateX Member").toUpperCase()}
               </Text>
             </View>
           </View>
