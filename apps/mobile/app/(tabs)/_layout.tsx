@@ -4,6 +4,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { Redirect } from "expo-router";
 import { FullscreenMessage } from "../../components/FullscreenMessage";
 import { AppTabBar } from "../../components/AppTabBar";
+import { ControlCenterSheet } from "../../components/ControlCenterSheet";
 
 export default function TabsLayout() {
   const { user, isLoading } = useAuthStore();
@@ -15,6 +16,7 @@ export default function TabsLayout() {
   if (!isLoading && !user) return <Redirect href="/auth/welcome" />;
 
   return (
+    <>
     <Tabs
       tabBar={(props) => <AppTabBar {...props} />}
       screenOptions={{
@@ -30,10 +32,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="feed"
         options={{
-          title: "Explore",
-          tabBarIcon: ({ color, size }) => <Feather name="compass" color={color} size={size} />,
+          title: "Community",
+          tabBarIcon: ({ color, size }) => <Feather name="users" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -44,10 +46,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="activity"
+        name="chat"
         options={{
-          title: "Activity",
-          tabBarIcon: ({ color, size }) => <Feather name="bell" color={color} size={size} />,
+          title: "Chat",
+          tabBarIcon: ({ color, size }) => <Feather name="message-square" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -55,6 +57,24 @@ export default function TabsLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => <Feather name="user" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="activity"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="hub"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -93,18 +113,8 @@ export default function TabsLayout() {
           href: null,
         }}
       />
-      <Tabs.Screen
-        name="feed"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
+    <ControlCenterSheet />
+    </>
   );
 }

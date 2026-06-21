@@ -351,8 +351,8 @@ export default function WalletScreen() {
                 style={{
                   borderRadius: 16,
                   borderWidth: 1,
-                  borderColor: webTheme.border,
-                  backgroundColor: theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                  borderColor: theme === "dark" ? "rgba(255,255,255,0.15)" : webTheme.border,
+                  backgroundColor: theme === "dark" ? "#000000" : "rgba(0,0,0,0.015)",
                   padding: 12,
                   minHeight: 78,
                   justifyContent: "space-between",

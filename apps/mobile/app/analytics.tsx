@@ -10,6 +10,7 @@ import { SurfaceCard } from "../components/SurfaceCard";
 import { api } from "../lib/api";
 import { type } from "../lib/typography";
 import { webTheme } from "../lib/webTheme";
+import { useThemeStore } from "../stores/themeStore";
 
 interface AnalyticsResponse {
   posted: {
@@ -176,6 +177,7 @@ function BackgroundParticles() {
 }
 
 export default function AnalyticsScreen() {
+  const isDark = useThemeStore((s) => s.theme) === "dark";
   const analytics = useQuery<AnalyticsResponse>({
     queryKey: ["analyticsScreen"],
     queryFn: () => api.get("/api/analytics/tasks"),
@@ -284,8 +286,8 @@ export default function AnalyticsScreen() {
                   style={{
                     borderRadius: 18,
                     borderWidth: 1,
-                    borderColor: webTheme.border,
-                    backgroundColor: "rgba(255,255,255,0.03)",
+                    borderColor: isDark ? "rgba(255,255,255,0.15)" : webTheme.border,
+                    backgroundColor: isDark ? "#000000" : "rgba(255,255,255,0.03)",
                     padding: 14,
                   }}
                 >

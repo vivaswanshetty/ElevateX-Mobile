@@ -21,9 +21,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const routeMeta = {
   index: { label: "Home", icon: "home" },
-  explore: { label: "Explore", icon: "compass" },
+  feed: { label: "Community", icon: "users" },
   create: { label: "Create", icon: "plus" },
-  activity: { label: "Updates", icon: "bell" },
+  chat: { label: "Chat", icon: "message-square" },
   profile: { label: "Profile", icon: "user" },
 } as const;
 
@@ -69,8 +69,16 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const barBg = isDark ? "rgba(10, 10, 15, 0.70)" : "rgba(255, 255, 255, 0.75)";
   const barBorder = isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.50)";
   const edgeHighlight = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.60)";
-  const indicatorBg = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)";
-  const indicatorBorder = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)";
+  const activeRoute = state.routes[state.index];
+  const isCreateActive = activeRoute?.name === "create";
+
+  const indicatorBg = isCreateActive
+    ? "rgba(229, 54, 75, 0.16)"
+    : (isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)");
+
+  const indicatorBorder = isCreateActive
+    ? "rgba(229, 54, 75, 0.35)"
+    : (isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)");
 
   return (
     <View
@@ -136,6 +144,11 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               backgroundColor: indicatorBg,
               borderWidth: 1,
               borderColor: indicatorBorder,
+              shadowColor: isCreateActive ? webTheme.accent : "transparent",
+              shadowOpacity: isCreateActive ? 0.35 : 0,
+              shadowRadius: isCreateActive ? 12 : 0,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: isCreateActive ? 4 : 0,
             }}
           />
         </Animated.View>
@@ -152,7 +165,6 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
 
             const focused = state.index === index;
             const meta = routeMeta[route.name];
-            const isCreate = route.name === "create";
 
             const onPress = () => {
               const event = navigation.emit({
@@ -178,7 +190,6 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
                 key={route.key}
                 focused={focused}
                 meta={meta}
-                isCreate={isCreate}
                 onPress={onPress}
                 onLongPress={onLongPress}
                 isDark={isDark}
@@ -194,14 +205,12 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
 function TabItem({ 
   focused, 
   meta, 
-  isCreate, 
   onPress, 
   onLongPress,
   isDark
 }: { 
   focused: boolean; 
   meta: any; 
-  isCreate: boolean; 
   onPress: () => void;
   onLongPress: () => void;
   isDark: boolean;
@@ -224,38 +233,6 @@ function TabItem({
 
   const activeColor = webTheme.accent;
   const inactiveColor = isDark ? "#FFF" : "#737373";
-
-  if (isCreate) {
-    return (
-      <HapticPressable
-        onPress={onPress}
-        onLongPress={onLongPress}
-        style={{ width: TAB_WIDTH, alignItems: "center", justifyContent: "center" }}
-        onPressIn={() => { scale.value = withSpring(0.9); }}
-        onPressOut={() => { scale.value = withSpring(1); }}
-      >
-        <LinearGradient
-          colors={focused ? ["#FF4D5E", "#D63048"] : (isDark ? ["#2A2A35", "#1A1A22"] : ["#E5E5E5", "#D4D4D4"])}
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: 14,
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 1,
-            borderColor: focused ? "rgba(255,255,255,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)"),
-            shadowColor: focused ? webTheme.red : "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: focused ? 0.3 : (isDark ? 0.2 : 0.06),
-            shadowRadius: 8,
-            elevation: 4,
-          }}
-        >
-          <Feather name="plus" size={22} color={focused ? "#fff" : (isDark ? "#fff" : "#404040")} />
-        </LinearGradient>
-      </HapticPressable>
-    );
-  }
 
   return (
     <HapticPressable

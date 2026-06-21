@@ -130,7 +130,7 @@ export const surfaceCardStyle = {
   get backgroundColor() {
     const theme = useThemeStore.getState().theme;
     if (theme === "dark") {
-      return Platform.OS === "ios" ? "rgba(13, 13, 15, 0.45)" : "#121212";
+      return "#000000";
     } else {
       return "#FFFFFF";
     }
@@ -138,15 +138,10 @@ export const surfaceCardStyle = {
   borderWidth: 1,
   get borderColor() {
     return useThemeStore.getState().theme === "dark"
-      ? "rgba(255, 255, 255, 0.12)"
+      ? "rgba(255, 255, 255, 0.15)"
       : "rgba(0, 0, 0, 0.08)";
   },
   borderRadius: 16,
-  shadowColor: "#000",
-  shadowOpacity: 0.18,
-  shadowRadius: 20,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 8,
 };
 
 /* ── glass card (translucent) ── */
@@ -166,11 +161,6 @@ export const glassCardStyle = {
       : "rgba(0,0,0,0.08)";
   },
   borderRadius: 16,
-  shadowColor: "#000",
-  shadowOpacity: 0.32,
-  shadowRadius: 20,
-  shadowOffset: { width: 0, height: 10 },
-  elevation: 12,
 };
 
 /* ── pill / tag ── */

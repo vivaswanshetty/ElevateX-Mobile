@@ -1,10 +1,10 @@
 export const fontFaces = {
-  regular: "Inter_400Regular",
-  medium: "Inter_500Medium",
-  semibold: "Inter_600SemiBold",
-  bold: "Inter_700Bold",
-  extrabold: "Inter_800ExtraBold",
-  black: "Inter_900Black",
+  regular: "PlusJakartaSans_400Regular",
+  medium: "PlusJakartaSans_500Medium",
+  semibold: "PlusJakartaSans_600SemiBold",
+  bold: "PlusJakartaSans_700Bold",
+  extrabold: "PlusJakartaSans_800ExtraBold",
+  black: "PlusJakartaSans_800ExtraBold",
 } as const;
 
 /* ── weight-only presets (original API — keep for compat) ── */

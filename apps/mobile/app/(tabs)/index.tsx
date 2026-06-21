@@ -22,6 +22,7 @@ import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { TabTransitionView } from "../../components/TabTransitionView";
 import { useAuthStore } from "../../stores/authStore";
 import { notify } from "../../stores/toastStore";
+import { useControlCenterStore } from "../../stores/controlCenterStore";
 
 const taskCategories = [
   "All",
@@ -135,33 +136,15 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            {/* AI Assistant Button */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {/* Create Task Button */}
             <HapticPressable
-              onPress={() => router.push("/assistant?from=home" as any)}
+              onPress={() => router.push("/create" as any)}
               hapticType="medium"
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: "rgba(229, 54, 75, 0.08)",
-                borderWidth: 1,
-                borderColor: "rgba(229, 54, 75, 0.2)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <MaterialCommunityIcons name="robot" size={20} color={webTheme.accent} />
-            </HapticPressable>
-
-            {/* Notification Bell Button */}
-            <HapticPressable
-              onPress={() => router.navigate("/activity")}
-              hapticType="light"
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 38,
+                height: 38,
+                borderRadius: 19,
                 backgroundColor: "rgba(255, 255, 255, 0.04)",
                 borderWidth: 1,
                 borderColor: webTheme.border,
@@ -169,7 +152,61 @@ export default function HomeScreen() {
                 justifyContent: "center",
               }}
             >
-              <Feather name="bell" size={18} color={webTheme.text} />
+              <Feather name="plus" size={17} color={webTheme.text} />
+            </HapticPressable>
+
+            {/* AI Assistant Button */}
+            <HapticPressable
+              onPress={() => router.push("/assistant?from=home" as any)}
+              hapticType="medium"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: "rgba(229, 54, 75, 0.08)",
+                borderWidth: 1,
+                borderColor: "rgba(229, 54, 75, 0.2)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MaterialCommunityIcons name="robot" size={17} color={webTheme.accent} />
+            </HapticPressable>
+
+            {/* Notification Bell Button */}
+            <HapticPressable
+              onPress={() => router.navigate("/activity")}
+              hapticType="light"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                borderWidth: 1,
+                borderColor: webTheme.border,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Feather name="bell" size={16} color={webTheme.text} />
+            </HapticPressable>
+
+            {/* Control Center Grid Button */}
+            <HapticPressable
+              onPress={() => useControlCenterStore.getState().open()}
+              hapticType="medium"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                borderWidth: 1,
+                borderColor: webTheme.border,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Feather name="grid" size={17} color={webTheme.text} />
             </HapticPressable>
           </View>
         </View>
