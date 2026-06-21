@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -36,6 +36,7 @@ import { TabTransitionView } from "../../components/TabTransitionView";
 import { UserListModal } from "../../components/UserListModal";
 import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
+import { useSavedPostsStore } from "../../stores/savedPostsStore";
 import { SignOutModal } from "../../components/SignOutModal";
 
 interface WorkItem {
@@ -88,6 +89,7 @@ interface FeedUser {
   _id: string;
   name: string;
   avatar?: string;
+  username?: string;
 }
 
 interface FeedPost {
@@ -114,7 +116,7 @@ export default function ProfileScreen() {
   const queryClient = useQueryClient();
   const theme = useThemeStore((s) => s.theme);
   const { user, setUser, signOut } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "posts" | "activity">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "posts" | "saved">("overview");
   const [avatarError, setAvatarError] = useState(false);
   const [showEnlargedAvatar, setShowEnlargedAvatar] = useState(false);
   const [userListModalVisible, setUserListModalVisible] = useState(false);
@@ -218,6 +220,12 @@ export default function ProfileScreen() {
   const ownPosts = useMemo(
     () => posts.filter((post) => String(post.author?._id || "") === String(displayProfile._id)),
     [displayProfile._id, posts],
+  );
+
+  const { savedPostIds } = useSavedPostsStore();
+  const savedPostsList = useMemo(
+    () => posts.filter((post) => Boolean(savedPostIds[post._id])),
+    [posts, savedPostIds],
   );
 
   const statCards: any[] = [
@@ -522,7 +530,7 @@ export default function ProfileScreen() {
                           hapticType="light"
                           style={{ width: "100%" }}
                         >
-                          <View style={{ borderRadius: 12, backgroundColor: webTheme.accent, paddingVertical: 14, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", minHeight: 52 }}>
+                          <View style={{ borderRadius: 9999, backgroundColor: webTheme.accent, paddingVertical: 14, paddingHorizontal: 20, alignItems: "center", justifyContent: "center", minHeight: 52 }}>
                             <Text style={{ ...type.buttonLabel, color: "#fff" }}>Edit Profile</Text>
                           </View>
                         </HapticPressable>
@@ -604,7 +612,7 @@ export default function ProfileScreen() {
                   { id: "overview", label: "Overview" },
                   { id: "tasks", label: "Tasks" },
                   { id: "posts", label: "Posts" },
-                  { id: "activity", label: "Activity" },
+                  { id: "saved", label: "Saved" },
                 ].map((tab) => {
                   const active = activeTab === tab.id;
                   return (
@@ -934,55 +942,75 @@ export default function ProfileScreen() {
             </View>
           ) : null}
 
-          {/* ── activity tab ── */}
-          {activeTab === "activity" ? (
+          {/* ── saved tab ── */}
+          {activeTab === "saved" ? (
             <View style={{ marginTop: 18, gap: 14 }}>
-              <SurfaceCard>
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Quick Access
-                </Text>
-                <View style={{ marginTop: 16, flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-                  {[
-                    { label: "Feed", route: "/feed", icon: "layout" },
-                    { label: "Wallet", route: "/wallet", icon: "credit-card" },
-                    { label: "Leaderboard", route: "/leaderboard", icon: "award" },
-                    { label: "Chat", route: "/chat", icon: "message-circle" },
-                    { label: "AI Assistant", route: "/assistant", icon: "cpu" },
-                    { label: "Workspace", route: "/hub", icon: "grid" },
-                  ].map((item) => (
-                    <Pressable
-                      key={item.label}
-                      onPress={() => router.navigate(`${item.route}?from=profile` as any)}
-                      style={({ pressed }) => ({
-                        width: "47%",
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: webTheme.border,
-                        backgroundColor: pressed ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.03)",
-                        padding: 18,
-                      })}
-                    >
-                      <Feather
-                        name={item.icon as any}
-                        size={18}
-                        color={webTheme.accent}
-                      />
-                      <Text style={{ ...type.h3, color: webTheme.text, fontSize: 16, marginTop: 12 }}>
-                        {item.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </SurfaceCard>
+              {savedPostsList.length > 0 ? (
+                savedPostsList.map((post) => (
+                  <SurfaceCard 
+                    key={post._id} 
+                    onPress={() => router.push({ pathname: "/post/[id]", params: { id: post._id } })}
+                  >
+                    {/* Author Header */}
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        <UserAvatar avatar={post.author?.avatar} size={32} />
+                        <View>
+                          <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
+                            {post.author?.name || "ElevateX user"}
+                          </Text>
+                          <Text style={{ ...type.caption, color: webTheme.muted, fontSize: 10 }}>
+                            @{post.author?.username || "user"}
+                          </Text>
+                        </View>
+                      </View>
+                      <Feather name="chevron-right" size={14} color={webTheme.faint} />
+                    </View>
 
-              <SurfaceCard>
-                <Text style={{ ...type.h2, color: webTheme.text }}>
-                  Account Visibility
-                </Text>
-                <Text style={{ ...type.body, color: webTheme.muted, fontSize: 14, marginTop: 10 }}>
-                  Your profile is currently {displayProfile.isPrivate ? "private" : "public"}. Manage privacy from the account section whenever you want to control who sees your details.
-                </Text>
-              </SurfaceCard>
+                    <Text style={{ ...type.body, color: webTheme.text, fontSize: 14, lineHeight: 20 }}>
+                      {post.content || "Media post"}
+                    </Text>
+                    {post.image ? (
+                      <Image
+                        source={{ uri: getImageUrl(post.image) || undefined }}
+                        style={{ width: "100%", height: 180, borderRadius: 16, marginTop: 12, backgroundColor: webTheme.surface }}
+                      />
+                    ) : null}
+                    
+                    {/* Card Footer */}
+                    <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", paddingTop: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <View style={{ flexDirection: "row", gap: 14 }}>
+                        <Text style={{ ...type.caption, color: webTheme.faint, fontSize: 11 }}>
+                          {post.likes?.length || 0} likes
+                        </Text>
+                        <Text style={{ ...type.caption, color: webTheme.faint, fontSize: 11 }}>
+                          {post.comments?.length || 0} comments
+                        </Text>
+                      </View>
+                      
+                      {/* Saved badge icon */}
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <FontAwesome name="bookmark" size={12} color={webTheme.accent} />
+                        <Text style={{ ...type.caption, color: webTheme.accent, fontSize: 11 }}>Saved</Text>
+                      </View>
+                    </View>
+                  </SurfaceCard>
+                ))
+              ) : (
+                <SurfaceCard>
+                  <Text style={{ ...type.h3, color: webTheme.text }}>
+                    No Saved Posts
+                  </Text>
+                  <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8 }}>
+                    Explore the feed and bookmark posts to read or follow up later.
+                  </Text>
+                  <HapticPressable onPress={() => router.navigate("/feed?from=profile")}>
+                    <View style={{ marginTop: 16, alignSelf: "flex-start", borderRadius: 999, backgroundColor: webTheme.accent, paddingHorizontal: 16, paddingVertical: 12 }}>
+                      <Text style={{ ...type.buttonLabel, color: "#fff" }}>Explore Feed</Text>
+                    </View>
+                  </HapticPressable>
+                </SurfaceCard>
+              )}
             </View>
           ) : null}
           </FadeSlideIn>

@@ -28,6 +28,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { notify } from "../../stores/toastStore";
 import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
+import { useSavedPostsStore } from "../../stores/savedPostsStore";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 
 interface FeedUser {
@@ -69,7 +70,7 @@ export default function FeedScreen() {
   const [composer, setComposer] = useState("");
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
-  const [savedPosts, setSavedPosts] = useState<Record<string, boolean>>({});
+  const { savedPostIds, toggleSavePost } = useSavedPostsStore();
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
@@ -548,12 +549,8 @@ export default function FeedScreen() {
                       key: "save",
                       icon: "bookmark",
                       label: "Save",
-                      active: Boolean(savedPosts[post._id]),
-                      onPress: () =>
-                        setSavedPosts((current) => ({
-                          ...current,
-                          [post._id]: !current[post._id],
-                        })),
+                      active: Boolean(savedPostIds[post._id]),
+                      onPress: () => toggleSavePost(post._id),
                     },
                   ].map((action) => (
                     <Pressable

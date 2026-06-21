@@ -17,6 +17,7 @@ import { HapticPressable } from "../../components/HapticPressable";
 import { normalizeUserPayload } from "../../lib/user";
 import { webTheme, inputFieldStyle } from "../../lib/webTheme";
 import { Watermark } from "../../components/Watermark";
+import { useThemeStore } from "../../stores/themeStore";
 import { notify } from "../../stores/toastStore";
 import { type as Typography } from "../../lib/typography";
 
@@ -51,8 +52,10 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterScreen() {
   const { setAuthError, setUser } = useAuthStore();
+  const theme = useThemeStore((s) => s.theme);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -90,24 +93,47 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <ScreenBackdrop />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingVertical: 24 }}>
+      {/* Background glow points */}
+      <View
+        style={{
+          position: "absolute",
+          top: 100,
+          right: -60,
+          width: 260,
+          height: 260,
+          borderRadius: 130,
+          backgroundColor: theme === "dark" ? "rgba(139, 92, 246, 0.08)" : "rgba(139, 92, 246, 0.04)",
+          pointerEvents: "none",
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          bottom: 120,
+          left: -80,
+          width: 280,
+          height: 280,
+          borderRadius: 140,
+          backgroundColor: theme === "dark" ? "rgba(229, 54, 75, 0.08)" : "rgba(229, 54, 75, 0.04)",
+          pointerEvents: "none",
+        }}
+      />
+
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingVertical: 24, flexGrow: 1, justifyContent: "center" }}>
         <FadeSlideIn distance={20} style={{ width: "100%" }}>
           <SurfaceCard accent={webTheme.accent}>
           {/* brand area */}
           <View style={{ alignItems: "center", marginBottom: 32 }}>
             <View
               style={{
-                width: 72,
-                height: 72,
+                width: 76,
+                height: 76,
                 borderRadius: 22,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: webTheme.accentSoft,
-                borderWidth: 1,
-                borderColor: webTheme.accentBorder,
                 marginBottom: 20,
                 shadowColor: webTheme.accent,
-                shadowOpacity: 0.18,
+                shadowOpacity: 0.35,
                 shadowRadius: 16,
                 shadowOffset: { width: 0, height: 6 },
                 elevation: 6,
@@ -115,12 +141,12 @@ export default function RegisterScreen() {
               }}
             >
               <LinearGradient
-                colors={["rgba(255,255,255,0.05)", "transparent"]}
-                start={{ x: 0.3, y: 0 }}
-                end={{ x: 0.7, y: 1 }}
+                colors={["#E5364B", "#8B5CF6"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
               />
-              <Feather name="zap" size={30} color={webTheme.accent} />
+              <Feather name="zap" size={32} color="#FFF" />
             </View>
             <Text style={{ ...Typography.h1, color: webTheme.text, fontSize: 28 }}>
               Join ElevateX
@@ -143,14 +169,15 @@ export default function RegisterScreen() {
               marginBottom: 22,
             }}
           >
-            <Pressable
+            <HapticPressable
               style={{ flex: 1, justifyContent: "center", borderRadius: 12 }}
               onPress={() => router.push("/auth/login")}
+              hapticType="light"
             >
               <Text style={{ ...Typography.bold, textAlign: "center", color: webTheme.faint, fontSize: 13 }}>
                 Sign In
               </Text>
-            </Pressable>
+            </HapticPressable>
             <View
               style={{
                 flex: 1,
@@ -183,6 +210,12 @@ export default function RegisterScreen() {
                       style={{
                         ...Typography.regular,
                         ...inputFieldStyle,
+                        backgroundColor: focusedField === field.name 
+                          ? (theme === "dark" ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)")
+                          : inputFieldStyle.backgroundColor,
+                        borderColor: focusedField === field.name 
+                          ? webTheme.accent 
+                          : inputFieldStyle.borderColor,
                         paddingRight: field.secure ? 50 : 18,
                         marginBottom: 10,
                       }}
@@ -193,6 +226,8 @@ export default function RegisterScreen() {
                       secureTextEntry={field.secure && !field.showVal}
                       value={value}
                       onChangeText={onChange}
+                      onFocus={() => setFocusedField(field.name)}
+                      onBlur={() => setFocusedField(null)}
                     />
                     {field.secure && (
                       <Pressable
@@ -224,25 +259,35 @@ export default function RegisterScreen() {
           ))}
 
           {/* submit button */}
-          <Pressable
+          <HapticPressable
             onPress={handleSubmit(onSubmit)}
             disabled={isSubmitting}
+            hapticType="medium"
+            style={{ marginTop: 8 }}
           >
             <View
               style={{
                 borderRadius: 999,
-                backgroundColor: webTheme.accent,
-                paddingVertical: 16,
-                alignItems: "center",
-                marginTop: 8,
+                overflow: "hidden",
                 opacity: isSubmitting ? 0.88 : 1,
               }}
             >
-              <Text style={{ ...Typography.buttonLabel, color: "#fff", fontSize: 15 }}>
-                {isSubmitting ? "Creating account..." : "Create Account"}
-              </Text>
+              <LinearGradient
+                colors={["#E5364B", "#8B5CF6"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  paddingVertical: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ ...Typography.buttonLabel, color: "#fff", fontSize: 15, letterSpacing: 0.4 }}>
+                  {isSubmitting ? "Creating account..." : "Create Account"}
+                </Text>
+              </LinearGradient>
             </View>
-          </Pressable>
+          </HapticPressable>
 
           <Text style={{ ...Typography.body, color: webTheme.muted, textAlign: "center", marginTop: 22, fontSize: 13 }}>
             Already have an account?{" "}
@@ -252,7 +297,6 @@ export default function RegisterScreen() {
           </Text>
         </SurfaceCard>
         </FadeSlideIn>
-
       </ScrollView>
     </SafeAreaView>
   );

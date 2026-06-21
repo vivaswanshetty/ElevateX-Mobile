@@ -1,9 +1,10 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useState } from "react";
 import { GradientText } from "../../components/GradientText";
 import { ScreenBackdrop } from "../../components/ScreenBackdrop";
 import { SectionRule, SurfaceCard } from "../../components/SurfaceCard";
@@ -19,6 +20,50 @@ import { webTheme } from "../../lib/webTheme";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { useThemeStore } from "../../stores/themeStore";
 import { BlurView } from "expo-blur";
+import { useHaptic } from "../../lib/useHaptic";
+
+const onboardingSlides = [
+  {
+    icon: "zap",
+    color: webTheme.accent,
+    bgGlow: "rgba(229, 54, 75, 0.15)",
+    titleLine1: "Elevate",
+    titleLine2: "Your Skills.",
+    gradientColors: ["#E5364B", "#F43F5E", "#8B5CF6"] as const,
+    subtitle: "A gamified micro-task marketplace. Post quests, complete gigs, and earn real rewards all in one place.",
+  },
+  {
+    icon: "shield",
+    color: webTheme.gold,
+    bgGlow: "rgba(234, 179, 8, 0.15)",
+    titleLine1: "Secure",
+    titleLine2: "Smart Escrows.",
+    gradientColors: ["#FBBF24", "#F59E0B", "#D97706"] as const,
+    subtitle: "Funds are locked safely in escrow. They are released only when both parties verify that the task criteria are met.",
+  },
+  {
+    icon: "award",
+    color: webTheme.violet,
+    bgGlow: "rgba(139, 92, 246, 0.15)",
+    titleLine1: "Build Your",
+    titleLine2: "Dev Reputation.",
+    gradientColors: ["#A78BFA", "#8B5CF6", "#6D28D9"] as const,
+    subtitle: "Climb global leaderboards, earn exclusive digital status badges, and level up your engineering status.",
+  },
+] as const;
+
+const bgGradients = {
+  dark: [
+    ["rgba(229, 54, 75, 0.08)", "rgba(139, 92, 246, 0.05)", "transparent"],
+    ["rgba(234, 179, 8, 0.08)", "rgba(249, 115, 22, 0.05)", "transparent"],
+    ["rgba(139, 92, 246, 0.08)", "rgba(109, 40, 217, 0.05)", "transparent"],
+  ],
+  light: [
+    ["rgba(229, 54, 75, 0.03)", "rgba(139, 92, 246, 0.02)", "transparent"],
+    ["rgba(234, 179, 8, 0.03)", "rgba(249, 115, 22, 0.02)", "transparent"],
+    ["rgba(139, 92, 246, 0.03)", "rgba(109, 40, 217, 0.02)", "transparent"],
+  ],
+} as const;
 
 const quickTools = [
   { label: "Wallet", icon: "credit-card", color: webTheme.gold, detail: "Balance & flow" },
@@ -82,6 +127,10 @@ function HeroButton({
 export default function WelcomeScreen() {
   const theme = useThemeStore((s) => s.theme);
   const tabBarPadding = useTabBarPadding();
+  const triggerHaptic = useHaptic();
+  const { width: SCREEN_WIDTH } = Dimensions.get("window");
+  const [activeSlide, setActiveSlide] = useState(0);
+
   const { data: tasks = [], isFetching } = useQuery<TaskCardSource[]>({
     queryKey: ["tasks"],
     queryFn: () => api.get("/api/tasks"),
@@ -117,7 +166,7 @@ export default function WelcomeScreen() {
         >
           {/* background gradient wash */}
           <LinearGradient
-            colors={theme === "dark" ? ["rgba(229,54,75,0.05)", "rgba(139,92,246,0.04)", "transparent"] : ["rgba(229,54,75,0.02)", "rgba(139,92,246,0.02)", "transparent"]}
+            colors={bgGradients[theme === "dark" ? "dark" : "light"][activeSlide]}
             start={{ x: 0.1, y: 0.1 }}
             end={{ x: 0.9, y: 0.9 }}
             style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.8, pointerEvents: "none" }}
@@ -172,8 +221,8 @@ export default function WelcomeScreen() {
                     width: 7,
                     height: 7,
                     borderRadius: 999,
-                    backgroundColor: webTheme.accent,
-                    shadowColor: webTheme.accent,
+                    backgroundColor: onboardingSlides[activeSlide].color,
+                    shadowColor: onboardingSlides[activeSlide].color,
                     shadowOpacity: 0.6,
                     shadowRadius: 6,
                     shadowOffset: { width: 0, height: 0 },
@@ -191,47 +240,171 @@ export default function WelcomeScreen() {
               </View>
             </FadeSlideIn>
 
-            {/* hero text */}
-            <FadeSlideIn delay={180}>
-              <View style={{ marginTop: 40, alignItems: "center" }}>
-                <Text
-                  style={{
-                    ...type.hero,
-                    color: webTheme.text,
-                    textAlign: "center",
+            {/* onboarding slides carousel */}
+            <FadeSlideIn delay={180} style={{ width: "100%" }}>
+              <View style={{ marginTop: 24, width: "100%" }}>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  decelerationRate="fast"
+                  style={{ marginHorizontal: -22 }}
+                  onScroll={(e) => {
+                    const x = e.nativeEvent.contentOffset.x;
+                    const index = Math.round(x / SCREEN_WIDTH);
+                    if (index !== activeSlide) {
+                      setActiveSlide(index);
+                      triggerHaptic("selection");
+                    }
                   }}
+                  scrollEventThrottle={16}
                 >
-                  Elevate
-                </Text>
-                <View style={{ marginTop: 4 }}>
-                  <GradientText
-                    text="Your Skills."
-                    colors={["#E5364B", "#F43F5E", "#8B5CF6"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      ...type.hero,
-                      textAlign: "center",
-                    }}
-                  />
-                </View>
+                  {onboardingSlides.map((slide, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        width: SCREEN_WIDTH,
+                        paddingHorizontal: 22,
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Glowing Icon Wrapper */}
+                      <View style={{ position: "relative", marginBottom: 24, alignItems: "center", justifyContent: "center" }}>
+                        {/* Outer Glow */}
+                        <View
+                          style={{
+                            position: "absolute",
+                            width: 100,
+                            height: 100,
+                            borderRadius: 50,
+                            backgroundColor: slide.bgGlow,
+                            opacity: 0.8,
+                          }}
+                        />
+                        
+                        {/* Glassmorphic border container */}
+                        <View
+                          style={{
+                            width: 72,
+                            height: 72,
+                            borderRadius: 36,
+                            backgroundColor: "rgba(255, 255, 255, 0.03)",
+                            borderWidth: 1.5,
+                            borderColor: "rgba(255, 255, 255, 0.08)",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            shadowColor: slide.color,
+                            shadowOffset: { width: 0, height: 8 },
+                            shadowOpacity: 0.35,
+                            shadowRadius: 16,
+                          }}
+                        >
+                          {/* Inner circle gradient glow */}
+                          <LinearGradient
+                            colors={[`${slide.color}00`, `${slide.color}25`]}
+                            style={{
+                              position: "absolute",
+                              top: 0, left: 0, right: 0, bottom: 0,
+                              borderRadius: 36,
+                            }}
+                          />
+                          <Feather name={slide.icon as any} size={28} color={slide.color} />
+                        </View>
+
+                        {/* Floating particle/decorations */}
+                        <View
+                          style={{
+                            position: "absolute",
+                            top: -2,
+                            right: -6,
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: slide.color,
+                            opacity: 0.6,
+                          }}
+                        />
+                        <View
+                          style={{
+                            position: "absolute",
+                            bottom: -2,
+                            left: -6,
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: slide.color,
+                            opacity: 0.4,
+                          }}
+                        />
+                      </View>
+
+                      {/* Title */}
+                      <View style={{ alignItems: "center" }}>
+                        <Text
+                          style={{
+                            ...type.hero,
+                            color: webTheme.text,
+                            textAlign: "center",
+                            fontSize: 34,
+                            lineHeight: 40,
+                          }}
+                        >
+                          {slide.titleLine1}
+                        </Text>
+                        <View style={{ marginTop: 2 }}>
+                          <GradientText
+                            text={slide.titleLine2}
+                            colors={slide.gradientColors}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{
+                              ...type.hero,
+                              textAlign: "center",
+                              fontSize: 34,
+                              lineHeight: 40,
+                            }}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Description */}
+                      <Text
+                        style={{
+                          ...type.body,
+                          color: webTheme.faint,
+                          textAlign: "center",
+                          maxWidth: 290,
+                          marginTop: 16,
+                          lineHeight: 22,
+                          fontSize: 13.5,
+                        }}
+                      >
+                        {slide.subtitle}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
               </View>
             </FadeSlideIn>
 
-            {/* subtitle */}
-            <FadeSlideIn delay={260} distance={12}>
-              <Text
-                style={{
-                  ...type.body,
-                  color: webTheme.faint,
-                  textAlign: "center",
-                  maxWidth: 300,
-                  marginTop: 26,
-                  lineHeight: 26,
-                }}
-              >
-                A gamified micro-task marketplace. Post tasks, complete gigs, and earn real rewards all in one place.
-              </Text>
+            {/* Pagination Indicators */}
+            <FadeSlideIn delay={220}>
+              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 20, marginBottom: 8 }}>
+                {onboardingSlides.map((_, idx) => {
+                  const isActive = idx === activeSlide;
+                  return (
+                    <View
+                      key={idx}
+                      style={{
+                        height: 5,
+                        width: isActive ? 20 : 5,
+                        borderRadius: 2.5,
+                        backgroundColor: isActive ? onboardingSlides[idx].color : "rgba(255, 255, 255, 0.16)",
+                      }}
+                    />
+                  );
+                })}
+              </View>
             </FadeSlideIn>
 
             {/* CTAs */}
