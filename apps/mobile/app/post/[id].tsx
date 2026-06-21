@@ -281,7 +281,7 @@ export default function PostDetailScreen() {
                 marginTop: 14,
                 paddingTop: 14,
                 borderTopWidth: 1,
-                borderTopColor: "rgba(255,255,255,0.05)",
+                borderTopColor: webTheme.borderSoft,
                 flexDirection: "row",
                 gap: 6,
               }}

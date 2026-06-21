@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect } from "react";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -189,7 +189,7 @@ export default function StreakScreen() {
             }}
             hapticType="light"
           >
-            <MaterialCommunityIcons name="star-four-points" size={14} color={webTheme.gold} />
+            <FontAwesome5 name="coins" size={11} color={webTheme.gold} />
             <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
               {user?.tokenBalance ?? 0}
             </Text>

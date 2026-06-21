@@ -9,7 +9,7 @@ import Animated, {
   withDelay,
   runOnJS,
 } from "react-native-reanimated";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useGamificationStore } from "../stores/gamificationStore";
 import { useAuthStore } from "../stores/authStore";
@@ -60,7 +60,7 @@ function Particle({ index, isCoin }: ParticleProps) {
   return (
     <Animated.View style={[styles.particle, animatedStyle]}>
       {isCoin ? (
-        <MaterialCommunityIcons name="star-four-points" size={18} color={webTheme.gold} />
+        <FontAwesome5 name="coins" size={14} color={webTheme.gold} />
       ) : (
         <Feather name="star" size={16} color="#c084fc" />
       )}
@@ -181,7 +181,7 @@ export function GamificationOverlay() {
           <LinearGradientWrapper isCoin={pendingCoins > 0 && pendingXP === 0}>
             <View style={styles.iconCircle}>
               {pendingCoins > 0 && pendingXP === 0 ? (
-                <MaterialCommunityIcons name="star-four-points" size={32} color={webTheme.gold} />
+                <FontAwesome5 name="coins" size={26} color={webTheme.gold} />
               ) : (
                 <Feather name="award" size={32} color={webTheme.accent} />
               )}
@@ -205,7 +205,7 @@ export function GamificationOverlay() {
           )}
           {pendingCoins > 0 && (
             <View style={[styles.rewardBadge, { backgroundColor: "rgba(234, 179, 8, 0.1)", borderColor: "rgba(234, 179, 8, 0.2)" }]}>
-              <MaterialCommunityIcons name="star-four-points" size={14} color={webTheme.gold} />
+              <FontAwesome5 name="coins" size={12} color={webTheme.gold} style={{ marginRight: 2 }} />
               <Text style={[styles.rewardText, { color: webTheme.gold }]}>+{pendingCoins} coins</Text>
             </View>
           )}

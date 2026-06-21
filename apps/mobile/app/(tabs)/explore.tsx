@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import { ScrollView, Text, TextInput, View, Pressable, Animated, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -392,7 +392,7 @@ export default function ExploreScreen() {
 
                                   <View style={{ marginTop: 18, flexDirection: "row", alignItems: "center", gap: 12 }}>
                                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                                      <MaterialCommunityIcons name="star-four-points" size={14} color={webTheme.gold} />
+                                      <FontAwesome5 name="coins" size={12} color={webTheme.gold} />
                                       <Text style={{ ...type.bold, color: webTheme.gold, fontSize: 12 }}>{featuredTask.rewardCoins} Coins</Text>
                                     </View>
                                     <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: webTheme.border }} />

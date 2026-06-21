@@ -1,4 +1,4 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -302,7 +302,7 @@ export default function HomeScreen() {
                     marginBottom: 8,
                   }}
                 >
-                  <MaterialCommunityIcons name="star-four-points" size={15} color={webTheme.gold} />
+                  <FontAwesome5 name="coins" size={14} color={webTheme.gold} />
                 </View>
                 <Text style={{ ...type.bold, color: webTheme.text, fontSize: 16 }}>
                   {user?.tokenBalance ?? 0}
@@ -566,7 +566,7 @@ export default function HomeScreen() {
                           </Text>
 
                           {/* Metadata Row */}
-                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderColor: "rgba(255,255,255,0.05)", paddingTop: 12 }}>
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderColor: webTheme.border, paddingTop: 12 }}>
                             <View style={{ gap: 3 }}>
                               <Text style={{ ...type.bold, color: webTheme.faint, fontSize: 9, textTransform: "uppercase", letterSpacing: 0.8 }}>
                                 {postedTime ? `Posted ${postedTime}` : "Active"}
@@ -581,7 +581,7 @@ export default function HomeScreen() {
                                 Reward
                               </Text>
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                                <MaterialCommunityIcons name="star-four-points" size={12} color={webTheme.gold} />
+                                <FontAwesome5 name="coins" size={11} color={webTheme.gold} />
                                 <Text style={{ ...type.bold, color: webTheme.gold, fontSize: 13 }}>
                                   {task.rewardCoins}
                                 </Text>

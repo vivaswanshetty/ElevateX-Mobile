@@ -330,7 +330,7 @@ export default function AIAssistantScreen() {
               marginVertical: 8,
               backgroundColor: "rgba(0,0,0,0.45)",
               borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.08)",
+              borderColor: webTheme.border,
               borderRadius: 12,
               padding: 12,
             }}
@@ -344,7 +344,7 @@ export default function AIAssistantScreen() {
                   textTransform: "uppercase",
                   marginBottom: 6,
                   borderBottomWidth: 1,
-                  borderBottomColor: "rgba(255,255,255,0.05)",
+                  borderBottomColor: webTheme.borderSoft,
                   paddingBottom: 2,
                 }}
               >

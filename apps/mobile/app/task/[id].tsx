@@ -412,7 +412,7 @@ export default function TaskDetailScreen() {
                 </View>
               </View>
 
-              <View style={{ height: 1, backgroundColor: "rgba(255,255,255,0.05)", marginVertical: 18 }} />
+              <View style={{ height: 1, backgroundColor: webTheme.border, marginVertical: 18 }} />
 
               {/* Info Row: Deadline & Created */}
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -501,7 +501,7 @@ export default function TaskDetailScreen() {
                         paddingHorizontal: 12,
                         paddingVertical: 10,
                         borderWidth: 1,
-                        borderColor: "rgba(255,255,255,0.04)",
+                        borderColor: webTheme.borderSoft,
                       }}
                     >
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -671,7 +671,7 @@ export default function TaskDetailScreen() {
                   gap: 12,
                   backgroundColor: "rgba(255,255,255,0.02)",
                   borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.05)",
+                  borderColor: webTheme.borderSoft,
                   borderRadius: 16,
                   padding: 14,
                   marginTop: 14,
@@ -690,7 +690,7 @@ export default function TaskDetailScreen() {
                   gap: 12,
                   backgroundColor: "rgba(255,255,255,0.02)",
                   borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.05)",
+                  borderColor: webTheme.borderSoft,
                   borderRadius: 16,
                   padding: 14,
                   marginTop: 14,
@@ -768,7 +768,7 @@ export default function TaskDetailScreen() {
             paddingBottom: 16,
             backgroundColor: webTheme.bg,
             borderTopWidth: 1,
-            borderTopColor: "rgba(255,255,255,0.03)",
+            borderTopColor: webTheme.borderSoft,
             alignItems: "center",
           }}
         >
@@ -857,7 +857,7 @@ export default function TaskDetailScreen() {
               borderRadius: 16,
               backgroundColor: "rgba(255,255,255,0.04)",
               borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.08)",
+              borderColor: webTheme.border,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -892,7 +892,7 @@ export default function TaskDetailScreen() {
               paddingHorizontal: 22,
               paddingBottom: Platform.OS === "ios" ? 40 : 24,
               borderWidth: 1,
-              borderColor: "rgba(255, 255, 255, 0.05)",
+              borderColor: webTheme.borderSoft,
             }}
             onPress={(e: GestureResponderEvent) => e.stopPropagation()} // Prevent closing when clicking inside
           >
@@ -999,7 +999,7 @@ export default function TaskDetailScreen() {
                 borderRadius: 16,
                 backgroundColor: "rgba(255, 255, 255, 0.04)",
                 borderWidth: 1,
-                borderColor: "rgba(255, 255, 255, 0.08)",
+                borderColor: webTheme.border,
                 paddingVertical: 14,
                 alignItems: "center",
               }}
