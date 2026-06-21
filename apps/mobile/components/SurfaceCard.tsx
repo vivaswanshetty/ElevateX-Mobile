@@ -221,7 +221,7 @@ export function SurfaceCard({
     ? ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.015)", "rgba(255,255,255,0.005)"]
     : ["rgba(0,0,0,0.01)", "rgba(0,0,0,0.005)", "rgba(0,0,0,0.0)"]) as [string, string, string];
 
-  const edgeHighlightColor = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)";
+  const edgeHighlightColor = isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.12)";
 
   const renderInner = (pressed = false) => (
     <>
@@ -358,7 +358,7 @@ export function SurfaceCard({
 export function SectionRule() {
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
-  const ruleColor = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
+  const ruleColor = isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.18)";
 
   return (
     <LinearGradient

@@ -8,9 +8,9 @@ const darkColors = {
   surfaceRaised: "#121212",
   surfaceAlt: "#0A0A0A",
 
-  border: "rgba(255,255,255,0.08)",
-  borderStrong: "rgba(255,255,255,0.15)",
-  borderSoft: "rgba(255,255,255,0.04)",
+  border: "rgba(255,255,255,0.22)",
+  borderStrong: "rgba(255,255,255,0.32)",
+  borderSoft: "rgba(255,255,255,0.15)",
 
   text: "#FFFFFF",
   textSecondary: "rgba(255,255,255,0.85)",
@@ -26,9 +26,9 @@ const lightColors = {
   surfaceRaised: "#FFFFFF",
   surfaceAlt: "#F1F3F5",
 
-  border: "rgba(0,0,0,0.08)",
-  borderStrong: "rgba(0,0,0,0.14)",
-  borderSoft: "rgba(0,0,0,0.04)",
+  border: "rgba(0,0,0,0.18)",
+  borderStrong: "rgba(0,0,0,0.28)",
+  borderSoft: "rgba(0,0,0,0.12)",
 
   text: "#1A1A1A",
   textSecondary: "rgba(0,0,0,0.80)",
@@ -138,8 +138,8 @@ export const surfaceCardStyle = {
   borderWidth: 1,
   get borderColor() {
     return useThemeStore.getState().theme === "dark"
-      ? "rgba(255, 255, 255, 0.22)"
-      : "rgba(0, 0, 0, 0.15)";
+      ? "rgba(255, 255, 255, 0.28)"
+      : "rgba(0, 0, 0, 0.20)";
   },
   borderRadius: 16,
 };
@@ -157,8 +157,8 @@ export const glassCardStyle = {
   borderWidth: 1,
   get borderColor() {
     return useThemeStore.getState().theme === "dark"
-      ? "rgba(255,255,255,0.08)"
-      : "rgba(0,0,0,0.08)";
+      ? "rgba(255, 255, 255, 0.20)"
+      : "rgba(0, 0, 0, 0.16)";
   },
   borderRadius: 16,
 };

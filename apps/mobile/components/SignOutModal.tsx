@@ -39,7 +39,7 @@ export function SignOutModal({ visible, onConfirm, onCancel }: SignOutModalProps
     }
   }, [visible, scale, opacity]);
 
-  const dividerColor = isDark ? "rgba(84, 84, 88, 0.38)" : "rgba(60, 60, 67, 0.18)";
+  const dividerColor = isDark ? "rgba(255, 255, 255, 0.40)" : "rgba(0, 0, 0, 0.25)";
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>

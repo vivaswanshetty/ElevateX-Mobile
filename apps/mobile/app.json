@@ -3,7 +3,7 @@
     "name": "ElevateX",
     "slug": "elevatex",
     "scheme": "elevatex",
-    "version": "1.0.24",
+    "version": "1.0.25",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",

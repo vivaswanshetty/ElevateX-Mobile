@@ -46,7 +46,7 @@ export function UserListModal({ visible, title, users, isLoading, onClose, onRem
 
   const blurTint = isDark ? "dark" : "light";
   const modalBg = isDark ? "rgba(10, 10, 12, 0.94)" : "rgba(255, 255, 255, 0.95)";
-  const modalBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const modalBorder = isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.18)";
   const handleBg = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
   const closeBtnBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
   const searchInputBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";

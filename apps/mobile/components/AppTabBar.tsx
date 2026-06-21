@@ -64,11 +64,11 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
 
   const tint = isDark ? "dark" : "light";
   const barBg = isDark ? "rgba(10, 10, 15, 0.70)" : "rgba(255, 255, 255, 0.75)";
-  const barBorder = isDark ? "rgba(255, 255, 255, 0.14)" : "rgba(0, 0, 0, 0.08)";
-  const edgeHighlight = isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.50)";
+  const barBorder = isDark ? "rgba(255, 255, 255, 0.24)" : "rgba(0, 0, 0, 0.18)";
+  const edgeHighlight = isDark ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.70)";
 
   const indicatorBg = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)";
-  const indicatorBorder = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)";
+  const indicatorBorder = isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(0, 0, 0, 0.12)";
 
   return (
     <View
