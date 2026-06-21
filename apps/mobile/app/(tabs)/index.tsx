@@ -480,7 +480,7 @@ export default function HomeScreen() {
                       letterSpacing: 0.3,
                     }}
                   >
-                    .live
+                    live
                   </Text>
                 </HapticPressable>
               </View>
