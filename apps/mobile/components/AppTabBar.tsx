@@ -15,6 +15,9 @@ import { fontFaces } from "../lib/typography";
 import { webTheme } from "../lib/webTheme";
 import { useTabStore } from "../stores/tabStore";
 import { useThemeStore } from "../stores/themeStore";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../lib/api";
+import { useAuthStore } from "../stores/authStore";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -48,6 +51,17 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
   const isTabBarHidden = useTabStore((s) => s.isTabBarHidden);
+
+  const user = useAuthStore((s) => s.user);
+
+  const { data: conversations = [] } = useQuery<any[]>({
+    queryKey: ["conversations"],
+    queryFn: () => api.get("/api/messages"),
+    refetchInterval: 10000,
+    enabled: !!user,
+  });
+
+  const unreadDMsCount = conversations.filter((c: any) => c.isUnread).length;
 
   useEffect(() => {
     setIndex(activeIndex);
@@ -189,6 +203,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
                 onPress={onPress}
                 onLongPress={onLongPress}
                 isDark={isDark}
+                badgeCount={route.name === "chat" ? unreadDMsCount : 0}
               />
             );
           })}
@@ -246,13 +261,15 @@ function TabItem({
   meta, 
   onPress, 
   onLongPress,
-  isDark
+  isDark,
+  badgeCount = 0
 }: { 
   focused: boolean; 
   meta: any; 
   onPress: () => void;
   onLongPress: () => void;
   isDark: boolean;
+  badgeCount?: number;
 }) {
   const scale = useSharedValue(1);
   const iconTranslateY = useSharedValue(focused ? 0 : 6);
@@ -287,11 +304,42 @@ function TabItem({
       onPressOut={() => { scale.value = withSpring(1); }}
     >
       <Animated.View style={[{ alignItems: "center" }, animatedIconStyle]}>
-        <Feather 
-          name={meta.icon} 
-          size={19} 
-          color={focused ? activeColor : inactiveColor} 
-        />
+        <View style={{ position: "relative" }}>
+          <Feather 
+            name={meta.icon} 
+            size={19} 
+            color={focused ? activeColor : inactiveColor} 
+          />
+          {badgeCount > 0 && (
+            <View
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -9,
+                backgroundColor: "#ef4444",
+                borderRadius: 8,
+                minWidth: 15,
+                height: 15,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingHorizontal: 3,
+                borderWidth: 1.5,
+                borderColor: isDark ? "rgba(10, 10, 15, 0.9)" : "#fff",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 7.5,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                }}
+              >
+                {badgeCount > 99 ? "99+" : badgeCount}
+              </Text>
+            </View>
+          )}
+        </View>
         <Animated.Text
           style={[
             {
