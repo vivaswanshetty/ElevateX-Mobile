@@ -33,6 +33,7 @@ import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { useTabStore } from "../../stores/tabStore";
+import { notify } from "../../stores/toastStore";
 
 interface ChatUser {
   _id: string;
@@ -321,9 +322,9 @@ export default function ChatScreen() {
       }
       const errorMsg = error instanceof Error ? error.message : "Failed to send message";
       if (errorMsg.includes("follow")) {
-        Alert.alert("Cannot Message", `You can only message people you follow. Follow ${selectedChat?.name} first.`);
+        notify.error(`You can only message people you follow. Follow ${selectedChat?.name} first.`);
       } else {
-        Alert.alert("Error", errorMsg);
+        notify.error(errorMsg);
       }
     },
   });
