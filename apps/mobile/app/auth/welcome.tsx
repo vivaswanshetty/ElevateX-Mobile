@@ -1,756 +1,394 @@
-import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Pressable, ScrollView, Text, View, Dimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
+import { Pressable, ScrollView, Text, View, Dimensions, Platform } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useState, useRef, useEffect } from "react";
 import { GradientText } from "../../components/GradientText";
 import { ScreenBackdrop } from "../../components/ScreenBackdrop";
-import { SectionRule, SurfaceCard } from "../../components/SurfaceCard";
-import { TaskCard } from "../../components/TaskCard";
-import { AnimatedList } from "../../components/AnimatedList";
-import { FadeSlideIn } from "../../components/FadeSlideIn";
 import { HapticPressable } from "../../components/HapticPressable";
-import { TaskCardSkeleton } from "../../components/TaskCardSkeleton";
-import { api } from "../../lib/api";
-import { mapTaskToCard, type TaskCardSource } from "../../lib/tasks";
 import { type } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
-import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { useThemeStore } from "../../stores/themeStore";
-import { BlurView } from "expo-blur";
 import { useHaptic } from "../../lib/useHaptic";
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withRepeat, 
+  withSequence 
+} from "react-native-reanimated";
 
 const onboardingSlides = [
   {
     icon: "zap",
     color: webTheme.accent,
-    bgGlow: "rgba(229, 54, 75, 0.15)",
-    titleLine1: "Elevate",
-    titleLine2: "Your Skills.",
+    bgGlow: "rgba(229, 54, 75, 0.16)",
+    titleLine1: "Gamified",
+    titleLine2: "Work & Quests.",
     gradientColors: ["#E5364B", "#F43F5E", "#8B5CF6"] as const,
-    subtitle: "A gamified micro-task marketplace. Post quests, complete gigs, and earn real rewards all in one place.",
+    subtitle: "Post developer quests, complete gigs, and earn real rewards. Turn your daily tasks into an epic, gamified questline with XP & coins!",
   },
   {
     icon: "shield",
     color: webTheme.gold,
-    bgGlow: "rgba(234, 179, 8, 0.15)",
+    bgGlow: "rgba(234, 179, 8, 0.16)",
     titleLine1: "Secure",
-    titleLine2: "Smart Escrows.",
+    titleLine2: "Escrow & Chat.",
     gradientColors: ["#FBBF24", "#F59E0B", "#D97706"] as const,
-    subtitle: "Funds are locked safely in escrow. They are released only when both parties verify that the task criteria are met.",
+    subtitle: "Collaborate with real-time direct messaging and transact securely. Funds are safely locked in smart escrows until the work is verified.",
   },
   {
-    icon: "award",
+    icon: "cpu",
     color: webTheme.violet,
-    bgGlow: "rgba(139, 92, 246, 0.15)",
-    titleLine1: "Build Your",
-    titleLine2: "Dev Reputation.",
+    bgGlow: "rgba(139, 92, 246, 0.16)",
+    titleLine1: "AI Match &",
+    titleLine2: "Social Feed.",
     gradientColors: ["#A78BFA", "#8B5CF6", "#6D28D9"] as const,
-    subtitle: "Climb global leaderboards, earn exclusive digital status badges, and level up your engineering status.",
+    subtitle: "Stay on top of public momentum with our community feed, and let our intelligent AI assistant match you with the perfect tasks instantly!",
   },
 ] as const;
 
 const bgGradients = {
   dark: [
-    ["rgba(229, 54, 75, 0.08)", "rgba(139, 92, 246, 0.05)", "transparent"],
-    ["rgba(234, 179, 8, 0.08)", "rgba(249, 115, 22, 0.05)", "transparent"],
-    ["rgba(139, 92, 246, 0.08)", "rgba(109, 40, 217, 0.05)", "transparent"],
+    ["rgba(229, 54, 75, 0.12)", "rgba(139, 92, 246, 0.04)", "transparent"],
+    ["rgba(234, 179, 8, 0.12)", "rgba(249, 115, 22, 0.04)", "transparent"],
+    ["rgba(139, 92, 246, 0.12)", "rgba(109, 40, 217, 0.04)", "transparent"],
   ],
   light: [
-    ["rgba(229, 54, 75, 0.03)", "rgba(139, 92, 246, 0.02)", "transparent"],
-    ["rgba(234, 179, 8, 0.03)", "rgba(249, 115, 22, 0.02)", "transparent"],
-    ["rgba(139, 92, 246, 0.03)", "rgba(109, 40, 217, 0.02)", "transparent"],
+    ["rgba(229, 54, 75, 0.05)", "rgba(139, 92, 246, 0.02)", "transparent"],
+    ["rgba(234, 179, 8, 0.05)", "rgba(249, 115, 22, 0.02)", "transparent"],
+    ["rgba(139, 92, 246, 0.05)", "rgba(109, 40, 217, 0.02)", "transparent"],
   ],
 } as const;
 
-const quickTools = [
-  { label: "Wallet", icon: "credit-card", color: webTheme.gold, detail: "Balance & flow" },
-  { label: "Chat", icon: "message-circle", color: webTheme.blue, detail: "Direct messages" },
-  { label: "Leaderboard", icon: "award", color: webTheme.red, detail: "Global rankings" },
-  { label: "Feed", icon: "users", color: webTheme.green, detail: "Public momentum" },
-  { label: "Duels", icon: "zap", color: webTheme.violet, detail: "Live challenges" },
-  { label: "Alchemy Lab", icon: "box", color: webTheme.purple, detail: "Essences & relics" },
-] as const;
-
-function HeroButton({
-  label,
-  icon,
-  onPress,
-  primary = false,
-}: {
-  label: string;
-  icon: "arrow-right" | "arrow-up-right";
-  onPress: () => void;
-  primary?: boolean;
-}) {
-  return (
-    <HapticPressable hapticType={primary ? "medium" : "light"} onPress={onPress} style={{ flex: 1 }}>
-      <View
-        style={{
-          borderRadius: 999,
-          borderWidth: primary ? 0 : 1,
-          borderColor: primary ? "transparent" : webTheme.borderStrong,
-          backgroundColor: primary ? "transparent" : "rgba(255,255,255,0.04)",
-          overflow: "hidden",
-        }}
-      >
-        {primary && (
-          <LinearGradient
-            colors={["#E5364B", "#F43F5E", "#8B5CF6"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
-          />
-        )}
-        <View
-          style={{
-            paddingHorizontal: 16,
-            paddingVertical: 18,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-          }}
-        >
-          <Text style={{ ...type.buttonLabel, color: primary ? "#fff" : webTheme.text, zIndex: 1, fontSize: 13, letterSpacing: 0.3 }}>
-            {label}
-          </Text>
-          <Feather name={icon} size={15} color={primary ? "#fff" : webTheme.muted} style={{ zIndex: 1 }} />
-        </View>
-      </View>
-    </HapticPressable>
-  );
-}
-
 export default function WelcomeScreen() {
   const theme = useThemeStore((s) => s.theme);
-  const tabBarPadding = useTabBarPadding();
   const triggerHaptic = useHaptic();
+  const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
   const [activeSlide, setActiveSlide] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  const { data: tasks = [], isFetching } = useQuery<TaskCardSource[]>({
-    queryKey: ["tasks"],
-    queryFn: () => api.get("/api/tasks"),
-  });
+  // Soft floating animation for slide icons
+  const floatAnim = useSharedValue(0);
 
-  const recentTasks = tasks.slice(0, 3).map(mapTaskToCard);
-  const stats = [
-    { value: "100+", label: "Members Earned", icon: "users", color: webTheme.blue },
-    { value: "98%", label: "Success Rate", icon: "activity", color: webTheme.green },
-    { value: "500", label: "Tasks Done", icon: "check-circle", color: webTheme.gold },
-  ] as const;
+  useEffect(() => {
+    floatAnim.value = withRepeat(
+      withSequence(
+        withSpring(6, { damping: 4, stiffness: 20 }),
+        withSpring(-6, { damping: 4, stiffness: 20 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const floatStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatAnim.value }],
+  }));
 
   const handleAuthRedirect = () => {
+    triggerHaptic("medium");
     router.push("/auth/login");
+  };
+
+  const handleNextSlide = () => {
+    if (activeSlide < onboardingSlides.length - 1) {
+      triggerHaptic("light");
+      scrollViewRef.current?.scrollTo({
+        x: (activeSlide + 1) * SCREEN_WIDTH,
+        animated: true,
+      });
+    }
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <ScreenBackdrop />
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
-        showsVerticalScrollIndicator={false}
+      
+      {/* Background Gradient Accent Wash */}
+      <LinearGradient
+        colors={bgGradients[theme === "dark" ? "dark" : "light"][activeSlide]}
+        start={{ x: 0.1, y: 0.1 }}
+        end={{ x: 0.9, y: 0.9 }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.85, pointerEvents: "none" }}
+      />
+
+      {/* Top Header Bar */}
+      <View 
+        style={{ 
+          width: "100%", 
+          flexDirection: "row", 
+          justifyContent: "space-between", 
+          alignItems: "center",
+          paddingHorizontal: 24, 
+          paddingTop: Platform.OS === "android" ? 12 : 6,
+          height: 60,
+          zIndex: 100 
+        }}
       >
-        {/* ── hero section ── */}
-        <View
-          style={{
-            minHeight: 700,
-            overflow: "hidden",
-            paddingHorizontal: 22,
-            paddingTop: 20,
-            paddingBottom: 40,
-          }}
-        >
-          {/* background gradient wash */}
-          <LinearGradient
-            colors={bgGradients[theme === "dark" ? "dark" : "light"][activeSlide]}
-            start={{ x: 0.1, y: 0.1 }}
-            end={{ x: 0.9, y: 0.9 }}
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.8, pointerEvents: "none" }}
-          />
+        <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 20, letterSpacing: 0.5 }}>
+          Elevate<Text style={{ color: webTheme.accent }}>X</Text>
+        </Text>
+        
+        <HapticPressable onPress={handleAuthRedirect} hapticType="light">
+          <View style={{
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.12)",
+            backgroundColor: "rgba(255,255,255,0.04)",
+            paddingHorizontal: 16,
+            paddingVertical: 8
+          }}>
+            <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
+              Sign In
+            </Text>
+          </View>
+        </HapticPressable>
+      </View>
 
-          {/* top edge highlight */}
+      {/* Full-Screen Horizontal Walkthrough ScrollView */}
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          const x = e.nativeEvent.contentOffset.x;
+          const index = Math.round(x / SCREEN_WIDTH);
+          if (index !== activeSlide) {
+            setActiveSlide(index);
+            triggerHaptic("selection");
+          }
+        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        {onboardingSlides.map((slide, idx) => (
           <View
+            key={idx}
             style={{
-              position: "absolute",
-              top: 0, right: 0, bottom: 0, left: 0,
-              borderTopWidth: 1,
-              borderTopColor: "rgba(255,255,255,0.06)",
+              width: SCREEN_WIDTH,
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 30,
+              paddingBottom: 80, // Leave breathing room for bottom controls
             }}
-          />
+          >
+            {/* Animated Glowing Icon Badge */}
+            <Animated.View style={[{ position: "relative", marginBottom: 36, alignItems: "center", justifyContent: "center" }, floatStyle]}>
+              {/* Outer Glow Wash */}
+              <View
+                style={{
+                  position: "absolute",
+                  width: 140,
+                  height: 140,
+                  borderRadius: 70,
+                  backgroundColor: slide.bgGlow,
+                  opacity: 0.9,
+                  shadowColor: slide.color,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 30,
+                }}
+              />
+              
+              {/* Glassmorphic Border Circle */}
+              <View
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: 45,
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  borderWidth: 1.5,
+                  borderColor: "rgba(255, 255, 255, 0.08)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  shadowColor: slide.color,
+                  shadowOffset: { width: 0, height: 12 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 20,
+                  elevation: 10,
+                }}
+              >
+                {/* Inner Gradient Glow */}
+                <LinearGradient
+                  colors={[`${slide.color}00`, `${slide.color}25`]}
+                  style={{
+                    position: "absolute",
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    borderRadius: 45,
+                  }}
+                />
+                <Feather name={slide.icon as any} size={36} color={slide.color} />
+              </View>
 
-          {/* Login/Signup header link */}
-          <View style={{ width: "100%", flexDirection: "row", justifyContent: "flex-end", paddingBottom: 10 }}>
+              {/* Decorative Particle Accents */}
+              <View
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -10,
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: slide.color,
+                  opacity: 0.7,
+                }}
+              />
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -6,
+                  left: -12,
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: slide.color,
+                  opacity: 0.5,
+                }}
+              />
+            </Animated.View>
+
+            {/* Title Line 1 */}
+            <Text
+              style={{
+                ...type.hero,
+                color: webTheme.text,
+                textAlign: "center",
+                fontSize: 38,
+                lineHeight: 46,
+              }}
+            >
+              {slide.titleLine1}
+            </Text>
+            
+            {/* Title Line 2 (Vibrant Gradient Text) */}
+            <View style={{ marginTop: 2 }}>
+              <GradientText
+                text={slide.titleLine2}
+                colors={slide.gradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  ...type.hero,
+                  textAlign: "center",
+                  fontSize: 38,
+                  lineHeight: 46,
+                }}
+              />
+            </View>
+
+            {/* Description Text */}
+            <Text
+              style={{
+                ...type.body,
+                color: webTheme.faint,
+                textAlign: "center",
+                maxWidth: 300,
+                marginTop: 20,
+                lineHeight: 24,
+                fontSize: 14.5,
+              }}
+            >
+              {slide.subtitle}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Bottom Walkthrough Control Panel */}
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: Math.max(insets.bottom, 20),
+          paddingHorizontal: 24,
+          alignItems: "center",
+          zIndex: 100,
+        }}
+      >
+        {/* Expanding Pagination Indicators */}
+        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, marginBottom: 24 }}>
+          {onboardingSlides.map((_, idx) => {
+            const isActive = idx === activeSlide;
+            return (
+              <View
+                key={idx}
+                style={{
+                  height: 6,
+                  width: isActive ? 22 : 6,
+                  borderRadius: 3,
+                  backgroundColor: isActive ? onboardingSlides[idx].color : "rgba(255, 255, 255, 0.16)",
+                }}
+              />
+            );
+          })}
+        </View>
+
+        {/* Action Row */}
+        {activeSlide < onboardingSlides.length - 1 ? (
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", height: 56 }}>
+            {/* Skip Option */}
             <HapticPressable onPress={handleAuthRedirect} hapticType="light">
-              <View style={{
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: webTheme.borderStrong,
-                backgroundColor: "rgba(255,255,255,0.05)",
-                paddingHorizontal: 16,
-                paddingVertical: 8
-              }}>
-                <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
-                  Sign In
+              <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
+                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 14 }}>
+                  Skip
                 </Text>
               </View>
             </HapticPressable>
-          </View>
 
-          <View style={{ alignItems: "center", marginTop: 10 }}>
-            {/* status pill */}
-            <FadeSlideIn delay={100} distance={10}>
+            {/* Next Button */}
+            <HapticPressable onPress={handleNextSlide} hapticType="light">
               <View
                 style={{
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: webTheme.border,
-                  backgroundColor: webTheme.cardBg,
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
+                  borderColor: "rgba(255, 255, 255, 0.15)",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 8,
                 }}
               >
-                <View
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 999,
-                    backgroundColor: onboardingSlides[activeSlide].color,
-                    shadowColor: onboardingSlides[activeSlide].color,
-                    shadowOpacity: 0.6,
-                    shadowRadius: 6,
-                    shadowOffset: { width: 0, height: 0 },
-                  }}
-                />
-                <Text
-                  style={{
-                    ...type.label,
-                    color: webTheme.faint,
-                    fontSize: 10,
-                  }}
-                >
-                  The Future of Skill Exchange
+                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
+                  Next
                 </Text>
+                <Feather name="arrow-right" size={16} color={onboardingSlides[activeSlide].color} />
               </View>
-            </FadeSlideIn>
-
-            {/* onboarding slides carousel */}
-            <FadeSlideIn delay={180} style={{ width: "100%" }}>
-              <View style={{ marginTop: 24, width: "100%" }}>
-                <ScrollView
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  decelerationRate="fast"
-                  style={{ marginHorizontal: -22 }}
-                  onScroll={(e) => {
-                    const x = e.nativeEvent.contentOffset.x;
-                    const index = Math.round(x / SCREEN_WIDTH);
-                    if (index !== activeSlide) {
-                      setActiveSlide(index);
-                      triggerHaptic("selection");
-                    }
-                  }}
-                  scrollEventThrottle={16}
-                >
-                  {onboardingSlides.map((slide, idx) => (
-                    <View
-                      key={idx}
-                      style={{
-                        width: SCREEN_WIDTH,
-                        paddingHorizontal: 22,
-                        alignItems: "center",
-                      }}
-                    >
-                      {/* Glowing Icon Wrapper */}
-                      <View style={{ position: "relative", marginBottom: 24, alignItems: "center", justifyContent: "center" }}>
-                        {/* Outer Glow */}
-                        <View
-                          style={{
-                            position: "absolute",
-                            width: 100,
-                            height: 100,
-                            borderRadius: 50,
-                            backgroundColor: slide.bgGlow,
-                            opacity: 0.8,
-                          }}
-                        />
-                        
-                        {/* Glassmorphic border container */}
-                        <View
-                          style={{
-                            width: 72,
-                            height: 72,
-                            borderRadius: 36,
-                            backgroundColor: "rgba(255, 255, 255, 0.03)",
-                            borderWidth: 1.5,
-                            borderColor: "rgba(255, 255, 255, 0.08)",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            shadowColor: slide.color,
-                            shadowOffset: { width: 0, height: 8 },
-                            shadowOpacity: 0.35,
-                            shadowRadius: 16,
-                          }}
-                        >
-                          {/* Inner circle gradient glow */}
-                          <LinearGradient
-                            colors={[`${slide.color}00`, `${slide.color}25`]}
-                            style={{
-                              position: "absolute",
-                              top: 0, left: 0, right: 0, bottom: 0,
-                              borderRadius: 36,
-                            }}
-                          />
-                          <Feather name={slide.icon as any} size={28} color={slide.color} />
-                        </View>
-
-                        {/* Floating particle/decorations */}
-                        <View
-                          style={{
-                            position: "absolute",
-                            top: -2,
-                            right: -6,
-                            width: 8,
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: slide.color,
-                            opacity: 0.6,
-                          }}
-                        />
-                        <View
-                          style={{
-                            position: "absolute",
-                            bottom: -2,
-                            left: -6,
-                            width: 6,
-                            height: 6,
-                            borderRadius: 3,
-                            backgroundColor: slide.color,
-                            opacity: 0.4,
-                          }}
-                        />
-                      </View>
-
-                      {/* Title */}
-                      <View style={{ alignItems: "center" }}>
-                        <Text
-                          style={{
-                            ...type.hero,
-                            color: webTheme.text,
-                            textAlign: "center",
-                            fontSize: 34,
-                            lineHeight: 40,
-                          }}
-                        >
-                          {slide.titleLine1}
-                        </Text>
-                        <View style={{ marginTop: 2 }}>
-                          <GradientText
-                            text={slide.titleLine2}
-                            colors={slide.gradientColors}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={{
-                              ...type.hero,
-                              textAlign: "center",
-                              fontSize: 34,
-                              lineHeight: 40,
-                            }}
-                          />
-                        </View>
-                      </View>
-
-                      {/* Description */}
-                      <Text
-                        style={{
-                          ...type.body,
-                          color: webTheme.faint,
-                          textAlign: "center",
-                          maxWidth: 290,
-                          marginTop: 16,
-                          lineHeight: 22,
-                          fontSize: 13.5,
-                        }}
-                      >
-                        {slide.subtitle}
-                      </Text>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            </FadeSlideIn>
-
-            {/* Pagination Indicators */}
-            <FadeSlideIn delay={220}>
-              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 20, marginBottom: 8 }}>
-                {onboardingSlides.map((_, idx) => {
-                  const isActive = idx === activeSlide;
-                  return (
-                    <View
-                      key={idx}
-                      style={{
-                        height: 5,
-                        width: isActive ? 20 : 5,
-                        borderRadius: 2.5,
-                        backgroundColor: isActive ? onboardingSlides[idx].color : "rgba(255, 255, 255, 0.16)",
-                      }}
-                    />
-                  );
-                })}
-              </View>
-            </FadeSlideIn>
-
-            {/* CTAs */}
-            <View style={{ marginTop: 32, flexDirection: "row", gap: 12, width: "100%" }}>
-              <HeroButton label="Explore Tasks" icon="arrow-right" onPress={handleAuthRedirect} primary />
-              <HeroButton label="Post a Task" icon="arrow-up-right" onPress={handleAuthRedirect} />
-            </View>
-
-            {/* workspace link */}
-            <FadeSlideIn delay={420} distance={8}>
-              <HapticPressable hapticType="medium" onPress={handleAuthRedirect}>
-                <View
-                  style={{
-                    marginTop: 16,
-                    borderRadius: 999,
-                    padding: 1,
-                    overflow: "hidden",
-                  }}
-                >
-                  <LinearGradient
-                    colors={["rgba(229,54,75,0.5)", "rgba(139,92,246,0.5)", "rgba(229,54,75,0.2)"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
-                  />
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      backgroundColor: "rgba(13,10,12,0.95)",
-                      paddingHorizontal: 24,
-                      paddingVertical: 12,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
-                    <Feather name="hexagon" size={15} color={webTheme.accent} />
-                    <Text style={{ ...type.bold, color: "#FFFFFF", fontSize: 13, letterSpacing: 0.3 }}>
-                      Open workspace
-                    </Text>
-                    <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.6)" />
-                  </View>
-                </View>
-              </HapticPressable>
-            </FadeSlideIn>
-
-            {/* Quick Access Tools */}
-            <FadeSlideIn delay={460} distance={10} style={{ width: "100%" }}>
-              <View style={{ marginTop: 28, width: "100%" }}>
-                <Text
-                  style={{
-                    ...type.bold,
-                    color: webTheme.muted,
-                    fontSize: 10,
-                    letterSpacing: 1.8,
-                    textTransform: "uppercase",
-                    paddingHorizontal: 22,
-                    marginBottom: 14,
-                  }}
-                >
-                  Quick Tools
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: 22, gap: 12, paddingBottom: 4 }}
-                >
-                  {quickTools.map((tool) => (
-                    <HapticPressable
-                      key={tool.label}
-                      onPress={handleAuthRedirect}
-                      hapticType="light"
-                    >
-                      <View
-                        style={{
-                          width: 142,
-                          height: 112,
-                          borderRadius: 22,
-                          borderWidth: 1,
-                          borderColor: webTheme.border,
-                          backgroundColor: "rgba(255, 255, 255, 0.03)",
-                          padding: 15,
-                          justifyContent: "space-between",
-                          overflow: "hidden",
-                          position: "relative",
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 12,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: `${tool.color}1C`,
-                            borderWidth: 1,
-                            borderColor: `${tool.color}3A`,
-                          }}
-                        >
-                          <Feather name={tool.icon as any} size={16} color={tool.color} />
-                        </View>
-                        <View>
-                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }}>
-                            {tool.label}
-                          </Text>
-                          <Text style={{ ...type.regular, color: webTheme.muted, fontSize: 10, marginTop: 3 }} numberOfLines={1}>
-                            {tool.detail}
-                          </Text>
-                        </View>
-                      </View>
-                    </HapticPressable>
-                  ))}
-                </ScrollView>
-              </View>
-            </FadeSlideIn>
-
-            <FadeSlideIn delay={500}>
-              <SectionRule />
-            </FadeSlideIn>
-
-            {/* stat cards */}
-            <View style={{ marginTop: 40, width: "100%", flexDirection: "row", gap: 10 }}>
-              <AnimatedList baseDelay={580} stagger={60} distance={10} itemStyle={{ flex: 1 }}>
-                {stats.map((item) => (
-                  <View
-                    key={item.label}
-                    style={{
-                      borderRadius: 24,
-                      borderWidth: 1,
-                      borderColor: useThemeStore.getState().theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
-                      backgroundColor: useThemeStore.getState().theme === "dark" ? "rgba(18, 19, 23, 0.45)" : "rgba(255, 255, 255, 0.60)",
-                      alignSelf: "stretch",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <BlurView
-                      intensity={useThemeStore.getState().theme === "dark" ? 45 : 65}
-                      tint={useThemeStore.getState().theme === "dark" ? "dark" : "light"}
-                      style={{
-                        alignItems: "center",
-                        justifyContent: "center",
-                        paddingVertical: 22,
-                        paddingHorizontal: 8,
-                      }}
-                    >
-                      <View
-                        style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 999,
-                          backgroundColor: `${item.color}18`,
-                          borderWidth: 1,
-                          borderColor: `${item.color}3A`,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          marginBottom: 12,
-                        }}
-                      >
-                        <Feather name={item.icon as any} size={15} color={item.color} />
-                      </View>
-                      <Text style={{ ...type.black, color: webTheme.text, fontSize: 24 }}>
-                        {item.value}
-                      </Text>
-                      <Text
-                        style={{
-                          ...type.semibold,
-                          color: webTheme.muted,
-                          fontSize: 10,
-                          marginTop: 6,
-                          textAlign: "center"
-                        }}
-                      >
-                        {item.label}
-                      </Text>
-                    </BlurView>
-                  </View>
-                ))}
-              </AnimatedList>
-            </View>
+            </HapticPressable>
           </View>
-        </View>
-
-        {/* ── recent tasks section ── */}
-        <View style={{ paddingHorizontal: 22, marginTop: 6 }}>
-          <SectionRule />
-          <FadeSlideIn delay={400} distance={16}>
-            <View
-              style={{
-                marginTop: 32,
-                flexDirection: "row",
-                alignItems: "flex-end",
-                justifyContent: "space-between",
-                gap: 16,
-              }}
-            >
-              <View>
-                <Text
-                  style={{
-                    ...type.label,
-                    color: webTheme.accentBorder,
-                    fontSize: 10,
-                  }}
-                >
-                  Live Now
-                </Text>
-                <Text style={{ ...type.h1, color: webTheme.text, marginTop: 10 }}>
-                  Open{"\n"}Opportunities
-                </Text>
-              </View>
-              <HapticPressable onPress={handleAuthRedirect} hapticType="selection">
-                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 13 }}>
-                  View all tasks
-                </Text>
-              </HapticPressable>
-            </View>
-          </FadeSlideIn>
-
-          <View style={{ marginTop: 20, gap: 14 }}>
-            {isFetching && tasks.length === 0 ? (
-              <AnimatedList>
-                <TaskCardSkeleton />
-                <TaskCardSkeleton />
-                <TaskCardSkeleton />
-              </AnimatedList>
-            ) : recentTasks.length > 0 ? (
-              <AnimatedList baseDelay={100} stagger={100} distance={20}>
-                {recentTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onPress={handleAuthRedirect}
-                  />
-                ))}
-              </AnimatedList>
-            ) : (
-              <FadeSlideIn delay={100} distance={16}>
-                <SurfaceCard>
-                  <Text style={{ ...type.h3, color: webTheme.text }}>
-                    No Live Tasks Yet
-                  </Text>
-                  <Text style={{ ...type.body, color: webTheme.muted, marginTop: 8 }}>
-                    Start by posting the first task or refresh once the backend has seeded tasks.
-                  </Text>
-                </SurfaceCard>
-              </FadeSlideIn>
-            )}
-          </View>
-        </View>
-
-        {/* ── CTA card ── */}
-        <View style={{ paddingHorizontal: 22, marginTop: 30 }}>
-          <FadeSlideIn delay={300} distance={20}>
-            <SurfaceCard accent={webTheme.accent}>
-              <Text
+        ) : (
+          /* "Get Started" Primary Gradient Button (Slide 3 Only) */
+          <HapticPressable onPress={handleAuthRedirect} hapticType="medium" style={{ width: "100%" }}>
+            <View style={{ borderRadius: 999, overflow: "hidden", width: "100%" }}>
+              <LinearGradient
+                colors={["#E5364B", "#8B5CF6"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
                 style={{
-                  ...type.label,
-                  color: webTheme.muted,
-                  fontSize: 10,
+                  paddingVertical: 18,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  gap: 10,
                 }}
               >
-                Get Started
-              </Text>
-              <Text style={{ ...type.h1, color: webTheme.text, marginTop: 14, fontSize: 30 }}>
-                Ready to Elevate?
-              </Text>
-              <Text style={{ ...type.body, color: webTheme.muted, marginTop: 10 }}>
-                Join a growing community of skilled individuals earning real rewards and building public momentum.
-              </Text>
-              <View style={{ marginTop: 22, gap: 12 }}>
-                <HeroButton label="Post Your First Task" icon="arrow-right" onPress={handleAuthRedirect} primary />
-                <HeroButton label="Open Workspace" icon="arrow-up-right" onPress={handleAuthRedirect} />
-              </View>
-            </SurfaceCard>
-          </FadeSlideIn>
-        </View>
-      </ScrollView>
-
-      {/* Floating AI Assistant Shortcut Button */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: tabBarPadding + 43,
-          right: 20,
-          zIndex: 9999,
-        }}
-      >
-        <HapticPressable
-          hapticType="medium"
-          onPress={handleAuthRedirect}
-        >
-          <View
-            style={{
-              width: 58,
-              height: 58,
-              borderRadius: 29,
-              backgroundColor: "rgba(229, 54, 75, 0.15)",
-              alignItems: "center",
-              justifyContent: "center",
-              shadowColor: "#E5364B",
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.5,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
-          >
-            <LinearGradient
-              colors={["#E5364B", "#8B5CF6"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                borderRadius: 29,
-              }}
-            />
-            <View
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                backgroundColor: "rgba(13, 10, 12, 0.95)",
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: "rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  top: -2,
-                  left: -2,
-                  right: -2,
-                  bottom: -2,
-                  borderRadius: 25,
-                  borderWidth: 1.5,
-                  borderColor: "rgba(229, 54, 75, 0.3)",
-                }}
-              />
-              <MaterialCommunityIcons name="robot" size={22} color={webTheme.accent} />
+                <Text style={{ ...type.bold, color: "#FFFFFF", fontSize: 16, letterSpacing: 0.5 }}>
+                  Get Started
+                </Text>
+                <Feather name="arrow-right" size={18} color="#FFFFFF" />
+              </LinearGradient>
             </View>
-          </View>
-        </HapticPressable>
+          </HapticPressable>
+        )}
       </View>
     </SafeAreaView>
   );
