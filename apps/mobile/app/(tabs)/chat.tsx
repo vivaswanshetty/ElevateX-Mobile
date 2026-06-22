@@ -32,7 +32,6 @@ import { useAuthStore } from "../../stores/authStore";
 import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
-import { useTabStore } from "../../stores/tabStore";
 import { notify } from "../../stores/toastStore";
 
 interface ChatUser {
@@ -98,18 +97,24 @@ export default function ChatScreen() {
   const markedAsReadRef = useRef(new Set<string>());
 
   const tabBarPadding = useTabBarPadding();
-  const setTabBarHidden = useTabStore((s) => s.setTabBarHidden);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    if (selectedChat) {
-      setTabBarHidden(true);
-    } else {
-      setTabBarHidden(false);
-    }
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardVisible(false);
+    });
+
     return () => {
-      setTabBarHidden(false);
+      showSubscription.remove();
+      hideSubscription.remove();
     };
-  }, [selectedChat, setTabBarHidden]);
+  }, []);
 
   const conversations = useQuery<Conversation[]>({
     queryKey: ["conversations"],
@@ -837,7 +842,7 @@ export default function ChatScreen() {
               </HapticPressable>
             </View>
             
-            <View style={{ flex: 1, paddingHorizontal: 20, paddingBottom: 20, gap: 12 }}>
+            <View style={{ flex: 1, paddingHorizontal: 20, paddingBottom: isKeyboardVisible ? 20 : tabBarPadding, gap: 12 }}>
               {messages.error && (
                 <View style={{ 
                   backgroundColor: "rgba(214,60,71,0.2)", 
