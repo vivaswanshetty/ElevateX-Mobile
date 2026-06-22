@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, TextInput, View, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -124,33 +124,14 @@ export default function RegisterScreen() {
           <SurfaceCard accent={webTheme.accent}>
           {/* brand area */}
           <View style={{ alignItems: "center", marginBottom: 32 }}>
-            <View
-              style={{
-                width: 76,
-                height: 76,
-                borderRadius: 22,
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 20,
-                shadowColor: webTheme.accent,
-                shadowOpacity: 0.35,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 6 },
-                elevation: 6,
-                overflow: "hidden",
-              }}
-            >
-              <LinearGradient
-                colors={["#E5364B", "#8B5CF6"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
-              />
-              <Feather name="zap" size={32} color="#FFF" />
-            </View>
-            <Text style={{ ...Typography.h1, color: webTheme.text, fontSize: 28 }}>
-              Join ElevateX
-            </Text>
+            <Image 
+              source={require("../../assets/logo-bolt.png")} 
+              style={{ width: 72, height: 50, marginBottom: 20 }} 
+              resizeMode="contain" 
+            />
+            <Text style={{ ...Typography.h1, fontFamily: "Arimo_700Bold", color: webTheme.text, fontSize: 28 }}>
+               Join ElevateX
+             </Text>
             <Text style={{ ...Typography.body, color: webTheme.muted, marginTop: 8, textAlign: "center" }}>
               Start your journey on the ultimate task platform
             </Text>
@@ -259,35 +240,46 @@ export default function RegisterScreen() {
           ))}
 
           {/* submit button */}
-          <HapticPressable
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-            hapticType="medium"
-            style={{ marginTop: 8 }}
+          <View
+            style={{
+              marginTop: 8,
+              shadowColor: "#E5364B",
+              shadowOpacity: 0.5,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 8,
+              borderRadius: 999,
+              backgroundColor: "rgba(229, 54, 75, 0.2)",
+            }}
           >
-            <View
+            <HapticPressable
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+              hapticType="medium"
               style={{
                 borderRadius: 999,
                 overflow: "hidden",
+                borderWidth: 1.5,
+                borderColor: "rgba(255, 255, 255, 0.3)",
                 opacity: isSubmitting ? 0.88 : 1,
               }}
             >
               <LinearGradient
-                colors={["#E5364B", "#8B5CF6"]}
+                colors={["#E5364B", "#FF4A5A"]}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+                end={{ x: 1, y: 0 }}
                 style={{
                   paddingVertical: 16,
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ ...Typography.buttonLabel, color: "#fff", fontSize: 15, letterSpacing: 0.4 }}>
+                <Text style={{ fontFamily: "Outfit_700Bold", color: "#fff", fontSize: 15, letterSpacing: 0.8, textTransform: "uppercase" }}>
                   {isSubmitting ? "Creating account..." : "Create Account"}
                 </Text>
               </LinearGradient>
-            </View>
-          </HapticPressable>
+            </HapticPressable>
+          </View>
 
           <Text style={{ ...Typography.body, color: webTheme.muted, textAlign: "center", marginTop: 22, fontSize: 13 }}>
             Already have an account?{" "}

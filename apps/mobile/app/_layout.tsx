@@ -11,6 +11,12 @@ import {
   Arimo_600SemiBold,
   Arimo_700Bold,
 } from "@expo-google-fonts/arimo";
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from "@expo-google-fonts/outfit";
 import { useFonts } from "expo-font";
 import { FullscreenMessage } from "../components/FullscreenMessage";
 import { GlobalToast } from "../components/GlobalToast";
@@ -37,6 +43,10 @@ export default function RootLayout() {
     Arimo_500Medium,
     Arimo_600SemiBold,
     Arimo_700Bold,
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
   });
 
   useEffect(() => {

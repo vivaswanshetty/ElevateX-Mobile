@@ -7,8 +7,8 @@ import { SurfaceCard } from "./SurfaceCard";
 
 const difficultyStyles = {
   Easy: { color: webTheme.green, border: "rgba(52,211,153,0.22)", bg: "rgba(52,211,153,0.10)" },
-  Medium: { color: webTheme.blue, border: "rgba(96,165,250,0.22)", bg: "rgba(96,165,250,0.10)" },
-  Hard: { color: webTheme.gold, border: "rgba(251,191,36,0.22)", bg: "rgba(251,191,36,0.10)" },
+  Medium: { color: webTheme.orange, border: "rgba(251,146,60,0.22)", bg: "rgba(251,146,60,0.10)" },
+  Hard: { color: webTheme.accent, border: "rgba(229,54,75,0.22)", bg: "rgba(229,54,75,0.10)" },
 } as const;
 
 interface TaskCardProps {

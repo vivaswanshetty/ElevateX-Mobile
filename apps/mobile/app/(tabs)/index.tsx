@@ -64,9 +64,27 @@ export default function HomeScreen() {
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
+    let timeGreeting = "Good evening";
+    if (hour < 12) timeGreeting = "Good morning";
+    else if (hour < 17) timeGreeting = "Good afternoon";
+
+    const pool = [
+      timeGreeting,
+      "Welcome back",
+      "Good to see you",
+      "Nice to see you",
+      "Great to see you",
+      "Hey there",
+      "Hello",
+      "Happy to see you",
+      "Glad you're here",
+      "Always a pleasure",
+      "Hi",
+      "Hey",
+    ];
+
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex];
   }, []);
 
   const todayStr = useMemo(() => {
@@ -544,20 +562,43 @@ export default function HomeScreen() {
                               </Text>
                             </View>
 
-                            <View
-                              style={{
-                                borderRadius: 12,
-                                borderWidth: 1,
-                                borderColor: webTheme.border,
-                                backgroundColor: "rgba(255,255,255,0.03)",
-                                paddingHorizontal: 10,
-                                paddingVertical: 6,
-                              }}
-                            >
-                              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 11 }}>
-                                {task.difficulty}
-                              </Text>
-                            </View>
+                            {(() => {
+                              const diff = (task.difficulty || "").toLowerCase().trim();
+                              let color = webTheme.text;
+                              let border = webTheme.border;
+                              let bg = "rgba(255,255,255,0.03)";
+
+                              if (diff === "easy") {
+                                color = webTheme.green;
+                                border = "rgba(52,211,153,0.25)";
+                                bg = "rgba(52,211,153,0.08)";
+                              } else if (diff === "medium") {
+                                color = webTheme.orange;
+                                border = "rgba(251,146,60,0.25)";
+                                bg = "rgba(251,146,60,0.08)";
+                              } else if (diff === "hard" || diff === "expert") {
+                                color = webTheme.accent;
+                                border = "rgba(229,54,75,0.25)";
+                                bg = "rgba(229,54,75,0.08)";
+                              }
+
+                              return (
+                                <View
+                                  style={{
+                                    borderRadius: 12,
+                                    borderWidth: 1,
+                                    borderColor: border,
+                                    backgroundColor: bg,
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 6,
+                                  }}
+                                >
+                                  <Text style={{ ...type.bold, color: color, fontSize: 11 }}>
+                                    {task.difficulty}
+                                  </Text>
+                                </View>
+                              );
+                            })()}
                           </View>
 
                           {/* Description */}
@@ -593,30 +634,78 @@ export default function HomeScreen() {
                           </View>
 
                           {/* Apply Action Button */}
-                          <HapticPressable
-                            hapticType="medium"
-                            disabled={isOwner || hasApplied}
-                            onPress={() => handleApplyPress(task.id, task.title)}
-                            style={{
-                              borderRadius: 16,
-                              backgroundColor: isOwner || hasApplied ? "rgba(255,255,255,0.05)" : webTheme.accentSoft,
-                              borderWidth: 1,
-                              borderColor: isOwner || hasApplied ? webTheme.border : webTheme.accentBorder,
-                              paddingVertical: 12,
-                              alignItems: "center",
-                              marginTop: 4,
-                            }}
-                          >
-                            <Text
+                          {isOwner || hasApplied ? (
+                            <HapticPressable
+                              hapticType="medium"
+                              disabled
                               style={{
-                                ...type.bold,
-                                color: isOwner || hasApplied ? webTheme.muted : webTheme.accent,
-                                fontSize: 13,
+                                borderRadius: 9999,
+                                backgroundColor: "rgba(255,255,255,0.04)",
+                                borderWidth: 1,
+                                borderColor: webTheme.border,
+                                paddingVertical: 12,
+                                alignItems: "center",
+                                marginTop: 8,
                               }}
                             >
-                              {isOwner ? "Your Task" : hasApplied ? "Application Sent" : "Apply Now"}
-                            </Text>
-                          </HapticPressable>
+                              <Text
+                                style={{
+                                  fontFamily: "Outfit_700Bold",
+                                  color: webTheme.muted,
+                                  fontSize: 11,
+                                  letterSpacing: 1,
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {isOwner ? "Your Task" : "Application Sent"}
+                              </Text>
+                            </HapticPressable>
+                          ) : (
+                            <View
+                              style={{
+                                borderRadius: 9999,
+                                shadowColor: "#E5364B",
+                                shadowOffset: { width: 0, height: 6 },
+                                shadowOpacity: 0.45,
+                                shadowRadius: 12,
+                                backgroundColor: "transparent",
+                                elevation: 6,
+                                marginTop: 8,
+                              }}
+                            >
+                              <HapticPressable
+                                hapticType="medium"
+                                onPress={() => handleApplyPress(task.id, task.title)}
+                                style={{ borderRadius: 9999, overflow: "hidden" }}
+                              >
+                                <LinearGradient
+                                  colors={["#FF2A54", "#990D1C"]}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 0 }}
+                                  style={{
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    paddingVertical: 12,
+                                    borderWidth: 1.5,
+                                    borderColor: "rgba(255, 255, 255, 0.28)",
+                                    borderRadius: 9999,
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      fontFamily: "Outfit_700Bold",
+                                      fontSize: 11,
+                                      color: "#FFFFFF",
+                                      letterSpacing: 1.2,
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    Apply Now
+                                  </Text>
+                                </LinearGradient>
+                              </HapticPressable>
+                            </View>
+                          )}
                         </View>
                       </SurfaceCard>
                     );
@@ -625,27 +714,67 @@ export default function HomeScreen() {
 
                 {/* Explore All opportunities CTA button */}
                 <FadeSlideIn delay={300} distance={10}>
-                  <HapticPressable
-                    hapticType="medium"
-                    onPress={() => router.push("/explore")}
+                  <View
                     style={{
-                      borderRadius: 16,
-                      backgroundColor: "rgba(255,255,255,0.03)",
-                      borderWidth: 1,
-                      borderColor: webTheme.border,
-                      paddingVertical: 14,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "row",
-                      gap: 8,
-                      marginTop: 4,
+                      borderRadius: 9999,
+                      shadowColor: "#E5364B",
+                      shadowOffset: { width: 0, height: 10 },
+                      shadowOpacity: 0.5,
+                      shadowRadius: 20,
+                      backgroundColor: "transparent",
+                      elevation: 12,
+                      marginTop: 12,
+                      marginBottom: 8,
                     }}
                   >
-                    <Text style={{ ...type.bold, color: webTheme.textSecondary, fontSize: 14 }}>
-                      Explore All Opportunities
-                    </Text>
-                    <Feather name="arrow-right" size={16} color={webTheme.textSecondary} />
-                  </HapticPressable>
+                    <HapticPressable
+                      hapticType="medium"
+                      onPress={() => router.push("/explore")}
+                      style={{ borderRadius: 9999, overflow: "hidden" }}
+                    >
+                      <LinearGradient
+                        colors={["#FF2A54", "#0052FF"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          paddingVertical: 16,
+                          paddingHorizontal: 28,
+                          gap: 10,
+                          borderWidth: 1.5,
+                          borderColor: "rgba(255, 255, 255, 0.28)",
+                          borderRadius: 9999,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Outfit_700Bold",
+                            fontSize: 13,
+                            color: "#FFFFFF",
+                            letterSpacing: 1.5,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Explore All Opportunities
+                        </Text>
+                        <View
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 12,
+                            backgroundColor: "rgba(255, 255, 255, 0.22)",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginLeft: 4,
+                          }}
+                        >
+                          <Feather name="arrow-right" size={14} color="#FFF" />
+                        </View>
+                      </LinearGradient>
+                    </HapticPressable>
+                  </View>
                 </FadeSlideIn>
               </>
             ) : (

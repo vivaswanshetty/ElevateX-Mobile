@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import {
   Alert,
@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Keyboard,
   Modal,
+  BackHandler,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,6 +34,7 @@ import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
 import { notify } from "../../stores/toastStore";
+import { useTabStore } from "../../stores/tabStore";
 
 interface ChatUser {
   _id: string;
@@ -98,6 +100,20 @@ export default function ChatScreen() {
 
   const tabBarPadding = useTabBarPadding();
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const setTabBarHidden = useTabStore((s) => s.setTabBarHidden);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (selectedChat) {
+        setTabBarHidden(true);
+      } else {
+        setTabBarHidden(false);
+      }
+      return () => {
+        setTabBarHidden(false);
+      };
+    }, [selectedChat, setTabBarHidden])
+  );
 
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -115,6 +131,23 @@ export default function ChatScreen() {
       hideSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (selectedChat) {
+        setSelectedChat(null);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+
+    return () => subscription.remove();
+  }, [selectedChat]);
 
   const conversations = useQuery<Conversation[]>({
     queryKey: ["conversations"],
@@ -842,7 +875,7 @@ export default function ChatScreen() {
               </HapticPressable>
             </View>
             
-            <View style={{ flex: 1, paddingHorizontal: 20, paddingBottom: isKeyboardVisible ? 20 : tabBarPadding, gap: 12 }}>
+            <View style={{ flex: 1, paddingHorizontal: 20, paddingBottom: 20, gap: 12 }}>
               {messages.error && (
                 <View style={{ 
                   backgroundColor: "rgba(214,60,71,0.2)", 

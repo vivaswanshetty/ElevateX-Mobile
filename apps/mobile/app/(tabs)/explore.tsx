@@ -339,64 +339,180 @@ export default function ExploreScreen() {
                     <FadeSlideIn delay={170} distance={14} style={{ width: "100%" }}>
                       <Animated.View style={{ opacity: featuredOpacity }}>
                         <HapticPressable hapticType="selection" onPress={() => router.push({ pathname: "/task/[id]", params: { id: featuredTask.id } })}>
-                          <View style={{ marginTop: 24, borderRadius: 16, padding: 1, overflow: "hidden" }}>
+                          <View style={{ marginTop: 24, borderRadius: 20, padding: 1, overflow: "hidden" }}>
                             <LinearGradient
-                              colors={["rgba(229,54,75,0.8)", "rgba(139,92,246,0.6)", "rgba(20,20,25,0)"]}
+                              colors={["rgba(229,54,75,0.7)", "rgba(139,92,246,0.5)", "rgba(20,20,25,0)"]}
                               start={{ x: 0, y: 0 }}
                               end={{ x: 1, y: 1 }}
                               style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
                             />
-                            <View style={{ backgroundColor: webTheme.surface, borderRadius: 15, padding: 22, overflow: "hidden" }}>
+                            <View style={{ backgroundColor: "rgba(13, 13, 16, 0.95)", borderRadius: 19, padding: 22, overflow: "hidden" }}>
+                              {/* Glowing Backdrop Gradients */}
                               <LinearGradient
-                                colors={theme === "dark" ? ["rgba(139,92,246,0.06)", "transparent"] : ["rgba(139,92,246,0.04)", "transparent"]}
+                                colors={["rgba(229,54,75,0.18)", "rgba(139,92,246,0.12)", "transparent"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+                              />
+                              <LinearGradient
+                                colors={["rgba(0,240,255,0.06)", "transparent"]}
                                 start={{ x: 1, y: 0 }}
                                 end={{ x: 0, y: 1 }}
-                                style={{ position: "absolute", top: 0, right: 0, width: 150, height: 150, borderRadius: 15 }}
+                                style={{ position: "absolute", top: 0, right: 0, width: 180, height: 180, borderRadius: 19 }}
                               />
-                              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 10 }}>
-                                <View style={{ flex: 1 }}>
+                              
+                              <View style={{ gap: 14 }}>
+                                {/* Top Badges Row */}
+                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                    <View
+                                      style={{
+                                        borderRadius: 999,
+                                        borderWidth: 1,
+                                        borderColor: "rgba(229,54,75,0.45)",
+                                        backgroundColor: "rgba(229,54,75,0.14)",
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 6,
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        gap: 5,
+                                        shadowColor: "#E5364B",
+                                        shadowOpacity: 0.3,
+                                        shadowRadius: 6,
+                                      }}
+                                    >
+                                      <Feather name="zap" size={10} color={webTheme.accent} />
+                                      <Text
+                                        style={{
+                                          fontFamily: "Outfit_700Bold",
+                                          color: webTheme.accent,
+                                          fontSize: 9,
+                                          letterSpacing: 1.4,
+                                          textTransform: "uppercase",
+                                        }}
+                                      >
+                                        Featured Bounty
+                                      </Text>
+                                    </View>
+
+                                    {/* Category tag */}
+                                    <View
+                                      style={{
+                                        borderRadius: 999,
+                                        borderWidth: 1,
+                                        borderColor: "rgba(139,92,246,0.3)",
+                                        backgroundColor: "rgba(139,92,246,0.08)",
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 5,
+                                      }}
+                                    >
+                                      <Text
+                                        style={{
+                                          fontFamily: "Outfit_600SemiBold",
+                                          color: webTheme.purple,
+                                          fontSize: 9,
+                                          letterSpacing: 0.8,
+                                          textTransform: "uppercase",
+                                        }}
+                                      >
+                                        {featuredTask.category}
+                                      </Text>
+                                    </View>
+                                  </View>
+
+                                  {/* Difficulty Badge */}
+                                  {(() => {
+                                    const diff = (featuredTask.difficulty || "").toLowerCase().trim();
+                                    let diffColor = webTheme.text;
+                                    let diffBorder = webTheme.border;
+                                    let diffBg = "rgba(255,255,255,0.03)";
+
+                                    if (diff === "easy") {
+                                      diffColor = webTheme.green;
+                                      diffBorder = "rgba(52,211,153,0.25)";
+                                      diffBg = "rgba(52,211,153,0.08)";
+                                    } else if (diff === "medium") {
+                                      diffColor = webTheme.orange;
+                                      diffBorder = "rgba(251,146,60,0.25)";
+                                      diffBg = "rgba(251,146,60,0.08)";
+                                    } else if (diff === "hard" || diff === "expert") {
+                                      diffColor = webTheme.accent;
+                                      diffBorder = "rgba(229,54,75,0.25)";
+                                      diffBg = "rgba(229,54,75,0.08)";
+                                    }
+
+                                    return (
+                                      <View
+                                        style={{
+                                          borderRadius: 10,
+                                          borderWidth: 1,
+                                          borderColor: diffBorder,
+                                          backgroundColor: diffBg,
+                                          paddingHorizontal: 8,
+                                          paddingVertical: 4,
+                                        }}
+                                      >
+                                        <Text style={{ fontFamily: "Outfit_700Bold", color: diffColor, fontSize: 9, textTransform: "uppercase" }}>
+                                          {featuredTask.difficulty}
+                                        </Text>
+                                      </View>
+                                    );
+                                  })()}
+                                </View>
+
+                                {/* Title & Description */}
+                                <View style={{ gap: 6 }}>
+                                  <Text style={{ fontFamily: "Outfit_700Bold", color: webTheme.text, fontSize: 24, lineHeight: 30 }}>
+                                    {featuredTask.title}
+                                  </Text>
+                                  <Text style={{ ...type.body, color: webTheme.muted, fontSize: 13, lineHeight: 18 }} numberOfLines={2}>
+                                    {featuredTask.description}
+                                  </Text>
+                                </View>
+
+                                {/* Divider line */}
+                                <View style={{ height: 1, backgroundColor: "rgba(255,255,255,0.06)", marginVertical: 4 }} />
+
+                                {/* Reward Capsules Row */}
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                  {/* Coins */}
                                   <View
                                     style={{
-                                      alignSelf: "flex-start",
-                                      borderRadius: 999,
-                                      borderWidth: 1,
-                                      borderColor: "rgba(229,54,75,0.4)",
-                                      backgroundColor: "rgba(229,54,75,0.1)",
-                                      paddingHorizontal: 12,
-                                      paddingVertical: 6,
-                                      marginBottom: 14,
                                       flexDirection: "row",
                                       alignItems: "center",
                                       gap: 6,
+                                      borderRadius: 12,
+                                      borderWidth: 1,
+                                      borderColor: "rgba(251,191,36,0.25)",
+                                      backgroundColor: "rgba(251,191,36,0.08)",
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 6,
                                     }}
                                   >
-                                    <Feather name="zap" size={10} color={webTheme.accent} />
-                                    <Text
-                                      style={{
-                                        ...type.bold,
-                                        color: webTheme.accent,
-                                        fontSize: 10,
-                                        letterSpacing: 1.4,
-                                        textTransform: "uppercase",
-                                      }}
-                                    >
-                                      Featured Bounty
+                                    <FontAwesome5 name="coins" size={11} color={webTheme.gold} />
+                                    <Text style={{ fontFamily: "Outfit_700Bold", color: webTheme.gold, fontSize: 12 }}>
+                                      {featuredTask.rewardCoins} Coins
                                     </Text>
                                   </View>
-                                  <Text style={{ ...type.h2, color: webTheme.text, fontSize: 22, lineHeight: 28 }}>
-                                    {featuredTask.title}
-                                  </Text>
-                                  <Text style={{ ...type.body, marginTop: 10, color: webTheme.muted, fontSize: 13, lineHeight: 20 }} numberOfLines={2}>
-                                    {featuredTask.description}
-                                  </Text>
 
-                                  <View style={{ marginTop: 18, flexDirection: "row", alignItems: "center", gap: 12 }}>
-                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                                      <FontAwesome5 name="coins" size={12} color={webTheme.gold} />
-                                      <Text style={{ ...type.bold, color: webTheme.gold, fontSize: 12 }}>{featuredTask.rewardCoins} Coins</Text>
-                                    </View>
-                                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: webTheme.border }} />
-                                    <Text style={{ ...type.semibold, color: webTheme.faint, fontSize: 12 }}>{featuredTask.rewardXp} XP</Text>
+                                  {/* XP */}
+                                  <View
+                                    style={{
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                      gap: 6,
+                                      borderRadius: 12,
+                                      borderWidth: 1,
+                                      borderColor: "rgba(139,92,246,0.25)",
+                                      backgroundColor: "rgba(139,92,246,0.08)",
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 6,
+                                    }}
+                                  >
+                                    <Feather name="zap" size={11} color={webTheme.violet} />
+                                    <Text style={{ fontFamily: "Outfit_700Bold", color: webTheme.violet, fontSize: 12 }}>
+                                      +{featuredTask.rewardXp} XP
+                                    </Text>
                                   </View>
                                 </View>
                               </View>
@@ -405,19 +521,39 @@ export default function ExploreScreen() {
                         </HapticPressable>
                       </Animated.View>
                       {mappedTasks.length > 1 ? (
-                        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 12 }}>
-                          {mappedTasks.map((_, i) => (
-                            <Pressable key={i} onPress={() => setFeaturedIndex(i)}>
-                              <View
-                                style={{
-                                  width: i === featuredIndex ? 18 : 6,
-                                  height: 6,
-                                  borderRadius: 3,
-                                  backgroundColor: i === featuredIndex ? webTheme.accent : webTheme.border,
-                                }}
-                              />
-                            </Pressable>
-                          ))}
+                        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 16, marginTop: 14 }}>
+                          <HapticPressable
+                            hapticType="light"
+                            onPress={() => setFeaturedIndex((prev) => (prev - 1 + mappedTasks.length) % mappedTasks.length)}
+                            style={{ padding: 8 }}
+                            hitSlop={12}
+                          >
+                            <Feather name="chevron-left" size={20} color={webTheme.muted} />
+                          </HapticPressable>
+
+                          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                            {mappedTasks.map((_, i) => (
+                              <Pressable key={i} onPress={() => setFeaturedIndex(i)} hitSlop={10}>
+                                <View
+                                  style={{
+                                    width: i === featuredIndex ? 18 : 8,
+                                    height: 8,
+                                    borderRadius: 4,
+                                    backgroundColor: i === featuredIndex ? webTheme.accent : webTheme.border,
+                                  }}
+                                />
+                              </Pressable>
+                            ))}
+                          </View>
+
+                          <HapticPressable
+                            hapticType="light"
+                            onPress={() => setFeaturedIndex((prev) => (prev + 1) % mappedTasks.length)}
+                            style={{ padding: 8 }}
+                            hitSlop={12}
+                          >
+                            <Feather name="chevron-right" size={20} color={webTheme.muted} />
+                          </HapticPressable>
                         </View>
                       ) : null}
                     </FadeSlideIn>

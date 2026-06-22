@@ -1,13 +1,13 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Pressable, ScrollView, Text, View, Dimensions, Platform } from "react-native";
+import { Pressable, ScrollView, Text, View, Dimensions, Platform, Image } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useRef, useEffect } from "react";
 import { GradientText } from "../../components/GradientText";
 import { ScreenBackdrop } from "../../components/ScreenBackdrop";
 import { HapticPressable } from "../../components/HapticPressable";
-import { type } from "../../lib/typography";
+import { type, fontFaces } from "../../lib/typography";
 import { webTheme } from "../../lib/webTheme";
 import { useThemeStore } from "../../stores/themeStore";
 import { useHaptic } from "../../lib/useHaptic";
@@ -19,46 +19,66 @@ import Animated, {
   withSequence 
 } from "react-native-reanimated";
 
+const onboardingType = {
+  regular: { fontFamily: "Outfit_400Regular" },
+  medium: { fontFamily: "Outfit_500Medium" },
+  semibold: { fontFamily: "Outfit_600SemiBold" },
+  bold: { fontFamily: "Outfit_700Bold" },
+  hero: { fontFamily: "Outfit_700Bold" },
+  body: { fontFamily: "Outfit_400Regular" },
+} as const;
+
 const onboardingSlides = [
   {
     icon: "zap",
     color: webTheme.accent,
     bgGlow: "rgba(229, 54, 75, 0.16)",
-    titleLine1: "Gamified",
-    titleLine2: "Work & Quests.",
+    titleLine1: "Post & Fulfill",
+    titleLine2: "Developer Tasks.",
     gradientColors: ["#E5364B", "#F43F5E", "#8B5CF6"] as const,
-    subtitle: "Post developer quests, complete gigs, and earn real rewards. Turn your daily tasks into an epic, gamified questline with XP & coins!",
+    subtitle: "Need work done? Post your developer quest for any task across 10+ categories. Want to earn? Fulfill active quests posted by others. Get things done fast in our modern marketplace!",
   },
   {
-    icon: "shield",
-    color: webTheme.gold,
-    bgGlow: "rgba(234, 179, 8, 0.16)",
-    titleLine1: "Secure",
-    titleLine2: "Escrow & Chat.",
-    gradientColors: ["#FBBF24", "#F59E0B", "#D97706"] as const,
-    subtitle: "Collaborate with real-time direct messaging and transact securely. Funds are safely locked in smart escrows until the work is verified.",
+    icon: "target",
+    color: webTheme.orange,
+    bgGlow: "rgba(251, 146, 60, 0.16)",
+    titleLine1: "Gamified",
+    titleLine2: "XP & Rewards.",
+    gradientColors: ["#F97316", "#FB923C", "#F59E0B"] as const,
+    subtitle: "Level up your developer profile, earn coins, and complete challenges. Turn every single milestone into rewards and climb the leaderboard!",
   },
   {
     icon: "cpu",
     color: webTheme.violet,
     bgGlow: "rgba(139, 92, 246, 0.16)",
     titleLine1: "AI Match &",
-    titleLine2: "Social Feed.",
+    titleLine2: "Direct Chat.",
     gradientColors: ["#A78BFA", "#8B5CF6", "#6D28D9"] as const,
-    subtitle: "Stay on top of public momentum with our community feed, and let our intelligent AI assistant match you with the perfect tasks instantly!",
+    subtitle: "Let our smart AI assistant instantly match you with ideal tasks, and collaborate with direct messages to iron out requirements.",
+  },
+  {
+    icon: "shield",
+    color: webTheme.gold,
+    bgGlow: "rgba(234, 179, 8, 0.16)",
+    titleLine1: "Secure",
+    titleLine2: "Smart Escrows.",
+    gradientColors: ["#FBBF24", "#F59E0B", "#D97706"] as const,
+    subtitle: "Your funds and work are always protected. Payments are locked in secure smart escrows and released only when criteria are met.",
   },
 ] as const;
 
 const bgGradients = {
   dark: [
     ["rgba(229, 54, 75, 0.12)", "rgba(139, 92, 246, 0.04)", "transparent"],
-    ["rgba(234, 179, 8, 0.12)", "rgba(249, 115, 22, 0.04)", "transparent"],
+    ["rgba(251, 146, 60, 0.12)", "rgba(234, 179, 8, 0.04)", "transparent"],
     ["rgba(139, 92, 246, 0.12)", "rgba(109, 40, 217, 0.04)", "transparent"],
+    ["rgba(234, 179, 8, 0.12)", "rgba(249, 115, 22, 0.04)", "transparent"],
   ],
   light: [
     ["rgba(229, 54, 75, 0.05)", "rgba(139, 92, 246, 0.02)", "transparent"],
-    ["rgba(234, 179, 8, 0.05)", "rgba(249, 115, 22, 0.02)", "transparent"],
+    ["rgba(251, 146, 60, 0.05)", "rgba(234, 179, 8, 0.02)", "transparent"],
     ["rgba(139, 92, 246, 0.05)", "rgba(109, 40, 217, 0.02)", "transparent"],
+    ["rgba(234, 179, 8, 0.05)", "rgba(249, 115, 22, 0.02)", "transparent"],
   ],
 } as const;
 
@@ -103,6 +123,16 @@ export default function WelcomeScreen() {
     }
   };
 
+  const handleBackSlide = () => {
+    if (activeSlide > 0) {
+      triggerHaptic("light");
+      scrollViewRef.current?.scrollTo({
+        x: (activeSlide - 1) * SCREEN_WIDTH,
+        animated: true,
+      });
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: webTheme.bg }}>
       <ScreenBackdrop />
@@ -128,20 +158,35 @@ export default function WelcomeScreen() {
           zIndex: 100 
         }}
       >
-        <Text style={{ ...type.extrabold, color: webTheme.text, fontSize: 20, letterSpacing: 0.5 }}>
-          Elevate<Text style={{ color: webTheme.accent }}>X</Text>
-        </Text>
+        {/* Brand Logo & Name Container (Red Glowing Bolt + Metallic Text) */}
+        <View style={{ flexDirection: "row", alignItems: "center", marginLeft: -8 }}>
+          <Image 
+            source={require("../../assets/logo-bolt.png")} 
+            style={{ width: 44, height: 30 }} 
+            resizeMode="contain" 
+          />
+          <Image 
+            source={require("../../assets/logo-text.png")} 
+            style={{ width: 88, height: 22, marginLeft: -6 }} 
+            resizeMode="contain" 
+          />
+        </View>
         
         <HapticPressable onPress={handleAuthRedirect} hapticType="light">
           <View style={{
             borderRadius: 999,
-            borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.12)",
-            backgroundColor: "rgba(255,255,255,0.04)",
-            paddingHorizontal: 16,
-            paddingVertical: 8
+            borderWidth: 1.5,
+            borderColor: "rgba(229, 54, 75, 0.45)",
+            backgroundColor: "rgba(229, 54, 75, 0.08)",
+            paddingHorizontal: 18,
+            paddingVertical: 8,
+            shadowColor: "#E5364B",
+            shadowOpacity: 0.35,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 0 },
+            elevation: 4,
           }}>
-            <Text style={{ ...type.semibold, color: webTheme.text, fontSize: 13 }}>
+            <Text style={{ ...onboardingType.bold, color: "#FF4A5A", fontSize: 13, letterSpacing: 0.3 }}>
               Sign In
             </Text>
           </View>
@@ -176,7 +221,7 @@ export default function WelcomeScreen() {
               justifyContent: "center",
               alignItems: "center",
               paddingHorizontal: 30,
-              paddingBottom: 80, // Leave breathing room for bottom controls
+              paddingBottom: 90, // Leave breathing room for bottom controls
             }}
           >
             {/* Animated Glowing Icon Badge */}
@@ -203,28 +248,18 @@ export default function WelcomeScreen() {
                   width: 90,
                   height: 90,
                   borderRadius: 45,
-                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  backgroundColor: `${slide.color}0D`, // ~5% opacity tint of slide color
                   borderWidth: 1.5,
                   borderColor: "rgba(255, 255, 255, 0.08)",
                   alignItems: "center",
                   justifyContent: "center",
-                  shadowColor: slide.color,
-                  shadowOffset: { width: 0, height: 12 },
-                  shadowOpacity: 0.4,
-                  shadowRadius: 20,
-                  elevation: 10,
                 }}
               >
-                {/* Inner Gradient Glow */}
-                <LinearGradient
-                  colors={[`${slide.color}00`, `${slide.color}25`]}
-                  style={{
-                    position: "absolute",
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    borderRadius: 45,
-                  }}
-                />
-                <Feather name={slide.icon as any} size={36} color={slide.color} />
+                {slide.icon === "target" ? (
+                  <MaterialCommunityIcons name="bullseye" size={40} color={slide.color} />
+                ) : (
+                  <Feather name={slide.icon as any} size={36} color={slide.color} />
+                )}
               </View>
 
               {/* Decorative Particle Accents */}
@@ -257,7 +292,7 @@ export default function WelcomeScreen() {
             {/* Title Line 1 */}
             <Text
               style={{
-                ...type.hero,
+                ...onboardingType.hero,
                 color: webTheme.text,
                 textAlign: "center",
                 fontSize: 38,
@@ -275,7 +310,7 @@ export default function WelcomeScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={{
-                  ...type.hero,
+                  ...onboardingType.hero,
                   textAlign: "center",
                   fontSize: 38,
                   lineHeight: 46,
@@ -286,7 +321,7 @@ export default function WelcomeScreen() {
             {/* Description Text */}
             <Text
               style={{
-                ...type.body,
+                ...onboardingType.body,
                 color: webTheme.faint,
                 textAlign: "center",
                 maxWidth: 300,
@@ -334,16 +369,35 @@ export default function WelcomeScreen() {
         {/* Action Row */}
         {activeSlide < onboardingSlides.length - 1 ? (
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", height: 56 }}>
-            {/* Skip Option */}
-            <HapticPressable onPress={handleAuthRedirect} hapticType="light">
-              <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
-                <Text style={{ ...type.semibold, color: webTheme.muted, fontSize: 14 }}>
-                  Skip
-                </Text>
-              </View>
-            </HapticPressable>
+            {/* Left Button: Skip on slide 0, otherwise Back */}
+            {activeSlide === 0 ? (
+              <HapticPressable onPress={handleAuthRedirect} hapticType="light">
+                <View style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
+                  <Text style={{ ...onboardingType.semibold, color: webTheme.muted, fontSize: 14 }}>
+                    Skip
+                  </Text>
+                </View>
+              </HapticPressable>
+            ) : (
+              <HapticPressable onPress={handleBackSlide} hapticType="light">
+                <View 
+                  style={{ 
+                    paddingVertical: 10, 
+                    paddingHorizontal: 16,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <Feather name="arrow-left" size={16} color={webTheme.muted} />
+                  <Text style={{ ...onboardingType.semibold, color: webTheme.muted, fontSize: 14 }}>
+                    Back
+                  </Text>
+                </View>
+              </HapticPressable>
+            )}
 
-            {/* Next Button */}
+            {/* Right Button: Next */}
             <HapticPressable onPress={handleNextSlide} hapticType="light">
               <View
                 style={{
@@ -358,7 +412,7 @@ export default function WelcomeScreen() {
                   gap: 8,
                 }}
               >
-                <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
+                <Text style={{ ...onboardingType.bold, color: webTheme.text, fontSize: 14 }}>
                   Next
                 </Text>
                 <Feather name="arrow-right" size={16} color={onboardingSlides[activeSlide].color} />
@@ -366,28 +420,49 @@ export default function WelcomeScreen() {
             </HapticPressable>
           </View>
         ) : (
-          /* "Get Started" Primary Gradient Button (Slide 3 Only) */
-          <HapticPressable onPress={handleAuthRedirect} hapticType="medium" style={{ width: "100%" }}>
-            <View style={{ borderRadius: 999, overflow: "hidden", width: "100%" }}>
-              <LinearGradient
-                colors={["#E5364B", "#8B5CF6"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                  paddingVertical: 18,
-                  alignItems: "center",
-                  justifyContent: "center",
+          /* Final Slide Controls */
+          <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
+            {/* "Get Started" Primary Gradient Button */}
+            <HapticPressable onPress={handleAuthRedirect} hapticType="medium" style={{ width: "100%" }}>
+              <View style={{ borderRadius: 999, overflow: "hidden", width: "100%" }}>
+                <LinearGradient
+                  colors={["#E5364B", "#FF4A5A"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    paddingVertical: 18,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "row",
+                    gap: 10,
+                  }}
+                >
+                  <Text style={{ ...onboardingType.bold, color: "#FFFFFF", fontSize: 16, letterSpacing: 0.5 }}>
+                    Get Started
+                  </Text>
+                  <Feather name="arrow-right" size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </View>
+            </HapticPressable>
+
+            {/* Go Back Option Below */}
+            <HapticPressable onPress={handleBackSlide} hapticType="light">
+              <View 
+                style={{ 
+                  paddingVertical: 8, 
+                  paddingHorizontal: 16,
                   flexDirection: "row",
-                  gap: 10,
+                  alignItems: "center",
+                  gap: 6
                 }}
               >
-                <Text style={{ ...type.bold, color: "#FFFFFF", fontSize: 16, letterSpacing: 0.5 }}>
-                  Get Started
+                <Feather name="arrow-left" size={14} color={webTheme.muted} />
+                <Text style={{ ...onboardingType.semibold, color: webTheme.muted, fontSize: 13, textDecorationLine: "underline" }}>
+                  Go back
                 </Text>
-                <Feather name="arrow-right" size={18} color="#FFFFFF" />
-              </LinearGradient>
-            </View>
-          </HapticPressable>
+              </View>
+            </HapticPressable>
+          </View>
         )}
       </View>
     </SafeAreaView>
