@@ -30,6 +30,7 @@ import { useThemeStore } from "../../stores/themeStore";
 import { UserAvatar } from "../../components/UserAvatar";
 import { useSavedPostsStore } from "../../stores/savedPostsStore";
 import { useTabBarPadding } from "../../hooks/useTabBarPadding";
+import { useMutedUsersStore } from "../../stores/mutedUsersStore";
 
 interface FeedUser {
   _id: string;
@@ -65,13 +66,15 @@ export default function FeedScreen() {
   const theme = useThemeStore((s) => s.theme);
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
-  const [mode, setMode] = useState<"all" | "following">("all");
+  const [mode, setMode] = useState<"latest" | "trending" | "following">("latest");
   const [composerOpen, setComposerOpen] = useState(false);
   const [composer, setComposer] = useState("");
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const { savedPostIds, toggleSavePost } = useSavedPostsStore();
+  const { mutedUserIds, muteUser } = useMutedUsersStore();
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
+  const [muteConfirmUser, setMuteConfirmUser] = useState<FeedUser | null>(null);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const params = useLocalSearchParams<{ postId?: string; from?: string }>();
@@ -116,8 +119,26 @@ export default function FeedScreen() {
     refetch,
   } = useQuery<FeedPost[]>({
     queryKey: ["posts", mode],
-    queryFn: () => api.get(mode === "following" ? "/api/posts/feed" : "/api/posts"),
+    queryFn: () => {
+      if (mode === "following") return api.get("/api/posts/feed");
+      if (mode === "trending") return api.get("/api/posts?sort=trending");
+      return api.get("/api/posts?sort=latest");
+    },
   });
+
+  const { data: suggestedPosts = [] } = useQuery<FeedPost[]>({
+    queryKey: ["suggested-posts"],
+    queryFn: () => api.get("/api/posts/suggested"),
+    enabled: !!currentUser,
+  });
+
+  const visiblePosts = posts.filter(
+    (post) => !post.author?._id || !mutedUserIds.includes(post.author._id)
+  );
+
+  const visibleSuggested = suggestedPosts.filter(
+    (post) => !post.author?._id || !mutedUserIds.includes(post.author._id)
+  );
 
   const createPost = useMutation({
     mutationFn: () => {
@@ -192,6 +213,20 @@ export default function FeedScreen() {
           if (!deletePostId) return;
           deletePost.mutate(deletePostId);
           setDeletePostId(null);
+        }}
+      />
+      <ConfirmDialog
+        visible={Boolean(muteConfirmUser)}
+        title={muteConfirmUser ? `Mute ${muteConfirmUser.name}?` : "Mute user?"}
+        detail="You will no longer see posts from this user in your feed."
+        confirmLabel="Mute"
+        destructive
+        onClose={() => setMuteConfirmUser(null)}
+        onConfirm={() => {
+          if (!muteConfirmUser) return;
+          muteUser(muteConfirmUser._id);
+          notify.success(`Muted @${muteConfirmUser.name}`);
+          setMuteConfirmUser(null);
         }}
       />
       <ScrollView
@@ -348,9 +383,105 @@ export default function FeedScreen() {
           )}
         </SurfaceCard>
 
-        <View style={{ marginTop: 16, flexDirection: "row", gap: 10 }}>
+        {visibleSuggested.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <Feather name="compass" size={15} color={webTheme.accent} />
+              <Text style={{ ...type.bold, color: webTheme.text, fontSize: 14 }}>
+                Suggested for You
+              </Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 12 }}
+            >
+              {visibleSuggested.map((post) => {
+                const authorLevel = getLevel(post.author?.xp);
+                return (
+                  <Pressable
+                    key={`suggested-${post._id}`}
+                    onPress={() => {
+                      const inCurrentFeed = posts.some(p => p._id === post._id);
+                      if (!inCurrentFeed) {
+                        setMode("latest");
+                        targetPostIdRef.current = post._id;
+                        hasScrolledRef.current = false;
+                        setExpandedPostId(post._id);
+                      } else {
+                        setExpandedPostId(post._id);
+                        if (postLayoutsRef.current[post._id] !== undefined) {
+                          scrollViewRef.current?.scrollTo({
+                            y: postLayoutsRef.current[post._id] + 160,
+                            animated: true,
+                          });
+                        } else {
+                          targetPostIdRef.current = post._id;
+                          hasScrolledRef.current = false;
+                        }
+                      }
+                    }}
+                    style={{
+                      width: 240,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: "rgba(255, 255, 255, 0.08)",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      padding: 14,
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                        <UserAvatar avatar={post.author?.avatar} size={28} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ ...type.bold, color: webTheme.text, fontSize: 13 }} numberOfLines={1}>
+                            {post.author?.name || "ElevateX user"}
+                          </Text>
+                          <Text style={{ ...type.regular, color: webTheme.faint, fontSize: 10 }}>
+                            L{authorLevel}
+                          </Text>
+                        </View>
+                      </View>
+                      {post.author?._id && post.author._id !== currentUser?.id && (
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            setMuteConfirmUser(post.author || null);
+                          }}
+                          style={{ padding: 4 }}
+                        >
+                          <Feather name="user-x" size={14} color={webTheme.faint} />
+                        </Pressable>
+                      )}
+                    </View>
+                    <Text style={{ ...type.regular, color: webTheme.textSecondary, fontSize: 12, marginTop: 10, lineHeight: 18 }} numberOfLines={3}>
+                      {post.content || "Image post"}
+                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)" }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <AntDesign name="heart" size={11} color={webTheme.accent} />
+                        <Text style={{ ...type.medium, color: webTheme.faint, fontSize: 10 }}>
+                          {post.likes?.length || 0}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <Feather name="message-circle" size={11} color={webTheme.faint} />
+                        <Text style={{ ...type.medium, color: webTheme.faint, fontSize: 10 }}>
+                          {post.comments?.length || 0}
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        <View style={{ marginTop: 20, flexDirection: "row", gap: 10 }}>
           {[
-            { key: "all", label: "All posts" },
+            { key: "latest", label: "Latest" },
+            { key: "trending", label: "Trending" },
             { key: "following", label: "Following" },
           ].map((item) => {
             const active = mode === item.key;
@@ -375,7 +506,7 @@ export default function FeedScreen() {
           })}
         </View>
 
-        {!isFetching && posts.length === 0 && (
+        {!isFetching && visiblePosts.length === 0 && (
           <EmptyState
             icon="message-square"
             title="It's quiet here"
@@ -386,7 +517,7 @@ export default function FeedScreen() {
         )}
 
         <View style={{ marginTop: 18, gap: 14 }}>
-          {posts.map((post) => {
+          {visiblePosts.map((post) => {
             const isOwnPost = post.author?._id === currentUser?.id;
             const isLiked = post.likes?.includes(currentUser?.id || "");
             const image = getImageUrl(post.image);
@@ -478,6 +609,19 @@ export default function FeedScreen() {
                       }}
                     >
                       <Feather name="trash-2" size={16} color={webTheme.faint} />
+                    </Pressable>
+                  ) : post.author ? (
+                    <Pressable
+                      onPress={() => setMuteConfirmUser(post.author || null)}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: 999,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Feather name="user-x" size={16} color={webTheme.faint} />
                     </Pressable>
                   ) : null}
                 </View>

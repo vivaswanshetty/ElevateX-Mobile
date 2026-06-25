@@ -55,6 +55,7 @@
           "launchWaitMs": 2000
         }
       ],
+      "@react-native-google-signin/google-signin",
       "./plugins/withGradleMemory"
     ],
     "updates": {

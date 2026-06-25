@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { ComponentProps, useEffect } from "react";
-import { Text, View, Dimensions, Pressable } from "react-native";
+import { ComponentProps, useEffect, useState } from "react";
+import { Text, View, Dimensions, Pressable, Keyboard, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { 
@@ -51,8 +51,25 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
   const isTabBarHidden = useTabStore((s) => s.isTabBarHidden);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const { data: conversations = [] } = useQuery<any[]>({
     queryKey: ["conversations"],
@@ -84,15 +101,17 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const indicatorBg = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)";
   const indicatorBorder = isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(0, 0, 0, 0.12)";
 
+  const shouldHide = isTabBarHidden || isKeyboardVisible;
+
   return (
     <View
-      pointerEvents={isTabBarHidden ? "none" : "box-none"}
+      pointerEvents={shouldHide ? "none" : "box-none"}
       style={{
         position: "absolute",
         left: TAB_BAR_MARGIN,
         right: TAB_BAR_MARGIN,
         bottom: Math.max(insets.bottom, 14),
-        display: isTabBarHidden ? "none" : "flex",
+        display: shouldHide ? "none" : "flex",
       }}
     >
       <BlurView

@@ -1,5 +1,5 @@
-import { Feather } from "@expo/vector-icons";
-import { Alert, Pressable, ScrollView, Text, TextInput, View, Image } from "react-native";
+import { Feather, AntDesign } from "@expo/vector-icons";
+import { Alert, Pressable, ScrollView, Text, TextInput, View, Image, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,14 @@ import * as SecureStore from "expo-secure-store";
 import { api, getErrorMessage } from "../../lib/api";
 import { saveAuthToken } from "../../lib/authSession";
 import { useAuthStore } from "../../stores/authStore";
+
+// Safe dynamic require for Google Sign-In to prevent crashes in dev clients without the native module compiled in
+let GoogleSignin: any = null;
+try {
+  GoogleSignin = require("@react-native-google-signin/google-signin").GoogleSignin;
+} catch (e) {
+  console.warn("[Google Sign-In] Native module not found. Rebuild native app to enable Google login.");
+}
 import { ScreenBackdrop } from "../../components/ScreenBackdrop";
 import { SurfaceCard } from "../../components/SurfaceCard";
 import { FadeSlideIn } from "../../components/FadeSlideIn";
@@ -68,6 +76,70 @@ export default function LoginScreen() {
 
     loadSavedCredentials();
   }, [setValue]);
+
+  // Configure Google SDK on mount
+  useEffect(() => {
+    if (Platform.OS !== "web" && GoogleSignin) {
+      try {
+        GoogleSignin.configure({
+          webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "123456-dummy.apps.googleusercontent.com",
+          offlineAccess: true,
+        });
+      } catch (e) {
+        console.warn("Failed to configure Google Sign-In:", e);
+      }
+    }
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    if (Platform.OS === "web") {
+      notify.error("Google login is only supported on mobile devices");
+      return;
+    }
+    if (!GoogleSignin) {
+      notify.error("Google Sign-In is not supported in this build. Please run a native rebuild.");
+      return;
+    }
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = (userInfo as any).idToken || (userInfo as any).data?.idToken;
+      
+      if (!idToken) {
+        throw new Error("No ID Token received from Google");
+      }
+
+      const response = await api.post("/api/auth/google", { idToken });
+      await saveAuthToken(response.token);
+      setUser(normalizeUserPayload(response));
+      setAuthError(null);
+      notify.success("Signed in with Google!");
+      router.replace("/");
+    } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      // Avoid alerting on user cancellation (which is common)
+      const isCancel = error.code === "SIGN_IN_CANCELLED" || 
+                       error.code === "12501" ||
+                       error.message?.includes("cancelled") || 
+                       error.message?.includes("cancel");
+      if (!isCancel) {
+        notify.error(getErrorMessage(error));
+      }
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    try {
+      const response = await api.post("/api/auth/guest");
+      await saveAuthToken(response.token);
+      setUser(normalizeUserPayload(response));
+      setAuthError(null);
+      notify.success("Welcome, Guest Developer!");
+      router.replace("/");
+    } catch (error) {
+      notify.error(getErrorMessage(error));
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -323,7 +395,65 @@ export default function LoginScreen() {
             </HapticPressable>
           </View>
 
-          <Text style={{ ...type.body, color: webTheme.muted, textAlign: "center", marginTop: 22, fontSize: 13 }}>
+          {/* Divider "Or continue with" */}
+          <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255, 255, 255, 0.08)" }} />
+            <Text style={{ ...type.regular, fontFamily: "Outfit_500Medium", color: webTheme.faint, fontSize: 11, paddingHorizontal: 12, textTransform: "uppercase", letterSpacing: 0.8 }}>
+              Or continue with
+            </Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: "rgba(255, 255, 255, 0.08)" }} />
+          </View>
+
+          {/* Third-party Sign In Actions */}
+          <View style={{ gap: 10, marginBottom: 12 }}>
+            {/* Google Sign In */}
+            <HapticPressable
+              onPress={handleGoogleLogin}
+              hapticType="light"
+              style={{
+                width: "100%",
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: "rgba(255, 255, 255, 0.08)",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                paddingVertical: 14,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                gap: 10,
+              }}
+            >
+              <AntDesign name="google" size={18} color="#FF4A5A" />
+              <Text style={{ fontFamily: "Outfit_600SemiBold", color: webTheme.text, fontSize: 14, letterSpacing: 0.2 }}>
+                Continue with Google
+              </Text>
+            </HapticPressable>
+
+            {/* Guest Sign In */}
+            <HapticPressable
+              onPress={handleGuestLogin}
+              hapticType="medium"
+              style={{
+                width: "100%",
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: "rgba(255, 255, 255, 0.08)",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                paddingVertical: 14,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                gap: 10,
+              }}
+            >
+              <Feather name="user" size={18} color="#60A5FA" />
+              <Text style={{ fontFamily: "Outfit_600SemiBold", color: webTheme.text, fontSize: 14, letterSpacing: 0.2 }}>
+                Continue as Guest
+              </Text>
+            </HapticPressable>
+          </View>
+
+          <Text style={{ ...type.body, color: webTheme.muted, textAlign: "center", marginTop: 10, fontSize: 13 }}>
             Don't have an account?{" "}
             <Link href="/auth/register" style={{ color: webTheme.accent, fontFamily: type.bold.fontFamily }}>
               Sign up
