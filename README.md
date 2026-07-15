@@ -1,7 +1,7 @@
 # 🚀 ElevateX Mobile
 
 <p align="center">
-  <img src="./Playstore screenshots/logo.png" alt="ElevateX Logo" width="120" style="border-radius: 24px;" />
+  <img src="./apps/mobile/assets/icon.png" alt="ElevateX Logo" width="120" style="border-radius: 24px;" />
 </p>
 
 <p align="center">
