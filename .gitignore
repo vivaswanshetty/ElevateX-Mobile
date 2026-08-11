@@ -12,3 +12,5 @@ apps/mobile/.expo/
 apps/mobile/node_modules/
 .gradle/
 Playstore screenshots/
+Outfit*.ttf
+scratch/
