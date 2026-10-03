@@ -21,7 +21,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://elevatexco.up.railway.app",
+        "EXPO_PUBLIC_API_URL": "https://elevatex-3uey.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "715306946868-2rr5cs98fe0gu18palltm53tnun85c6u.apps.googleusercontent.com",
         "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
       }
     },
@@ -33,7 +34,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://elevatexco.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://elevatex-3uey.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "715306946868-2rr5cs98fe0gu18palltm53tnun85c6u.apps.googleusercontent.com"
       }
     }
   },

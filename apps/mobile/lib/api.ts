@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 import * as Device from "expo-device";
 import { getAuthToken } from "./authSession";
 
-const DEFAULT_API_URL = "https://elevatexco.up.railway.app";
+const DEFAULT_API_URL = "https://elevatex-3uey.onrender.com";
 
 // For development: use emulator/localhost addresses
 // For production: use EXPO_PUBLIC_API_URL environment variable
